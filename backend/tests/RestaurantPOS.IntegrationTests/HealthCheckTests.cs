@@ -5,11 +5,11 @@ using Xunit;
 
 namespace RestaurantPOS.IntegrationTests;
 
-public class HealthCheckTests : IClassFixture<WebApplicationFactory<Program>>
+public class HealthCheckTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public HealthCheckTests(WebApplicationFactory<Program> factory)
+    public HealthCheckTests(CustomWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }
@@ -18,7 +18,6 @@ public class HealthCheckTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task Health_Endpoint_Returns_Ok()
     {
         var response = await _client.GetAsync("/health");
-
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 }

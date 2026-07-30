@@ -30,6 +30,7 @@ dotnet_style_qualification_for_field = false:suggestion
 dotnet_diagnostic.CA1062 = warning   # null-check public method args
 dotnet_diagnostic.CA2007 = none      # disable ConfigureAwait warning (ASP.NET Core doesn't need it)
 
+
 # Organize usings
 dotnet_separate_import_directive_groups = true
 dotnet_sort_system_directives_first = true
