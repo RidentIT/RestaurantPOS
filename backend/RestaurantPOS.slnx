@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RestaurantPOS.API/RestaurantPOS.API.csproj" />
+    <Project Path="src/RestaurantPOS.Application/RestaurantPOS.Application.csproj" />
+    <Project Path="src/RestaurantPOS.Domain/RestaurantPOS.Domain.csproj" />
+    <Project Path="src/RestaurantPOS.Infrastructure/RestaurantPOS.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RestaurantPOS.ArchitectureTests/RestaurantPOS.ArchitectureTests.csproj" />
+    <Project Path="tests/RestaurantPOS.IntegrationTests/RestaurantPOS.IntegrationTests.csproj" />
+    <Project Path="tests/RestaurantPOS.UnitTests/RestaurantPOS.UnitTests.csproj" />
+  </Folder>
+</Solution>
