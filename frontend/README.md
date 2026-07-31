@@ -1,58 +1,69 @@
-# RestaurantPOS Frontend
+# Enterprise Desktop POS System — Frontend
 
-Enterprise-grade Next.js 15 (App Router, React 19, TypeScript, pnpm) architecture tailored for high-reliability POS applications.
+Enterprise-grade **Electron 43 + React 19 + Vite 7** desktop application architecture following **Feature-Sliced Design (FSD)** principles for POS terminals.
 
-## Architecture Overview
+## Architecture Stack
 
-This project strictly follows **Feature-Sliced Design (FSD)** principles to enforce domain decoupling and layer isolation:
+- **Container**: Electron 43 (2-Process Architecture: Main Node Process & Sandboxed Renderer Process)
+- **UI Framework**: React 19 + Vite 7 SPA Engine
+- **State Management**: Redux Toolkit + TanStack Query
+- **HTTP Client**: Axios with 3 interceptors (Auth, Token Refresh, Global Error Handling)
+- **Styling**: TailwindCSS + clsx + tailwind-merge
+- **Testing**: Vitest + React Testing Library + MSW + Playwright E2E
 
+---
+
+## Directory Structure (FSD)
+
+```text
+frontend/
+├── electron/                     # Electron Main Process (Node.js)
+│   ├── main.ts                   # Entry point & window initialization
+│   ├── preload.ts                # Exposed IPC bridge wall
+│   ├── ipc/                      # System & Printer IPC handlers
+│   └── services/                 # Native hardware print services
+│
+├── src/                          # Renderer Process (React 19)
+│   ├── app/                      # React root, global providers & CSS
+│   ├── pages/                    # Route-level screens (login, dashboard, checkout, reports)
+│   ├── widgets/                  # Composite UI blocks (Header, Sidebar, CartSummary)
+│   ├── features/                 # User flows & actions (auth, add-to-cart, payment)
+│   ├── entities/                 # Business domain models (product, order, customer, ui)
+│   └── shared/                   # Generic primitives (ui, api, store, socket, hooks, utils)
+│
+└── tests/                        # Unit, component, integration, architecture, & E2E tests
 ```
-src/
-├── app/          # App Router routes, layouts, providers
-├── widgets/      # Composition layer (complex UI blocks combining features/entities)
-├── features/     # User actions/interactions (auth, orders, kitchen, inventory, etc.)
-├── entities/     # Domain business models (user, order, product, supplier)
-└── shared/       # Cross-cutting infrastructure (api, store, hooks, lib, ui, utils, websocket)
-```
 
-### Architectural Layer Import Rules
-Rules are statically enforced via `eslint-plugin-boundaries`:
-1. `shared` can only import `shared`.
-2. `entities` can only import `shared`.
-3. `features` can import `entities` and `shared`.
-4. `widgets` can import `features`, `entities`, and `shared`.
-5. `app` can import `widgets`, `features`, `entities`, and `shared`.
-
-**Crucial Rule**: All API calls must reside exclusively inside `@/shared/api/endpoints`. Features and entities MUST NOT invoke direct raw HTTP calls.
-
-## State Management & Real-time Stack
-
-- **Redux Toolkit**: Client UI state, active session, authentication context.
-- **TanStack Query (React Query)**: Server state fetching, caching, optimistic updates, and cache invalidation.
-- **Axios Interceptors**: JWT bearer token injection, automated silent token refresh, and standardized error mapping.
-- **Socket.io Client**: Real-time order status, kitchen order tickets (KOT), and table status updates.
-
-## Testing Infrastructure
-
-- **Vitest & React Testing Library**: Fast unit, component, and architecture boundary testing.
-- **MSW (Mock Service Worker)**: API mocking layer for both browser development and Vitest integration testing.
-- **Playwright**: End-to-end user journey automation testing across Chromium, Firefox, and WebKit.
+---
 
 ## Getting Started
 
+### Install Dependencies
 ```bash
-# Install dependencies
-pnpm install
+npm install
+```
 
-# Start development server
-pnpm dev
+### Run Desktop App in Development Mode (Live Reloading)
+```bash
+npm run electron:dev
+```
 
-# Run type check
-pnpm typecheck
+### Run Test Suite
+```bash
+npm test
+```
 
-# Run unit & component tests
-pnpm test
+### TypeScript Type Check
+```bash
+npm run typecheck
+```
 
-# Run E2E tests
-pnpm test:e2e
+### Build Production Bundle
+```bash
+npm run build
+```
+
+### Package Desktop Executable (.exe Installer)
+```bash
+npm run electron:build
 ```

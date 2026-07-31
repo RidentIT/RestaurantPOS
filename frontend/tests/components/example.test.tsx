@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { screen } from "@testing-library/react";
-import HomePage from "@/app/page";
+import App from "@/app/App";
 import { renderWithProviders } from "../utils/render";
 
-describe("HomePage Component Test", () => {
+describe("App Component Test", () => {
   it("renders system title heading", () => {
-    renderWithProviders(<HomePage />);
+    renderWithProviders(<App />);
     expect(
-      screen.getByRole("heading", { name: /Restaurant POS Enterprise System/i })
+      screen.getByRole("heading", { name: /Restaurant POS System/i })
     ).toBeInTheDocument();
   });
 });

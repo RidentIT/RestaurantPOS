@@ -1,34 +1,49 @@
 # dependencies
-/node_modules
-/.pnpm-store
+node_modules/
+.pnpm-store/
 
-# next.js build output
-/.next/
-/out/
+# Vite & Electron build outputs
+dist/
+dist-electron/
+release/
+out/
+build/
 
-# production
-/build
+# Executables & Packaged Installers
+*.exe
+*.msi
+*.dmg
+*.AppImage
+*.deb
+*.blockmap
+*.zip
 
-# debug
+# Debug & logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+*.log
 
-# testing & coverage
-/coverage
-/test-results
-/playwright-report
-/blob-report
-/playwright/.cache
+# Testing & coverage
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
 
-# env files
-.env*.local
+# Environment files
 .env
+.env*.local
+!.env.example
 
-# vercel
-.vercel
+# IDE & OS files
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
 
-# typescript
+# TypeScript build cache
 *.tsbuildinfo
-next-env.d.ts

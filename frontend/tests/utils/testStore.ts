@@ -1,6 +1,6 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
-import authReducer from "@/shared/store/authSlice";
-import uiReducer from "@/shared/store/uiSlice";
+import authReducer from "@/features/auth/model/authSlice";
+import uiReducer from "@/entities/ui/model/uiSlice";
 import { RootState } from "@/shared/store";
 
 const rootReducer = combineReducers({
