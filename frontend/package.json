@@ -57,7 +57,7 @@
     "electron-builder": "^26.15.3",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
-    "eslint-import-resolver-typescript": "^3.7.0",
+    "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-boundaries": "^5.0.1",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-react-hooks": "^5.1.0",
