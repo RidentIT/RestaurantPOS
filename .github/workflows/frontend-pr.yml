@@ -15,36 +15,31 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version-file: 'frontend/.nvmrc'
-          cache: 'pnpm'
+          cache: 'npm'
           cache-dependency-path: 'frontend/package-lock.json'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
         working-directory: frontend
 
       - name: Type Check
-        run: pnpm typecheck
+        run: npm run typecheck
         working-directory: frontend
 
       - name: Lint
-        run: pnpm lint
+        run: npm run lint
         working-directory: frontend
 
       - name: Run Tests
-        run: pnpm test
+        run: npm test
         working-directory: frontend
 
       - name: Build Application (Vite)
-        run: pnpm build
+        run: npm run build
         working-directory: frontend
 
       - name: SonarCloud PR Analysis

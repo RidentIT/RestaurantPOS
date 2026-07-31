@@ -14,32 +14,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version-file: 'frontend/.nvmrc'
-          cache: 'pnpm'
+          cache: 'npm'
           cache-dependency-path: 'frontend/package-lock.json'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
         working-directory: frontend
 
       - name: Type Check
-        run: pnpm typecheck
+        run: npm run typecheck
         working-directory: frontend
 
       - name: Lint
-        run: pnpm lint
+        run: npm run lint
         working-directory: frontend
 
       - name: Run Unit & Component Tests with Coverage
-        run: pnpm coverage
+        run: npm run coverage
         working-directory: frontend
 
       - name: Upload Coverage to Artifacts
@@ -49,15 +44,15 @@ jobs:
           path: frontend/coverage
 
       - name: Build Application (Vite)
-        run: pnpm build
+        run: npm run build
         working-directory: frontend
 
       - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps
+        run: npx playwright install --with-deps
         working-directory: frontend
 
       - name: Run E2E Tests
-        run: pnpm test:e2e
+        run: npm run test:e2e
         working-directory: frontend
 
       - name: Upload Playwright Report
