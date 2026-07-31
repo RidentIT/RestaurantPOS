@@ -8,7 +8,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   use: {
-    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3000",
+    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:4173",
     trace: "on-first-retry",
   },
   projects: [
@@ -26,8 +26,10 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
+    // Uses vite preview (serves pre-built dist/) — no Electron process spawned,
+    // no X Display required. CI must run `npm run build` before `npm run test:e2e`.
+    command: "npm run preview",
+    url: "http://localhost:4173",
     reuseExistingServer: !process.env.CI,
   },
 });

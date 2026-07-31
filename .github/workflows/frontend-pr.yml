@@ -4,6 +4,9 @@ on:
   pull_request:
     branches: [ main, develop ]
     types: [opened, synchronize, reopened]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-pr.yml'
 
 jobs:
   pr-validation:
