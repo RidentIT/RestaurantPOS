@@ -12,6 +12,10 @@ jobs:
   pr-validation:
     runs-on: ubuntu-latest
 
+    # Expose secret as job-level env so steps can check if it is set
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -52,17 +56,18 @@ jobs:
         working-directory: backend
 
       - name: Setup Java (required by SonarCloud scanner)
+        if: env.SONAR_TOKEN != ''
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Install SonarCloud scanner
+        if: env.SONAR_TOKEN != ''
         run: dotnet tool install --global dotnet-sonarscanner
 
       - name: SonarCloud PR Analysis
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
+        if: env.SONAR_TOKEN != ''
         run: |
           dotnet sonarscanner begin \
             /k:"RidentIT_RestaurantPOS" \

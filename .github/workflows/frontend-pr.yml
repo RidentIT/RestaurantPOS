@@ -12,6 +12,9 @@ jobs:
   pr-validation:
     runs-on: ubuntu-latest
 
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONTEND }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -46,6 +49,7 @@ jobs:
         working-directory: frontend
 
       - name: SonarCloud PR Analysis
+        if: env.SONAR_TOKEN != ''
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

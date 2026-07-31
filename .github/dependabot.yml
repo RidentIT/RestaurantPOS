@@ -1,22 +1,52 @@
 version: 2
 updates:
-  # Frontend - npm packages
+  # Frontend — npm packages
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    groups:
+      # All patch + minor updates bundled into ONE PR per week
+      npm-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+      # Major updates get individual PRs (breaking changes need review)
+    ignore:
+      # Ignore major version bumps for React (controlled upgrade)
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
 
-  # Backend - NuGet packages
+  # Backend — NuGet packages
   - package-ecosystem: "nuget"
     directory: "/backend"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    groups:
+      # All patch + minor updates bundled into ONE PR per week
+      nuget-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+      # Major updates get individual PRs (breaking changes need review)
+    ignore:
+      # Ignore major EF Core / ASP.NET major bumps (controlled upgrade)
+      - dependency-name: "Microsoft.EntityFrameworkCore*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.AspNetCore*"
+        update-types: ["version-update:semver-major"]
 
-  # GitHub Actions - keep workflow actions up to date
+  # GitHub Actions — keep workflow action versions up to date
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    groups:
+      actions-all:
+        patterns:
+          - "*"
