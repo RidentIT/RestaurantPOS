@@ -1,0 +1,76 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: 'frontend/.nvmrc'
+          cache: 'pnpm'
+          cache-dependency-path: 'frontend/pnpm-lock.yaml'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: frontend
+
+      - name: Type Check
+        run: pnpm typecheck
+        working-directory: frontend
+
+      - name: Lint
+        run: pnpm lint
+        working-directory: frontend
+
+      - name: Run Unit & Component Tests with Coverage
+        run: pnpm coverage
+        working-directory: frontend
+
+      - name: Upload Coverage to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
+
+      - name: Build Next.js Application
+        run: pnpm build
+        working-directory: frontend
+
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps
+        working-directory: frontend
+
+      - name: Run E2E Tests
+        run: pnpm test:e2e
+        working-directory: frontend
+
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+
+      - name: SonarCloud Main Analysis
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONTEND }}
+        with:
+          projectBaseDir: frontend
