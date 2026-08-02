@@ -19,7 +19,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 p-8">
       <div>
-        <h1 className="text-2xl font-semibold">Welcome back, {user?.fullName?.split(" ")[0]}</h1>
+        <h1 className="text-2xl font-semibold">Hi welcome back, {user?.fullName?.split(" ")[0]}</h1>
         <p className="text-sm text-muted-foreground">Here's what you can open today.</p>
       </div>
 
