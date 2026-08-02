@@ -1,6 +1,9 @@
 <Project>
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
+    <!-- Run on a newer major runtime when the 9.0 runtime is absent. Keeps the app launchable
+         on developer machines and tills that only have .NET 10 installed, without retargeting. -->
+    <RollForward>Major</RollForward>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

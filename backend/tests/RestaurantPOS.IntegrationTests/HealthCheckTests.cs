@@ -1,6 +1,9 @@
 using System.Net;
+
 using FluentAssertions;
+
 using Microsoft.AspNetCore.Mvc.Testing;
+
 using Xunit;
 
 namespace RestaurantPOS.IntegrationTests;

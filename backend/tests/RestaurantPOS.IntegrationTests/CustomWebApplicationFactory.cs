@@ -1,52 +1,71 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using RestaurantPOS.Infrastructure.Persistence;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace RestaurantPOS.IntegrationTests;
 
+/// <summary>
+/// Boots the real API against a throwaway SQLite file.
+/// </summary>
+/// <remarks>
+/// The application's own start-up path runs the migrations and seeds the administrator, so
+/// these tests exercise the same bootstrap a fresh install goes through rather than a
+/// test-only shortcut.
+/// </remarks>
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
-    private readonly string _dbFilePath = Path.Combine(Path.GetTempPath(), $"restaurantpos-test-{Guid.NewGuid()}.db");
+    public const string SeedAdminUsername = "admin";
+
+    /// <summary>The bootstrap password the seeded administrator is created with.</summary>
+    public const string SeedAdminPassword = "Bootstrap@2026";
+
+    private readonly string _dbFilePath =
+        Path.Combine(Path.GetTempPath(), $"restaurantpos-test-{Guid.NewGuid()}.db");
+
+    private readonly string _keyFilePath =
+        Path.Combine(Path.GetTempPath(), $"restaurantpos-test-{Guid.NewGuid()}.key");
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureServices(services =>
-        {
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+        ArgumentNullException.ThrowIfNull(builder);
 
-            if (descriptor is not null)
+        builder.UseEnvironment(Environments.Development);
+
+        builder.ConfigureAppConfiguration((_, config) =>
+            config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                services.Remove(descriptor);
-            }
-
-            services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlite($"Data Source={_dbFilePath}"));
-
-            var sp = services.BuildServiceProvider();
-            using var scope = sp.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            db.Database.EnsureCreated();
-        });
+                ["ConnectionStrings:DefaultConnection"] = $"Data Source={_dbFilePath}",
+                ["SeedAdmin:Username"] = SeedAdminUsername,
+                ["SeedAdmin:Password"] = SeedAdminPassword,
+                ["SeedAdmin:FullName"] = "System Administrator",
+                // Each factory gets its own signing key so tokens never leak between test classes.
+                ["Jwt:KeyFilePath"] = _keyFilePath,
+            }));
     }
 
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        if (disposing)
+
+        if (!disposing)
         {
-            if (File.Exists(_dbFilePath))
+            return;
+        }
+
+        foreach (var path in new[] { _dbFilePath, _keyFilePath })
+        {
+            try
             {
-                try
-                {
-                    File.Delete(_dbFilePath);
-                }
-                catch
-                {
-                    // Ignore transient lock cleanup errors
-                }
+                File.Delete(path);
+            }
+            catch (IOException)
+            {
+                // Transient file locks on Windows are not worth failing a test run over.
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // As above.
             }
         }
     }
