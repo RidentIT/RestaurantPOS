@@ -1,79 +1,111 @@
-import { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from "axios";
+import { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
+import { tokenStorage } from "../tokenStorage";
 
-interface FailedRequestQueueItem {
+interface QueuedRequest {
   resolve: (token: string) => void;
-  reject: (error: any) => void;
+  reject: (error: unknown) => void;
 }
 
-let isRefreshing = false;
-let failedQueue: FailedRequestQueueItem[] = [];
+/**
+ * Endpoints that must never trigger a refresh attempt.
+ *
+ * A 401 from sign-in means "wrong password", not "expired session". A 401 from the refresh
+ * endpoint itself means the refresh token is dead, and retrying it would recurse forever.
+ */
+const NON_REFRESHABLE_PATHS = ["/auth/login", "/auth/refresh", "/auth/logout"];
 
-const processQueue = (error: any, token: string | null = null): void => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else if (token) {
-      prom.resolve(token);
+const isNonRefreshable = (url: string | undefined): boolean =>
+  !!url && NON_REFRESHABLE_PATHS.some((path) => url.includes(path));
+
+/**
+ * Transparently renews an expired access token and replays the request that hit the 401.
+ *
+ * Concurrent failures queue behind a single refresh: because the server rotates refresh tokens,
+ * firing several refreshes at once would consume tokens it has already invalidated and drop the
+ * session entirely.
+ */
+export function setupRefreshTokenInterceptor(
+  axiosInstance: AxiosInstance,
+  onSessionExpired?: () => void,
+): void {
+  let isRefreshing = false;
+  let queue: QueuedRequest[] = [];
+
+  const flushQueue = (error: unknown, token: string | null): void => {
+    for (const pending of queue) {
+      if (token) {
+        pending.resolve(token);
+      } else {
+        pending.reject(error);
+      }
     }
-  });
-  failedQueue = [];
-};
 
-export function setupRefreshTokenInterceptor(axiosInstance: AxiosInstance): void {
+    queue = [];
+  };
+
+  const failSession = (error: unknown): Promise<never> => {
+    tokenStorage.clear();
+    flushQueue(error, null);
+    onSessionExpired?.();
+
+    return Promise.reject(error);
+  };
+
   axiosInstance.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
-      const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+      const request = error.config as
+        | (InternalAxiosRequestConfig & { _retried?: boolean })
+        | undefined;
 
-      if (error.response?.status === 401 && !originalRequest._retry) {
-        if (isRefreshing) {
-          return new Promise((resolve, reject) => {
-            failedQueue.push({ resolve, reject });
-          }).then((token) => {
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-            }
-            return axiosInstance(originalRequest);
-          });
-        }
+      const shouldAttemptRefresh =
+        error.response?.status === 401 &&
+        !!request &&
+        !request._retried &&
+        !isNonRefreshable(request.url);
 
-        originalRequest._retry = true;
-        isRefreshing = true;
-
-        try {
-          const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refresh_token") : null;
-          if (!refreshToken) {
-            throw new Error("No refresh token available");
-          }
-
-          const response = await axiosInstance.post("/auth/refresh", { refreshToken });
-          const { accessToken, refreshToken: newRefreshToken } = response.data;
-
-          if (typeof window !== "undefined") {
-            localStorage.setItem("access_token", accessToken);
-            localStorage.setItem("refresh_token", newRefreshToken);
-          }
-
-          processQueue(null, accessToken);
-
-          if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-          }
-          return axiosInstance(originalRequest);
-        } catch (refreshError) {
-          processQueue(refreshError, null);
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
-            window.location.href = "/login";
-          }
-          return Promise.reject(refreshError);
-        } finally {
-          isRefreshing = false;
-        }
+      if (!shouldAttemptRefresh) {
+        return Promise.reject(error);
       }
 
-      return Promise.reject(error);
-    }
+      request._retried = true;
+
+      // A refresh is already in flight, so wait for it rather than starting another.
+      if (isRefreshing) {
+        return new Promise<string>((resolve, reject) => {
+          queue.push({ resolve, reject });
+        }).then((token) => {
+          if (request.headers) {
+            request.headers.Authorization = `Bearer ${token}`;
+          }
+
+          return axiosInstance(request);
+        });
+      }
+
+      const refreshToken = tokenStorage.getRefreshToken();
+      if (!refreshToken) {
+        return failSession(error);
+      }
+
+      isRefreshing = true;
+
+      try {
+        const { data } = await axiosInstance.post("/auth/refresh", { refreshToken });
+
+        tokenStorage.save(data.accessToken, data.refreshToken);
+        flushQueue(null, data.accessToken);
+
+        if (request.headers) {
+          request.headers.Authorization = `Bearer ${data.accessToken}`;
+        }
+
+        return await axiosInstance(request);
+      } catch (refreshError) {
+        return failSession(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    },
   );
 }

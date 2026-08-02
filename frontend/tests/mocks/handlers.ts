@@ -1,14 +1,20 @@
 import { http, HttpResponse } from "msw";
+import { adminPendingChange, moduleCatalog, sessionFor } from "./fixtures";
 
+const API = "*/api/v1";
+
+/**
+ * Default handlers matching the real API's contracts. Individual tests override specific
+ * routes with `server.use(...)` for the scenario under test, e.g. a login failure.
+ */
 export const handlers = [
-  http.get("*/api/v1/health", () => {
-    return HttpResponse.json({ status: "Healthy" });
-  }),
-  http.post("*/api/v1/auth/login", () => {
-    return HttpResponse.json({
-      accessToken: "mock_access_token",
-      refreshToken: "mock_refresh_token",
-      user: { id: "1", name: "Admin User", email: "admin@pos.com", role: "Admin" },
-    });
-  }),
+  http.get("*/health", () => HttpResponse.json({ status: "Healthy" })),
+
+  http.post(`${API}/auth/login`, () => HttpResponse.json(sessionFor(adminPendingChange))),
+
+  http.get(`${API}/auth/me`, () => HttpResponse.json(adminPendingChange)),
+
+  http.get(`${API}/modules`, () => HttpResponse.json(moduleCatalog)),
+
+  http.get(`${API}/users`, () => HttpResponse.json([])),
 ];

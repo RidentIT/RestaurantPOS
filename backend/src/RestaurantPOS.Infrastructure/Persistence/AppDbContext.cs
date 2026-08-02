@@ -1,10 +1,14 @@
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
+using RestaurantPOS.Application.Common.Interfaces;
 using RestaurantPOS.Domain.Common;
+using RestaurantPOS.Domain.Entities;
 
 namespace RestaurantPOS.Infrastructure.Persistence;
 
-public class AppDbContext : DbContext
+public class AppDbContext : DbContext, IAppDbContext
 {
     private readonly IPublisher? _publisher;
 
@@ -12,6 +16,12 @@ public class AppDbContext : DbContext
     {
         _publisher = publisher;
     }
+
+    public DbSet<User> Users => Set<User>();
+
+    public DbSet<UserModulePermission> UserModulePermissions => Set<UserModulePermission>();
+
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

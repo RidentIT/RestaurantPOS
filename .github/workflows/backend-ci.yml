@@ -7,9 +7,23 @@ on:
       - 'backend/**'
       - '.github/workflows/backend-ci.yml'
 
+# A newer push to the same branch makes an in-flight run redundant.
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # Exposed at job level so steps can skip Sonar when the secret is absent, which is what
+    # happens on a fork or before the token has been configured.
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
 
     steps:
       - name: Checkout code
@@ -23,17 +37,18 @@ jobs:
           global-json-file: backend/global.json
 
       - name: Setup Java (required by Sonar scanner)
+        if: env.SONAR_TOKEN != ''
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Install SonarCloud scanner
+        if: env.SONAR_TOKEN != ''
         run: dotnet tool install --global dotnet-sonarscanner
 
       - name: Begin SonarCloud analysis
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
+        if: env.SONAR_TOKEN != ''
         run: |
           dotnet sonarscanner begin \
             /k:"RidentIT_RestaurantPOS" \
@@ -72,13 +87,14 @@ jobs:
         working-directory: backend
 
       - name: End SonarCloud analysis
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
+        if: env.SONAR_TOKEN != ''
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN_BACKEND }}"
         working-directory: backend
 
       - name: Upload coverage report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
           path: backend/**/TestResults/**/coverage.opencover.xml
+          if-no-files-found: warn

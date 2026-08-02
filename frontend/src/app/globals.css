@@ -2,18 +2,109 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #09090b;
-  --primary: #18181b;
-  --primary-foreground: #fafafa;
+/*
+ * Colours are declared as raw HSL channels so Tailwind can compose them with an alpha value
+ * (e.g. `bg-primary/10`). Every colour the app uses is defined here once, in both themes, so
+ * no component hard-codes a hex value.
+ */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 24% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 24% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 24% 11%;
+
+    /* Deep teal-green: calm and professional on a till screen being stared at all day. */
+    --primary: 168 72% 22%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 222 24% 20%;
+
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 16% 44%;
+
+    --accent: 210 20% 94%;
+    --accent-foreground: 222 24% 20%;
+
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 62% 32%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 35 92% 42%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 214 22% 90%;
+    --input: 214 22% 88%;
+    --ring: 168 62% 30%;
+
+    --radius: 0.625rem;
+  }
+
+  .dark {
+    --background: 222 26% 8%;
+    --foreground: 210 20% 96%;
+
+    --card: 222 22% 11%;
+    --card-foreground: 210 20% 96%;
+
+    --popover: 222 22% 11%;
+    --popover-foreground: 210 20% 96%;
+
+    --primary: 168 58% 44%;
+    --primary-foreground: 222 32% 7%;
+
+    --secondary: 217 19% 17%;
+    --secondary-foreground: 210 20% 92%;
+
+    --muted: 217 19% 16%;
+    --muted-foreground: 215 16% 64%;
+
+    --accent: 217 19% 19%;
+    --accent-foreground: 210 20% 92%;
+
+    --destructive: 0 62% 52%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 52% 46%;
+    --success-foreground: 222 32% 7%;
+
+    --warning: 35 84% 54%;
+    --warning-foreground: 222 32% 7%;
+
+    --border: 217 19% 21%;
+    --input: 217 19% 24%;
+    --ring: 168 58% 44%;
+  }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #09090b;
-    --foreground: #fafafa;
-    --primary: #fafafa;
-    --primary-foreground: #18181b;
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+  }
+
+  /* A POS is driven by touch and keyboard, so focus must always be clearly visible. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer utilities {
+  /* Tabular figures stop money and counts from shifting as their values change. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
   }
 }

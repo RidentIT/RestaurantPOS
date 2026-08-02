@@ -8,9 +8,18 @@ on:
       - 'backend/**'
       - '.github/workflows/backend-pr.yml'
 
+concurrency:
+  group: backend-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   pr-validation:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     # Expose secret as job-level env so steps can check if it is set
     env:
