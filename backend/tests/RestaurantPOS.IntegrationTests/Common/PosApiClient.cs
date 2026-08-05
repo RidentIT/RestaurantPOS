@@ -37,11 +37,11 @@ public sealed record PinResponse(string Pin);
 /// Thin wrapper over <see cref="HttpClient"/> that keeps the tests focused on behaviour rather
 /// than on URL and JSON plumbing.
 /// </summary>
-public sealed class PosApiClient(HttpClient http)
+public sealed partial class PosApiClient(HttpClient http)
 {
-    private const string BaseUrl = "/api/v1";
+    internal const string BaseUrl = "/api/v1";
 
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
+    internal static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
         Converters = { new JsonStringEnumConverter() },
     };

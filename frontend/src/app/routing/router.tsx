@@ -15,6 +15,11 @@ const AccountPage = lazy(() => import("@/pages/account"));
 const UsersPage = lazy(() => import("@/pages/users"));
 const CheckoutPage = lazy(() => import("@/pages/checkout"));
 const ReportsPage = lazy(() => import("@/pages/reports"));
+const RecipesPage = lazy(() => import("@/pages/recipes"));
+const MainStorePage = lazy(() => import("@/pages/inventory/main-store"));
+const KitchenPage = lazy(() => import("@/pages/inventory/kitchen"));
+const ReleasesPage = lazy(() => import("@/pages/inventory/releases"));
+const SuppliersPage = lazy(() => import("@/pages/suppliers"));
 
 function withSuspense(element: ReactNode) {
   return <Suspense fallback={<LoadingState label="Loading…" className="h-screen" />}>{element}</Suspense>;
@@ -46,6 +51,26 @@ export const router = createBrowserRouter([
           {
             element: <RequireModule module="UserManagement" />,
             children: [{ path: "users", element: withSuspense(<UsersPage />) }],
+          },
+          {
+            element: <RequireModule module="RecipeManagement" />,
+            children: [{ path: "recipes", element: withSuspense(<RecipesPage />) }],
+          },
+          {
+            element: <RequireModule module="StoreStockManagement" />,
+            children: [{ path: "inventory/main-store", element: withSuspense(<MainStorePage />) }],
+          },
+          {
+            element: <RequireModule module="KitchenStockTracking" />,
+            children: [{ path: "inventory/kitchen", element: withSuspense(<KitchenPage />) }],
+          },
+          {
+            element: <RequireModule module="KitchenStockRelease" />,
+            children: [{ path: "inventory/releases", element: withSuspense(<ReleasesPage />) }],
+          },
+          {
+            element: <RequireModule module="SupplierManagement" />,
+            children: [{ path: "suppliers", element: withSuspense(<SuppliersPage />) }],
           },
         ],
       },

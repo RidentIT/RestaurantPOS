@@ -35,15 +35,15 @@ export interface ModuleRoute {
 
 export const MODULE_ROUTES: Record<string, ModuleRoute> = {
   PosBilling: { path: "/checkout", icon: Receipt },
-  RecipeManagement: { icon: ChefHat },
-  StoreStockManagement: { icon: Warehouse },
-  KitchenStockRelease: { icon: PackageSearch },
-  KitchenStockTracking: { icon: ClipboardList },
+  RecipeManagement: { path: "/recipes", icon: ChefHat },
+  StoreStockManagement: { path: "/inventory/main-store", icon: Warehouse },
+  KitchenStockRelease: { path: "/inventory/releases", icon: PackageSearch },
+  KitchenStockTracking: { path: "/inventory/kitchen", icon: ClipboardList },
   KitchenOperations: { icon: ChefHat },
   ReportsAnalytics: { path: "/reports", icon: BarChart3 },
   Notifications: { icon: Bell },
   UserManagement: { path: "/users", icon: Users },
-  SupplierManagement: { icon: Truck },
+  SupplierManagement: { path: "/suppliers", icon: Truck },
   ExpensesManagement: { icon: Receipt },
   SystemSettings: { icon: Settings },
 };
