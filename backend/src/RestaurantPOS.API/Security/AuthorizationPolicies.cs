@@ -15,6 +15,14 @@ public static class AuthorizationPolicies
     /// <summary>Requires the Admin role.</summary>
     public const string AdminOnly = "role:admin";
 
+    /// <summary>
+    /// Reading the supplier list is needed by Main Store staff picking a supplier on a GRN, not
+    /// just by Supplier Management itself — so it accepts either grant, unlike every other
+    /// supplier endpoint (create/edit supplier, purchase orders, pricing, payments), which stay
+    /// <see cref="AppModule.SupplierManagement"/>-only.
+    /// </summary>
+    public const string SupplierLookup = "suppliers:read";
+
     /// <summary>Builds the policy name guarding <paramref name="module"/>.</summary>
     public static string ForModule(AppModule module) => $"module:{module}";
 
@@ -24,6 +32,12 @@ public static class AuthorizationPolicies
         ArgumentNullException.ThrowIfNull(builder);
 
         builder.AddPolicy(AdminOnly, policy => policy.RequireRole(nameof(UserRole.Admin)));
+
+        builder.AddPolicy(SupplierLookup, policy =>
+            policy.RequireAssertion(context =>
+                context.User.IsInRole(nameof(UserRole.Admin)) ||
+                context.User.HasClaim(AppClaimTypes.Module, AppModule.SupplierManagement.ToString()) ||
+                context.User.HasClaim(AppClaimTypes.Module, AppModule.StoreStockManagement.ToString())));
 
         foreach (var descriptor in ModuleCatalog.All)
         {

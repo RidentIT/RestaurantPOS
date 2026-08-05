@@ -17,5 +17,31 @@ public interface IAppDbContext
 
     DbSet<RefreshToken> RefreshTokens { get; }
 
+    DbSet<MenuItem> MenuItems { get; }
+
+    DbSet<RawMaterial> RawMaterials { get; }
+
+    DbSet<Recipe> Recipes { get; }
+
+    DbSet<Supplier> Suppliers { get; }
+
+    DbSet<StockLevel> StockLevels { get; }
+
+    DbSet<StockMovement> StockMovements { get; }
+
+    DbSet<GoodsReceivedNote> GoodsReceivedNotes { get; }
+
+    DbSet<StockRelease> StockReleases { get; }
+
+    DbSet<AuditLogEntry> AuditLogEntries { get; }
+
+    DbSet<PurchaseOrder> PurchaseOrders { get; }
+
+    DbSet<SupplierPrice> SupplierPrices { get; }
+
+    DbSet<SupplierPriceHistoryEntry> SupplierPriceHistoryEntries { get; }
+
+    DbSet<SupplierPayment> SupplierPayments { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -23,6 +23,32 @@ public class AppDbContext : DbContext, IAppDbContext
 
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
+    public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+
+    public DbSet<RawMaterial> RawMaterials => Set<RawMaterial>();
+
+    public DbSet<Recipe> Recipes => Set<Recipe>();
+
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+
+    public DbSet<StockLevel> StockLevels => Set<StockLevel>();
+
+    public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+
+    public DbSet<GoodsReceivedNote> GoodsReceivedNotes => Set<GoodsReceivedNote>();
+
+    public DbSet<StockRelease> StockReleases => Set<StockRelease>();
+
+    public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
+
+    public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+
+    public DbSet<SupplierPrice> SupplierPrices => Set<SupplierPrice>();
+
+    public DbSet<SupplierPriceHistoryEntry> SupplierPriceHistoryEntries => Set<SupplierPriceHistoryEntry>();
+
+    public DbSet<SupplierPayment> SupplierPayments => Set<SupplierPayment>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);

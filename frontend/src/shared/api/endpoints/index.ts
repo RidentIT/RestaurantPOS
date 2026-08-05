@@ -20,6 +20,49 @@ export const API_ENDPOINTS = {
     STATUS: (id: string) => `/users/${id}/status`,
     PASSWORD: (id: string) => `/users/${id}/password`,
   },
+  MENU_ITEMS: {
+    BASE: "/menu-items",
+    BY_ID: (id: string) => `/menu-items/${id}`,
+    STATUS: (id: string) => `/menu-items/${id}/status`,
+    RECIPE: (menuItemId: string) => `/menu-items/${menuItemId}/recipe`,
+    RECIPE_STATUS: (menuItemId: string) => `/menu-items/${menuItemId}/recipe/status`,
+  },
+  RAW_MATERIALS: {
+    BASE: "/raw-materials",
+    BY_ID: (id: string) => `/raw-materials/${id}`,
+    STATUS: (id: string) => `/raw-materials/${id}/status`,
+  },
+  SUPPLIERS: {
+    BASE: "/suppliers",
+    BY_ID: (id: string) => `/suppliers/${id}`,
+    STATUS: (id: string) => `/suppliers/${id}/status`,
+    PRICES: "/suppliers/prices",
+    SET_PRICE: (id: string) => `/suppliers/${id}/prices`,
+    PRICE_HISTORY: (id: string, rawMaterialId: string) =>
+      `/suppliers/${id}/prices/${rawMaterialId}/history`,
+    PERFORMANCE: (id: string) => `/suppliers/${id}/performance`,
+  },
+  PURCHASE_ORDERS: {
+    BASE: "/purchase-orders",
+    BY_ID: (id: string) => `/purchase-orders/${id}`,
+    SUBMIT: (id: string) => `/purchase-orders/${id}/submit`,
+    CONFIRM: (id: string) => `/purchase-orders/${id}/confirm`,
+    CANCEL: (id: string) => `/purchase-orders/${id}/cancel`,
+    PAYMENTS: (id: string) => `/purchase-orders/${id}/payments`,
+  },
+  INVENTORY: {
+    MAIN_STORE_STOCK: "/inventory/main-store/stock",
+    MAIN_STORE_MOVEMENTS: "/inventory/main-store/movements",
+    MAIN_STORE_ADJUSTMENTS: "/inventory/main-store/adjustments",
+    GOODS_RECEIVED: "/inventory/main-store/goods-received",
+    GOODS_RECEIVED_BY_ID: (id: string) => `/inventory/main-store/goods-received/${id}`,
+    KITCHEN_STOCK: "/inventory/kitchen/stock",
+    KITCHEN_MOVEMENTS: "/inventory/kitchen/movements",
+    KITCHEN_ADJUSTMENTS: "/inventory/kitchen/adjustments",
+    CONSUMPTION: (menuItemId: string) => `/inventory/kitchen/consumption/${menuItemId}`,
+    RELEASES: "/inventory/releases",
+    RELEASE_BY_ID: (id: string) => `/inventory/releases/${id}`,
+  },
 } as const;
 
 /** Thin typed wrapper that unwraps `response.data`. */
