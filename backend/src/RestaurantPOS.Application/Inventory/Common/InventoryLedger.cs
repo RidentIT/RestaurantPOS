@@ -30,12 +30,20 @@ public static class InventoryLedger
     /// if any resulting balance would go negative, nothing is applied and the failure names the
     /// offending raw material.
     /// </summary>
+    /// <param name="allowNegative">
+    /// Lets balances fall below zero instead of rejecting the batch. Set only when recording
+    /// something that has already physically happened and cannot be refused — a dish sold at the
+    /// till must never be blocked because the ingredient ledger says the kitchen ran out
+    /// (BR-POS-015). The resulting negative balance is a true reading: it says the kitchen has
+    /// been cooking from stock nobody booked in, which is exactly what the manager needs to see.
+    /// </param>
     public static async Task<Result> ApplyAsync(
         IAppDbContext db,
         IReadOnlyCollection<StockMovementRequest> movements,
         Guid performedByUserId,
         DateTime nowUtc,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool allowNegative = false)
     {
         ArgumentNullException.ThrowIfNull(db);
         ArgumentNullException.ThrowIfNull(movements);
@@ -72,7 +80,7 @@ public static class InventoryLedger
             var key = (movement.RawMaterialId, movement.Store);
             var projected = projectedBalances[key] + movement.QuantityDelta;
 
-            if (projected < 0)
+            if (projected < 0 && !allowNegative)
             {
                 return Result.Failure(InventoryErrors.InsufficientStock);
             }
@@ -82,7 +90,7 @@ public static class InventoryLedger
 
         foreach (var movement in movements)
         {
-            levels[(movement.RawMaterialId, movement.Store)].ApplyDelta(movement.QuantityDelta, nowUtc);
+            levels[(movement.RawMaterialId, movement.Store)].ApplyDelta(movement.QuantityDelta, nowUtc, allowNegative);
 
             db.StockMovements.Add(new StockMovement(
                 movement.RawMaterialId,

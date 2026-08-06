@@ -34,12 +34,12 @@ export interface ModuleRoute {
 }
 
 export const MODULE_ROUTES: Record<string, ModuleRoute> = {
-  PosBilling: { path: "/checkout", icon: Receipt },
+  PosBilling: { path: "/pos", icon: Receipt },
   RecipeManagement: { path: "/recipes", icon: ChefHat },
   StoreStockManagement: { path: "/inventory/main-store", icon: Warehouse },
   KitchenStockRelease: { path: "/inventory/releases", icon: PackageSearch },
   KitchenStockTracking: { path: "/inventory/kitchen", icon: ClipboardList },
-  KitchenOperations: { icon: ChefHat },
+  KitchenOperations: { path: "/kitchen", icon: ChefHat },
   ReportsAnalytics: { path: "/reports", icon: BarChart3 },
   Notifications: { icon: Bell },
   UserManagement: { path: "/users", icon: Users },

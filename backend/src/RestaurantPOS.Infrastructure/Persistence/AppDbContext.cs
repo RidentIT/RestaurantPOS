@@ -49,6 +49,18 @@ public class AppDbContext : DbContext, IAppDbContext
 
     public DbSet<SupplierPayment> SupplierPayments => Set<SupplierPayment>();
 
+    public DbSet<RestaurantTable> RestaurantTables => Set<RestaurantTable>();
+
+    public DbSet<Order> Orders => Set<Order>();
+
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+
+    public DbSet<KitchenTicket> KitchenTickets => Set<KitchenTicket>();
+
+    public DbSet<OrderPayment> OrderPayments => Set<OrderPayment>();
+
+    public DbSet<Receipt> Receipts => Set<Receipt>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);

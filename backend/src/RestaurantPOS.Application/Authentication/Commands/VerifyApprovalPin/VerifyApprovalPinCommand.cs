@@ -38,13 +38,25 @@ public sealed class VerifyApprovalPinCommandValidator : AbstractValidator<Verify
 internal sealed class VerifyApprovalPinCommandHandler(
     IAppDbContext db,
     IPasswordHasher passwordHasher,
-    IDateTimeProvider clock)
+    IDateTimeProvider clock,
+    ICurrentUser currentUser,
+    IApprovalPinThrottle throttle)
     : IRequestHandler<VerifyApprovalPinCommand, Result<ApprovalResult>>
 {
     public async Task<Result<ApprovalResult>> Handle(
         VerifyApprovalPinCommand request,
         CancellationToken cancellationToken)
     {
+        // The signed-in user stands in for "this terminal": the restaurant runs one till per
+        // cashier (BR-POS-020), so their session is the closest thing to a physical terminal.
+        var terminalKey = currentUser.UserId?.ToString() ?? "anonymous";
+
+        var state = throttle.Check(terminalKey);
+        if (state.IsLocked)
+        {
+            return Result.Failure<ApprovalResult>(AuthErrors.PinAttemptsExhausted(state.RetryAfter));
+        }
+
         var admins = await db.Users
             .Where(u => u.IsActive && u.Role == UserRole.Admin && u.ApprovalPinHash != null)
             .Select(u => new { u.Id, u.FullName, u.ApprovalPinHash })
@@ -63,8 +75,17 @@ internal sealed class VerifyApprovalPinCommandHandler(
                 ? (admin.Id, admin.FullName, true)
                 : acc);
 
-        return matched.Found
-            ? Result.Success(new ApprovalResult(matched.Id, matched.Name, clock.UtcNow))
-            : Result.Failure<ApprovalResult>(AuthErrors.InvalidPin);
+        if (!matched.Found)
+        {
+            var afterFailure = throttle.RecordFailure(terminalKey);
+
+            return Result.Failure<ApprovalResult>(afterFailure.IsLocked
+                ? AuthErrors.PinAttemptsExhausted(afterFailure.RetryAfter)
+                : AuthErrors.InvalidPinWithAttemptsLeft(afterFailure.AttemptsRemaining));
+        }
+
+        throttle.Reset(terminalKey);
+
+        return Result.Success(new ApprovalResult(matched.Id, matched.Name, clock.UtcNow));
     }
 }

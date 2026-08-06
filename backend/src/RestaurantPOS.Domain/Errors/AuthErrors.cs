@@ -37,4 +37,24 @@ public static class AuthErrors
         Error.Conflict(
             "Auth.NoAdminPinConfigured",
             "No administrator has configured an approval PIN yet.");
+
+    /// <summary>
+    /// A wrong PIN, told to the person at the till how many tries are left. Counting down out
+    /// loud is deliberate: the cashier is usually mistyping a PIN they were told correctly, and
+    /// a silent lockout mid-service reads as the till breaking.
+    /// </summary>
+    public static Error InvalidPinWithAttemptsLeft(int attemptsRemaining) =>
+        Error.Validation(
+            "Auth.InvalidPin",
+            $"That approval PIN is not valid. {attemptsRemaining} attempt{(attemptsRemaining == 1 ? "" : "s")} remaining.");
+
+    /// <summary>
+    /// Too many wrong PINs from one terminal. This pauses PIN entry on that terminal only —
+    /// administrator accounts are never disabled, because locking out the sole administrator
+    /// mid-service would leave the restaurant unable to approve anything at all.
+    /// </summary>
+    public static Error PinAttemptsExhausted(TimeSpan retryAfter) =>
+        Error.Forbidden(
+            "Auth.PinAttemptsExhausted",
+            $"Too many incorrect PIN attempts. Try again in {retryAfter.Minutes}:{retryAfter.Seconds:00}.");
 }
