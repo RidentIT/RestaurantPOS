@@ -8,6 +8,7 @@ using RestaurantPOS.Infrastructure.Identity;
 using RestaurantPOS.Infrastructure.Persistence;
 using RestaurantPOS.Infrastructure.Persistence.Interceptors;
 using RestaurantPOS.Infrastructure.Persistence.Seeding;
+using RestaurantPOS.Infrastructure.Settings;
 
 namespace RestaurantPOS.Infrastructure;
 
@@ -26,8 +27,13 @@ public static class DependencyInjection
         services.AddOptions<SeedAdminOptions>()
             .Bind(configuration.GetSection(SeedAdminOptions.SectionName));
 
+        var restaurantProfile = new RestaurantProfileOptions();
+        configuration.GetSection(RestaurantProfileOptions.SectionName).Bind(restaurantProfile);
+        services.AddSingleton<IRestaurantProfile>(restaurantProfile);
+
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
+        services.AddSingleton<IApprovalPinThrottle, ApprovalPinThrottle>();
         services.AddSingleton<JwtSigningKeyProvider>();
         services.AddScoped<ITokenService, JwtTokenService>();
 

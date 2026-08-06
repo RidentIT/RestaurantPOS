@@ -114,6 +114,8 @@ try
     api.MapRecipeEndpoints();
     api.MapInventoryEndpoints();
     api.MapSupplierEndpoints();
+    api.MapOrderEndpoints();
+    api.MapKitchenEndpoints();
 
     app.MapGet("/health", () => Results.Ok(new { status = "Healthy", timestamp = DateTime.UtcNow }))
         .AllowAnonymous()

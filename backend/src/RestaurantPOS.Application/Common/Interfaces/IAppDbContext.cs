@@ -43,5 +43,17 @@ public interface IAppDbContext
 
     DbSet<SupplierPayment> SupplierPayments { get; }
 
+    DbSet<RestaurantTable> RestaurantTables { get; }
+
+    DbSet<Order> Orders { get; }
+
+    DbSet<OrderItem> OrderItems { get; }
+
+    DbSet<KitchenTicket> KitchenTickets { get; }
+
+    DbSet<OrderPayment> OrderPayments { get; }
+
+    DbSet<Receipt> Receipts { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

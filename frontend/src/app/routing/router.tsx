@@ -13,13 +13,17 @@ const ChangePasswordPage = lazy(() => import("@/pages/change-password"));
 const DashboardPage = lazy(() => import("@/pages/dashboard"));
 const AccountPage = lazy(() => import("@/pages/account"));
 const UsersPage = lazy(() => import("@/pages/users"));
-const CheckoutPage = lazy(() => import("@/pages/checkout"));
 const ReportsPage = lazy(() => import("@/pages/reports"));
 const RecipesPage = lazy(() => import("@/pages/recipes"));
 const MainStorePage = lazy(() => import("@/pages/inventory/main-store"));
 const KitchenPage = lazy(() => import("@/pages/inventory/kitchen"));
 const ReleasesPage = lazy(() => import("@/pages/inventory/releases"));
 const SuppliersPage = lazy(() => import("@/pages/suppliers"));
+const PosDashboardPage = lazy(() => import("@/pages/pos"));
+const TableManagementPage = lazy(() => import("@/pages/pos/tables"));
+const OrderScreen = lazy(() => import("@/pages/pos/order"));
+const CheckoutScreen = lazy(() => import("@/pages/pos/checkout"));
+const KitchenDisplayPage = lazy(() => import("@/pages/kitchen"));
 
 function withSuspense(element: ReactNode) {
   return <Suspense fallback={<LoadingState label="Loading…" className="h-screen" />}>{element}</Suspense>;
@@ -42,7 +46,17 @@ export const router = createBrowserRouter([
           { path: "account", element: withSuspense(<AccountPage />) },
           {
             element: <RequireModule module="PosBilling" />,
-            children: [{ path: "checkout", element: withSuspense(<CheckoutPage />) }],
+            children: [
+              { path: "pos", element: withSuspense(<PosDashboardPage />) },
+              { path: "pos/tables", element: withSuspense(<TableManagementPage />) },
+              { path: "pos/orders/:orderId", element: withSuspense(<OrderScreen />) },
+              { path: "pos/orders/:orderId/checkout", element: withSuspense(<CheckoutScreen />) },
+              { path: "checkout", element: <Navigate to="/pos" replace /> },
+            ],
+          },
+          {
+            element: <RequireModule module="KitchenOperations" />,
+            children: [{ path: "kitchen", element: withSuspense(<KitchenDisplayPage />) }],
           },
           {
             element: <RequireModule module="ReportsAnalytics" />,

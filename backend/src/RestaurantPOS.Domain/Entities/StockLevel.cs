@@ -35,11 +35,17 @@ public sealed class StockLevel
     /// negative (the application layer blocks that with a friendly error) before ever reaching
     /// here.
     /// </summary>
-    public void ApplyDelta(decimal delta, DateTime nowUtc)
+    /// <param name="allowNegative">
+    /// Permits the balance to fall below zero. Reserved for recording something that has already
+    /// physically happened: a dish sold at the till is deducted whatever the ledger says, because
+    /// refusing the deduction would not un-cook the food, it would only hide that the kitchen is
+    /// running on unrecorded stock (BR-POS-015).
+    /// </param>
+    public void ApplyDelta(decimal delta, DateTime nowUtc, bool allowNegative = false)
     {
         var updated = QuantityOnHand + delta;
 
-        if (updated < 0)
+        if (updated < 0 && !allowNegative)
         {
             throw new InvalidOperationException(
                 $"Applying this change would take the balance negative ({updated}).");

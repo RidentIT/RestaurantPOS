@@ -222,7 +222,7 @@ public class InventoryTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task ConsumingMoreThanKitchenHasInStock_IsBlocked()
+    public async Task ConsumingMoreThanKitchenHasInStock_IsRecordedRatherThanBlocked()
     {
         await SignInAsAdminAsync();
         var riceId = await CreateRawMaterialAsync("Rice");
@@ -233,8 +233,16 @@ public class InventoryTests : IntegrationTestBase
 
         var response = await Client.ConsumeStockAsync(itemId, 1);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        (await PosApiClient.ReadErrorCodeAsync(response)).Should().Be("Inventory.InsufficientStock");
+        // A sale is never refused for want of stock (BR-POS-015). The dish has already been
+        // cooked and served by the time consumption is recorded, so rejecting the deduction
+        // would not un-sell it — it would only leave the ledger claiming the rice is still on
+        // the shelf. The balance going negative is the true reading: it says the kitchen has
+        // been cooking from stock nobody booked in, which is what the manager needs to see.
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await PosApiClient.ReadAsync<ConsumptionResultResponse>(response)).Deducted.Should().BeTrue();
+
+        var stock = await PosApiClient.ReadAsync<List<StockLevelResponse>>(await Client.GetKitchenStockAsync());
+        stock.Single(s => s.RawMaterialId == riceId).QuantityOnHand.Should().Be(-1m);
     }
 
     [Fact]

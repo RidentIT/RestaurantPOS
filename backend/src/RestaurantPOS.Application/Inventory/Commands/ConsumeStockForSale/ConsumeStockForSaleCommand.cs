@@ -8,7 +8,6 @@ using RestaurantPOS.Application.Common.Interfaces;
 using RestaurantPOS.Application.Inventory.Common;
 using RestaurantPOS.Application.Inventory.Dtos;
 using RestaurantPOS.Domain.Common;
-using RestaurantPOS.Domain.Enums;
 using RestaurantPOS.Domain.Errors;
 
 namespace RestaurantPOS.Application.Inventory.Commands.ConsumeStockForSale;
@@ -46,48 +45,28 @@ internal sealed class ConsumeStockForSaleCommandHandler(
             return Result.Failure<ConsumptionResultDto>(RecipeErrors.MenuItemNotFound(request.MenuItemId));
         }
 
-        var recipe = await db.Recipes.AsNoTracking()
-            .Include(r => r.Lines)
-            .FirstOrDefaultAsync(r => r.MenuItemId == request.MenuItemId, cancellationToken);
+        var consumed = await SaleStockConsumption.ApplyAsync(
+            db,
+            [new SoldItem(request.MenuItemId, request.QuantitySold)],
+            currentUser.UserId!.Value,
+            clock.UtcNow,
+            cancellationToken);
+
+        if (consumed.IsFailure)
+        {
+            return Result.Failure<ConsumptionResultDto>(consumed.Error);
+        }
 
         // Not every menu item has a recipe, and a disabled one is not usable for a new sale —
         // neither is a failure, since the sale itself has already happened by the time this
         // runs. There is simply nothing to deduct.
-        if (recipe is null || !recipe.IsEnabled)
+        if (consumed.Value.Count == 0)
         {
             return Result.Success(NoDeduction);
         }
 
-        var rawMaterialIds = recipe.Lines.Select(l => l.RawMaterialId).ToList();
-        var rawMaterials = await db.RawMaterials.AsNoTracking()
-            .Where(r => rawMaterialIds.Contains(r.Id))
-            .ToDictionaryAsync(r => r.Id, cancellationToken);
-
-        var now = clock.UtcNow;
-
-        var movements = recipe.Lines
-            .Select(l => new StockMovementRequest(
-                l.RawMaterialId,
-                StoreType.Kitchen,
-                -(l.Quantity * request.QuantitySold),
-                StockMovementType.Consumption,
-                ReferenceId: null,
-                Notes: null))
-            .ToList();
-
-        var ledgerResult = await InventoryLedger.ApplyAsync(db, movements, currentUser.UserId!.Value, now, cancellationToken);
-        if (ledgerResult.IsFailure)
-        {
-            return Result.Failure<ConsumptionResultDto>(ledgerResult.Error);
-        }
-
         await db.SaveChangesAsync(cancellationToken);
 
-        var lines = movements
-            .Select(m => new ConsumedLineDto(
-                m.RawMaterialId, rawMaterials[m.RawMaterialId].Name, -m.QuantityDelta, rawMaterials[m.RawMaterialId].UnitOfMeasurement))
-            .ToList();
-
-        return Result.Success(new ConsumptionResultDto(Deducted: true, lines));
+        return Result.Success(new ConsumptionResultDto(Deducted: true, consumed.Value));
     }
 }
