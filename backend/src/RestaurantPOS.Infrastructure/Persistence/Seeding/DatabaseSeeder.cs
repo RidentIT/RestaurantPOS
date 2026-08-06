@@ -27,6 +27,7 @@ public sealed partial class DatabaseSeeder(
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         await db.Database.MigrateAsync(cancellationToken);
+        await SeedExpenseCategoriesAsync(cancellationToken);
 
         var anyAdmin = await db.Users.AnyAsync(u => u.Role == UserRole.Admin, cancellationToken);
         if (anyAdmin)
@@ -55,6 +56,51 @@ public sealed partial class DatabaseSeeder(
 
         SeededAdmin(logger, username);
     }
+
+    /// <summary>
+    /// The expense categories a restaurant starts with (EXP-010), each with the budget from the
+    /// requirements. Only ever added when missing by name, so renaming "Gas/LPG" to something the
+    /// staff prefer does not cause it to be recreated on the next start-up.
+    /// </summary>
+    private async Task SeedExpenseCategoriesAsync(CancellationToken cancellationToken)
+    {
+        (string Name, string Description, decimal Budget)[] defaults =
+        [
+            ("Rent/Lease", "Monthly rent for the premises", 50_000m),
+            ("Electricity", "CEB power bills", 35_000m),
+            ("Gas/LPG", "Cooking gas cylinders", 30_000m),
+            ("Water/Waste", "Water supply and waste collection", 20_000m),
+            ("Staff Meals", "Meals provided to employees", 15_000m),
+            ("Salaries", "Staff wages", 180_000m),
+            ("Maintenance", "Repairs to equipment and premises", 25_000m),
+            ("Miscellaneous", "Everything without a category of its own", 50_000m),
+        ];
+
+        var existing = await db.ExpenseCategories
+            .Select(c => c.Name.ToLower())
+            .ToListAsync(cancellationToken);
+
+        var missing = defaults
+            .Where(d => !existing.Contains(d.Name.ToLowerInvariant()))
+            .Select(d => ExpenseCategory.Create(d.Name, d.Description, d.Budget, parentCategoryId: null, isSystem: true))
+            .ToList();
+
+        if (missing.Count == 0)
+        {
+            return;
+        }
+
+        db.ExpenseCategories.AddRange(missing);
+        await db.SaveChangesAsync(cancellationToken);
+
+        SeededExpenseCategories(logger, missing.Count);
+    }
+
+    [LoggerMessage(
+        EventId = 2002,
+        Level = LogLevel.Information,
+        Message = "Seeded {Count} built-in expense categories.")]
+    private static partial void SeededExpenseCategories(ILogger logger, int count);
 
     [LoggerMessage(
         EventId = 2000,

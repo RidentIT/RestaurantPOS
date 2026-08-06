@@ -61,6 +61,16 @@ public class AppDbContext : DbContext, IAppDbContext
 
     public DbSet<Receipt> Receipts => Set<Receipt>();
 
+    public DbSet<ExpenseCategory> ExpenseCategories => Set<ExpenseCategory>();
+
+    public DbSet<Expense> Expenses => Set<Expense>();
+
+    public DbSet<ExpenseAttachment> ExpenseAttachments => Set<ExpenseAttachment>();
+
+    public DbSet<ExpenseApprovalEntry> ExpenseApprovalEntries => Set<ExpenseApprovalEntry>();
+
+    public DbSet<RecurringExpense> RecurringExpenses => Set<RecurringExpense>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);

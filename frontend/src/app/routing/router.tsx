@@ -24,6 +24,10 @@ const TableManagementPage = lazy(() => import("@/pages/pos/tables"));
 const OrderScreen = lazy(() => import("@/pages/pos/order"));
 const CheckoutScreen = lazy(() => import("@/pages/pos/checkout"));
 const KitchenDisplayPage = lazy(() => import("@/pages/kitchen"));
+const ExpensesPage = lazy(() => import("@/pages/expenses"));
+const ExpenseCategoriesPage = lazy(() => import("@/pages/expenses/categories"));
+const RecurringExpensesPage = lazy(() => import("@/pages/expenses/recurring"));
+const ExpenseReportsPage = lazy(() => import("@/pages/expenses/reports"));
 
 function withSuspense(element: ReactNode) {
   return <Suspense fallback={<LoadingState label="Loading…" className="h-screen" />}>{element}</Suspense>;
@@ -57,6 +61,15 @@ export const router = createBrowserRouter([
           {
             element: <RequireModule module="KitchenOperations" />,
             children: [{ path: "kitchen", element: withSuspense(<KitchenDisplayPage />) }],
+          },
+          {
+            element: <RequireModule module="ExpensesManagement" />,
+            children: [
+              { path: "expenses", element: withSuspense(<ExpensesPage />) },
+              { path: "expenses/categories", element: withSuspense(<ExpenseCategoriesPage />) },
+              { path: "expenses/recurring", element: withSuspense(<RecurringExpensesPage />) },
+              { path: "expenses/reports", element: withSuspense(<ExpenseReportsPage />) },
+            ],
           },
           {
             element: <RequireModule module="ReportsAnalytics" />,

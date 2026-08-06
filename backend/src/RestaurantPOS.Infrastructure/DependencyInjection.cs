@@ -9,6 +9,7 @@ using RestaurantPOS.Infrastructure.Persistence;
 using RestaurantPOS.Infrastructure.Persistence.Interceptors;
 using RestaurantPOS.Infrastructure.Persistence.Seeding;
 using RestaurantPOS.Infrastructure.Settings;
+using RestaurantPOS.Infrastructure.Storage;
 
 namespace RestaurantPOS.Infrastructure;
 
@@ -36,6 +37,8 @@ public static class DependencyInjection
         services.AddSingleton<IApprovalPinThrottle, ApprovalPinThrottle>();
         services.AddSingleton<JwtSigningKeyProvider>();
         services.AddScoped<ITokenService, JwtTokenService>();
+
+        services.AddSingleton<IExpenseAttachmentStore, FileSystemExpenseAttachmentStore>();
 
         services.AddScoped<AuditableEntityInterceptor>();
 
