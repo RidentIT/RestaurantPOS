@@ -1,10 +1,14 @@
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
+using RestaurantPOS.Application.Common.Interfaces;
 using RestaurantPOS.Domain.Common;
+using RestaurantPOS.Domain.Entities;
 
 namespace RestaurantPOS.Infrastructure.Persistence;
 
-public class AppDbContext : DbContext
+public class AppDbContext : DbContext, IAppDbContext
 {
     private readonly IPublisher? _publisher;
 
@@ -12,6 +16,50 @@ public class AppDbContext : DbContext
     {
         _publisher = publisher;
     }
+
+    public DbSet<User> Users => Set<User>();
+
+    public DbSet<UserModulePermission> UserModulePermissions => Set<UserModulePermission>();
+
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+
+    public DbSet<RawMaterial> RawMaterials => Set<RawMaterial>();
+
+    public DbSet<Recipe> Recipes => Set<Recipe>();
+
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+
+    public DbSet<StockLevel> StockLevels => Set<StockLevel>();
+
+    public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+
+    public DbSet<GoodsReceivedNote> GoodsReceivedNotes => Set<GoodsReceivedNote>();
+
+    public DbSet<StockRelease> StockReleases => Set<StockRelease>();
+
+    public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
+
+    public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+
+    public DbSet<SupplierPrice> SupplierPrices => Set<SupplierPrice>();
+
+    public DbSet<SupplierPriceHistoryEntry> SupplierPriceHistoryEntries => Set<SupplierPriceHistoryEntry>();
+
+    public DbSet<SupplierPayment> SupplierPayments => Set<SupplierPayment>();
+
+    public DbSet<RestaurantTable> RestaurantTables => Set<RestaurantTable>();
+
+    public DbSet<Order> Orders => Set<Order>();
+
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+
+    public DbSet<KitchenTicket> KitchenTickets => Set<KitchenTicket>();
+
+    public DbSet<OrderPayment> OrderPayments => Set<OrderPayment>();
+
+    public DbSet<Receipt> Receipts => Set<Receipt>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

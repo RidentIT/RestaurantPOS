@@ -1,40 +1,95 @@
 import { axiosClient } from "../axiosClient";
 
+/**
+ * Every API path in one place. Modules beyond user management are listed as they are built.
+ */
 export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: "/auth/login",
     REFRESH: "/auth/refresh",
     LOGOUT: "/auth/logout",
     ME: "/auth/me",
+    CHANGE_PASSWORD: "/auth/change-password",
+    PIN: "/auth/pin",
+    VERIFY_PIN: "/auth/pin/verify",
   },
-  ORDERS: {
-    BASE: "/orders",
-    BY_ID: (id: string) => `/orders/${id}`,
-    STATUS: (id: string) => `/orders/${id}/status`,
+  MODULES: "/modules",
+  USERS: {
+    BASE: "/users",
+    BY_ID: (id: string) => `/users/${id}`,
+    STATUS: (id: string) => `/users/${id}/status`,
+    PASSWORD: (id: string) => `/users/${id}/password`,
   },
-  PRODUCTS: {
-    BASE: "/products",
-    BY_ID: (id: string) => `/products/${id}`,
-    CATEGORIES: "/products/categories",
+  MENU_ITEMS: {
+    BASE: "/menu-items",
+    BY_ID: (id: string) => `/menu-items/${id}`,
+    STATUS: (id: string) => `/menu-items/${id}/status`,
+    RECIPE: (menuItemId: string) => `/menu-items/${menuItemId}/recipe`,
+    RECIPE_STATUS: (menuItemId: string) => `/menu-items/${menuItemId}/recipe/status`,
   },
-  INVENTORY: {
-    BASE: "/inventory",
-    STOCK: "/inventory/stock",
-  },
-  KITCHEN: {
-    KOT: "/kitchen/tickets",
-    UPDATE_STATUS: (id: string) => `/kitchen/tickets/${id}/status`,
+  RAW_MATERIALS: {
+    BASE: "/raw-materials",
+    BY_ID: (id: string) => `/raw-materials/${id}`,
+    STATUS: (id: string) => `/raw-materials/${id}/status`,
   },
   SUPPLIERS: {
     BASE: "/suppliers",
     BY_ID: (id: string) => `/suppliers/${id}`,
+    STATUS: (id: string) => `/suppliers/${id}/status`,
+    PRICES: "/suppliers/prices",
+    SET_PRICE: (id: string) => `/suppliers/${id}/prices`,
+    PRICE_HISTORY: (id: string, rawMaterialId: string) =>
+      `/suppliers/${id}/prices/${rawMaterialId}/history`,
+    PERFORMANCE: (id: string) => `/suppliers/${id}/performance`,
   },
-  REPORTS: {
-    SALES: "/reports/sales",
-    INVENTORY: "/reports/inventory",
+  PURCHASE_ORDERS: {
+    BASE: "/purchase-orders",
+    BY_ID: (id: string) => `/purchase-orders/${id}`,
+    SUBMIT: (id: string) => `/purchase-orders/${id}/submit`,
+    CONFIRM: (id: string) => `/purchase-orders/${id}/confirm`,
+    CANCEL: (id: string) => `/purchase-orders/${id}/cancel`,
+    PAYMENTS: (id: string) => `/purchase-orders/${id}/payments`,
+  },
+  TABLES: {
+    BASE: "/tables",
+    BY_ID: (id: string) => `/tables/${id}`,
+    STATUS: (id: string) => `/tables/${id}/status`,
+  },
+  ORDERS: {
+    BASE: "/orders",
+    BY_ID: (id: string) => `/orders/${id}`,
+    ITEMS: (id: string) => `/orders/${id}/items`,
+    ITEM_QUANTITY: (id: string, itemId: string) => `/orders/${id}/items/${itemId}/quantity`,
+    VOID_ITEM: (id: string, itemId: string) => `/orders/${id}/items/${itemId}/void`,
+    CONFIRM: (id: string) => `/orders/${id}/confirm`,
+    CANCEL: (id: string) => `/orders/${id}/cancel`,
+    DISCOUNT: (id: string) => `/orders/${id}/discount`,
+    CHECKOUT: (id: string) => `/orders/${id}/checkout`,
+    REOPEN: (id: string) => `/orders/${id}/reopen`,
+    PAYMENTS: (id: string) => `/orders/${id}/payments`,
+    REPRINT_RECEIPT: (id: string) => `/orders/${id}/receipt/reprint`,
+  },
+  KITCHEN: {
+    TICKETS: "/kitchen/tickets",
+    TICKET_STATUS: (id: string) => `/kitchen/tickets/${id}/status`,
+    TICKET_REPRINT: (id: string) => `/kitchen/tickets/${id}/reprint`,
+  },
+  INVENTORY: {
+    MAIN_STORE_STOCK: "/inventory/main-store/stock",
+    MAIN_STORE_MOVEMENTS: "/inventory/main-store/movements",
+    MAIN_STORE_ADJUSTMENTS: "/inventory/main-store/adjustments",
+    GOODS_RECEIVED: "/inventory/main-store/goods-received",
+    GOODS_RECEIVED_BY_ID: (id: string) => `/inventory/main-store/goods-received/${id}`,
+    KITCHEN_STOCK: "/inventory/kitchen/stock",
+    KITCHEN_MOVEMENTS: "/inventory/kitchen/movements",
+    KITCHEN_ADJUSTMENTS: "/inventory/kitchen/adjustments",
+    CONSUMPTION: (menuItemId: string) => `/inventory/kitchen/consumption/${menuItemId}`,
+    RELEASES: "/inventory/releases",
+    RELEASE_BY_ID: (id: string) => `/inventory/releases/${id}`,
   },
 } as const;
 
+/** Thin typed wrapper that unwraps `response.data`. */
 export const apiService = {
   get: <T>(url: string, params?: Record<string, unknown>) =>
     axiosClient.get<T>(url, { params }).then((res) => res.data),
@@ -42,9 +97,7 @@ export const apiService = {
   post: <T>(url: string, data?: unknown) =>
     axiosClient.post<T>(url, data).then((res) => res.data),
 
-  put: <T>(url: string, data?: unknown) =>
-    axiosClient.put<T>(url, data).then((res) => res.data),
+  put: <T>(url: string, data?: unknown) => axiosClient.put<T>(url, data).then((res) => res.data),
 
-  delete: <T>(url: string) =>
-    axiosClient.delete<T>(url).then((res) => res.data),
+  delete: <T>(url: string) => axiosClient.delete<T>(url).then((res) => res.data),
 };

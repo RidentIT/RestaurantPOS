@@ -1,6 +1,62 @@
 @RestaurantPOS.API_HostAddress = http://localhost:5207
+@api = {{RestaurantPOS.API_HostAddress}}/api/v1
 
-GET {{RestaurantPOS.API_HostAddress}}/weatherforecast/
+### Health check
+GET {{RestaurantPOS.API_HostAddress}}/health
 Accept: application/json
 
-###
+### Sign in as the seeded administrator (see appsettings.json > SeedAdmin)
+# @name login
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "ChangeMe!123"
+}
+
+### Change password (required on first sign-in — swap in the accessToken from login above)
+POST {{api}}/auth/change-password
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.accessToken}}
+
+{
+  "currentPassword": "ChangeMe!123",
+  "newPassword": "Lakshmi@2026"
+}
+
+### Who am I
+GET {{api}}/auth/me
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### Module catalog
+GET {{api}}/modules
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### List staff accounts
+GET {{api}}/users
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### Create a staff account
+POST {{api}}/users
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.accessToken}}
+
+{
+  "username": "cashier01",
+  "fullName": "Ravi Kumar",
+  "email": null,
+  "password": "Cashier@2026",
+  "role": "User",
+  "modules": ["PosBilling", "KitchenOperations"]
+}
+
+### Set the administrator's approval PIN
+POST {{api}}/auth/pin
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.accessToken}}
+
+{
+  "currentPassword": "Lakshmi@2026",
+  "pin": null
+}

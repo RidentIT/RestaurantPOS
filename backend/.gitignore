@@ -107,7 +107,8 @@ StyleCopReport.xml
 *.scc
 logs/
 *.db
-*.db
+*.db-shm
+*.db-wal
 integrationtests.db
 
 # Chutzpah Test files
@@ -484,3 +485,8 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Auto-generated JWT signing key (see JwtSigningKeyProvider).
+# Machine-local secret: never commit it, and never share it between installations.
+keys/
+*.key
