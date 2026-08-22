@@ -55,5 +55,15 @@ public interface IAppDbContext
 
     DbSet<Receipt> Receipts { get; }
 
+    DbSet<ExpenseCategory> ExpenseCategories { get; }
+
+    DbSet<Expense> Expenses { get; }
+
+    DbSet<ExpenseAttachment> ExpenseAttachments { get; }
+
+    DbSet<ExpenseApprovalEntry> ExpenseApprovalEntries { get; }
+
+    DbSet<RecurringExpense> RecurringExpenses { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

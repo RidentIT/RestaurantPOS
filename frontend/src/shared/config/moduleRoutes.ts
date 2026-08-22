@@ -44,7 +44,7 @@ export const MODULE_ROUTES: Record<string, ModuleRoute> = {
   Notifications: { icon: Bell },
   UserManagement: { path: "/users", icon: Users },
   SupplierManagement: { path: "/suppliers", icon: Truck },
-  ExpensesManagement: { icon: Receipt },
+  ExpensesManagement: { path: "/expenses", icon: Receipt },
   SystemSettings: { icon: Settings },
 };
 
