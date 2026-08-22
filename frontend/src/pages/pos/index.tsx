@@ -39,7 +39,14 @@ export default function PosDashboardPage() {
 
   const openTable = async (table: RestaurantTable) => {
     if (table.currentOrder) {
-      navigate(`/pos/orders/${table.currentOrder.orderId}`);
+      // A bill already frozen for payment has nothing left to do on the order screen — send the
+      // cashier straight to where they can actually finish it.
+      const destination =
+        table.currentOrder.status === "Checkout"
+          ? `/pos/orders/${table.currentOrder.orderId}/checkout`
+          : `/pos/orders/${table.currentOrder.orderId}`;
+
+      navigate(destination);
       return;
     }
 

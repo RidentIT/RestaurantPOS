@@ -69,6 +69,13 @@ export const API_ENDPOINTS = {
     PAYMENTS: (id: string) => `/orders/${id}/payments`,
     REPRINT_RECEIPT: (id: string) => `/orders/${id}/receipt/reprint`,
   },
+  NOTIFICATIONS: {
+    BASE: "/notifications",
+    EVALUATE: "/notifications/evaluate",
+    READ: "/notifications/read",
+    PREFERENCES: "/notifications/preferences",
+    THRESHOLDS: "/notifications/thresholds",
+  },
   EXPENSES: {
     BASE: "/expenses",
     BY_ID: (id: string) => `/expenses/${id}`,
@@ -94,6 +101,18 @@ export const API_ENDPOINTS = {
     TICKETS: "/kitchen/tickets",
     TICKET_STATUS: (id: string) => `/kitchen/tickets/${id}/status`,
     TICKET_REPRINT: (id: string) => `/kitchen/tickets/${id}/reprint`,
+  },
+  SETTINGS: {
+    BASE: "/settings",
+    PROFILE: "/settings/profile",
+    BILL_CHARGES: "/settings/bill-charges",
+    RECEIPT_FOOTER: "/settings/receipt-footer",
+    PRINTER: "/settings/printer",
+    APPROVAL_PIN_POLICY: "/settings/approval-pin-policy",
+    BACKUP: "/settings/backup",
+    BACKUPS: "/settings/backups",
+    BACKUPS_RESTORE: "/settings/backups/restore",
+    BACKUPS_RUN_DAILY: "/settings/backups/run-daily",
   },
   INVENTORY: {
     MAIN_STORE_STOCK: "/inventory/main-store/stock",

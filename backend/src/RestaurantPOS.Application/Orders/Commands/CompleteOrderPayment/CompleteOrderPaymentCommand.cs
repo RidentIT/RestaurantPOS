@@ -53,7 +53,7 @@ public sealed class CompleteOrderPaymentCommandValidator : AbstractValidator<Com
 }
 
 internal sealed class CompleteOrderPaymentCommandHandler(
-    IAppDbContext db, IDateTimeProvider clock, ICurrentUser currentUser, IRestaurantProfile restaurant)
+    IAppDbContext db, IDateTimeProvider clock, ICurrentUser currentUser)
     : IRequestHandler<CompleteOrderPaymentCommand, Result<ReceiptDocumentDto>>
 {
     public async Task<Result<ReceiptDocumentDto>> Handle(
@@ -100,13 +100,18 @@ internal sealed class CompleteOrderPaymentCommandHandler(
 
         await db.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(await ReceiptDocumentFactory.BuildAsync(db, order, receipt, restaurant, cancellationToken));
+        return Result.Success(await ReceiptDocumentFactory.BuildAsync(db, order, receipt, cancellationToken));
     }
 
     /// <summary>
-    /// Builds the customer-facing reference, e.g. "REC-001-2026" — the order's own number and the
-    /// year it was taken, which is enough to find it again from a slip of paper.
+    /// Builds the customer-facing reference, e.g. "REC-20260809-001".
     /// </summary>
+    /// <remarks>
+    /// Must carry the full date, not just the year: <see cref="Order.OrderNumber"/> restarts at 1
+    /// every day, so "order #1" happens on every trading day of the year. A year-only reference
+    /// collides the moment a second day's first sale is settled — <see cref="Receipt.Number"/>
+    /// has a unique index, and the year-only format was hitting it from the second day onward.
+    /// </remarks>
     private static string BuildReceiptNumber(int? orderNumber, DateOnly orderDate) =>
-        $"REC-{orderNumber ?? 0:000}-{orderDate.Year}";
+        $"REC-{orderDate:yyyyMMdd}-{orderNumber ?? 0:000}";
 }

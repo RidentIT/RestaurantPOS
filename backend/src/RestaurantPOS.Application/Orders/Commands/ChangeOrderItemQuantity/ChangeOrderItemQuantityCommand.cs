@@ -39,7 +39,7 @@ public sealed class ChangeOrderItemQuantityCommandValidator : AbstractValidator<
 }
 
 internal sealed class ChangeOrderItemQuantityCommandHandler(
-    IAppDbContext db, IDateTimeProvider clock, IRestaurantProfile restaurant, ISender sender)
+    IAppDbContext db, IDateTimeProvider clock, ISender sender)
     : IRequestHandler<ChangeOrderItemQuantityCommand, Result<OrderMutationDto>>
 {
     public async Task<Result<OrderMutationDto>> Handle(
@@ -76,6 +76,6 @@ internal sealed class ChangeOrderItemQuantityCommandHandler(
         var ticket = order.ChangeItemQuantity(request.OrderItemId, request.Quantity, clock.UtcNow);
         await db.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(await OrderResultFactory.BuildAsync(db, order, ticket, restaurant, cancellationToken));
+        return Result.Success(await OrderResultFactory.BuildAsync(db, order, ticket, cancellationToken));
     }
 }

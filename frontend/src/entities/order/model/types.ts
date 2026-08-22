@@ -60,6 +60,12 @@ export interface Order {
   discountValue: number;
   subtotal: number;
   discountAmount: number;
+  /** Zero unless the restaurant has configured a service charge rate (BR-POS-012). */
+  serviceChargeRatePercent: number;
+  serviceChargeAmount: number;
+  /** Zero unless the restaurant has configured a tax rate (BR-POS-011). */
+  taxRatePercent: number;
+  taxAmount: number;
   total: number;
   amountPaid: number;
   changeDue: number;
@@ -143,13 +149,16 @@ export interface ReceiptDocument {
   lines: ReceiptLine[];
   subtotal: number;
   discountAmount: number;
-  /** Always zero — no VAT or GST is applied (BR-POS-011). */
+  /** Zero unless the restaurant has configured a service charge rate (BR-POS-012). */
+  serviceChargeAmount: number;
+  /** Zero unless the restaurant has configured a tax rate (BR-POS-011). */
   taxAmount: number;
   total: number;
   changeGiven: number;
   payments: OrderPayment[];
   /** Encoded on the slip as a QR code (POS-028). */
   qrPayload: string;
+  footerMessage: string;
 }
 
 export interface ReceiptLine {

@@ -8,6 +8,7 @@ using RestaurantPOS.Application.Common.Interfaces;
 using RestaurantPOS.Application.Common.Mappings;
 using RestaurantPOS.Application.Orders.Common;
 using RestaurantPOS.Application.Orders.Dtos;
+using RestaurantPOS.Application.Settings.Common;
 using RestaurantPOS.Domain.Common;
 using RestaurantPOS.Domain.Entities;
 using RestaurantPOS.Domain.Enums;
@@ -58,7 +59,9 @@ internal sealed class CreateOrderCommandHandler(IAppDbContext db, ICurrentUser c
             return Result.Failure<OrderDto>(OrderErrors.TableOccupied);
         }
 
-        var order = Order.Create(table.Id, currentUser.UserId!.Value);
+        var settings = await RestaurantSettingsAccessor.GetAsync(db, cancellationToken);
+        var order = Order.Create(
+            table.Id, currentUser.UserId!.Value, settings.TaxRatePercent, settings.ServiceChargeRatePercent);
         db.Orders.Add(order);
         await db.SaveChangesAsync(cancellationToken);
 

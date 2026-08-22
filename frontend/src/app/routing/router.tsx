@@ -28,6 +28,8 @@ const ExpensesPage = lazy(() => import("@/pages/expenses"));
 const ExpenseCategoriesPage = lazy(() => import("@/pages/expenses/categories"));
 const RecurringExpensesPage = lazy(() => import("@/pages/expenses/recurring"));
 const ExpenseReportsPage = lazy(() => import("@/pages/expenses/reports"));
+const NotificationSettingsPage = lazy(() => import("@/pages/notifications/settings"));
+const SettingsPage = lazy(() => import("@/pages/settings"));
 
 function withSuspense(element: ReactNode) {
   return <Suspense fallback={<LoadingState label="Loading…" className="h-screen" />}>{element}</Suspense>;
@@ -48,6 +50,9 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: withSuspense(<DashboardPage />) },
           { path: "account", element: withSuspense(<AccountPage />) },
+          // Everybody has a bell, so everybody can configure it — what each person is
+          // eligible to receive is decided server-side by the modules they hold.
+          { path: "notifications/settings", element: withSuspense(<NotificationSettingsPage />) },
           {
             element: <RequireModule module="PosBilling" />,
             children: [
@@ -98,6 +103,10 @@ export const router = createBrowserRouter([
           {
             element: <RequireModule module="SupplierManagement" />,
             children: [{ path: "suppliers", element: withSuspense(<SuppliersPage />) }],
+          },
+          {
+            element: <RequireModule module="SystemSettings" />,
+            children: [{ path: "settings", element: withSuspense(<SettingsPage />) }],
           },
         ],
       },

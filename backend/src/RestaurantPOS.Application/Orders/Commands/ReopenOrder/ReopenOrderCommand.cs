@@ -22,7 +22,7 @@ public sealed class ReopenOrderCommandValidator : AbstractValidator<ReopenOrderC
     public ReopenOrderCommandValidator() => RuleFor(x => x.OrderId).NotEmpty();
 }
 
-internal sealed class ReopenOrderCommandHandler(IAppDbContext db, IRestaurantProfile restaurant)
+internal sealed class ReopenOrderCommandHandler(IAppDbContext db)
     : IRequestHandler<ReopenOrderCommand, Result<OrderMutationDto>>
 {
     public async Task<Result<OrderMutationDto>> Handle(
@@ -46,6 +46,6 @@ internal sealed class ReopenOrderCommandHandler(IAppDbContext db, IRestaurantPro
 
         await db.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(await OrderResultFactory.BuildAsync(db, order, null, restaurant, cancellationToken));
+        return Result.Success(await OrderResultFactory.BuildAsync(db, order, null, cancellationToken));
     }
 }

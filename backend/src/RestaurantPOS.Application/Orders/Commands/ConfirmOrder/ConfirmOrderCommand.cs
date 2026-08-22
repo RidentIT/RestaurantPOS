@@ -25,7 +25,7 @@ public sealed class ConfirmOrderCommandValidator : AbstractValidator<ConfirmOrde
 }
 
 internal sealed class ConfirmOrderCommandHandler(
-    IAppDbContext db, IDateTimeProvider clock, IRestaurantProfile restaurant)
+    IAppDbContext db, IDateTimeProvider clock)
     : IRequestHandler<ConfirmOrderCommand, Result<OrderMutationDto>>
 {
     public async Task<Result<OrderMutationDto>> Handle(
@@ -54,7 +54,7 @@ internal sealed class ConfirmOrderCommandHandler(
         var ticket = order.Confirm(orderNumber, today, clock.UtcNow);
         await db.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(await OrderResultFactory.BuildAsync(db, order, ticket, restaurant, cancellationToken));
+        return Result.Success(await OrderResultFactory.BuildAsync(db, order, ticket, cancellationToken));
     }
 
     /// <summary>

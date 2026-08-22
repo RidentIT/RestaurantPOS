@@ -23,7 +23,7 @@ public sealed class ReprintReceiptCommandValidator : AbstractValidator<ReprintRe
 }
 
 internal sealed class ReprintReceiptCommandHandler(
-    IAppDbContext db, IDateTimeProvider clock, IRestaurantProfile restaurant)
+    IAppDbContext db, IDateTimeProvider clock)
     : IRequestHandler<ReprintReceiptCommand, Result<ReceiptDocumentDto>>
 {
     public async Task<Result<ReceiptDocumentDto>> Handle(
@@ -45,6 +45,6 @@ internal sealed class ReprintReceiptCommandHandler(
         await db.SaveChangesAsync(cancellationToken);
 
         return Result.Success(
-            await ReceiptDocumentFactory.BuildAsync(db, order, order.Receipt, restaurant, cancellationToken));
+            await ReceiptDocumentFactory.BuildAsync(db, order, order.Receipt, cancellationToken));
     }
 }
