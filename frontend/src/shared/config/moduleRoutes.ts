@@ -41,11 +41,11 @@ export const MODULE_ROUTES: Record<string, ModuleRoute> = {
   KitchenStockTracking: { path: "/inventory/kitchen", icon: ClipboardList },
   KitchenOperations: { path: "/kitchen", icon: ChefHat },
   ReportsAnalytics: { path: "/reports", icon: BarChart3 },
-  Notifications: { icon: Bell },
+  Notifications: { path: "/notifications/settings", icon: Bell },
   UserManagement: { path: "/users", icon: Users },
   SupplierManagement: { path: "/suppliers", icon: Truck },
   ExpensesManagement: { path: "/expenses", icon: Receipt },
-  SystemSettings: { icon: Settings },
+  SystemSettings: { path: "/settings", icon: Settings },
 };
 
 export const DEFAULT_MODULE_ICON: LucideIcon = LayoutDashboard;

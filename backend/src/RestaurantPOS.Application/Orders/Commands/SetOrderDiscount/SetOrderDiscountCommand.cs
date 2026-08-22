@@ -29,7 +29,7 @@ public sealed class SetOrderDiscountCommandValidator : AbstractValidator<SetOrde
     }
 }
 
-internal sealed class SetOrderDiscountCommandHandler(IAppDbContext db, IRestaurantProfile restaurant)
+internal sealed class SetOrderDiscountCommandHandler(IAppDbContext db)
     : IRequestHandler<SetOrderDiscountCommand, Result<OrderMutationDto>>
 {
     public async Task<Result<OrderMutationDto>> Handle(
@@ -55,6 +55,6 @@ internal sealed class SetOrderDiscountCommandHandler(IAppDbContext db, IRestaura
         order.SetDiscount(request.Type, request.Value);
         await db.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(await OrderResultFactory.BuildAsync(db, order, null, restaurant, cancellationToken));
+        return Result.Success(await OrderResultFactory.BuildAsync(db, order, null, cancellationToken));
     }
 }

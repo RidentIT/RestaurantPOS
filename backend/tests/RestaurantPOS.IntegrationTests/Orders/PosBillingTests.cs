@@ -227,7 +227,7 @@ public class PosBillingTests : IntegrationTestBase
         paid.EnsureSuccessStatusCode();
         var receipt = await PosApiClient.ReadAsync<ReceiptDocumentResponse>(paid);
 
-        receipt.ReceiptNumber.Should().Be($"REC-001-{DateTime.Now.Year}");
+        receipt.ReceiptNumber.Should().Be($"REC-{DateTime.Now:yyyyMMdd}-001");
         receipt.RestaurantName.Should().Be("Sri Lakshmi Family Restaurant");
         receipt.Total.Should().Be(400m);
         receipt.TaxAmount.Should().Be(0m, "no VAT or GST is applied (BR-POS-011)");

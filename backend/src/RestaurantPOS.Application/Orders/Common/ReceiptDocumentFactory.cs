@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RestaurantPOS.Application.Common.Interfaces;
 using RestaurantPOS.Application.Common.Mappings;
 using RestaurantPOS.Application.Orders.Dtos;
+using RestaurantPOS.Application.Settings.Common;
 using RestaurantPOS.Domain.Entities;
 
 namespace RestaurantPOS.Application.Orders.Common;
@@ -21,13 +22,13 @@ public static class ReceiptDocumentFactory
         IAppDbContext db,
         Order order,
         Receipt receipt,
-        IRestaurantProfile restaurant,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(db);
         ArgumentNullException.ThrowIfNull(order);
         ArgumentNullException.ThrowIfNull(receipt);
-        ArgumentNullException.ThrowIfNull(restaurant);
+
+        var settings = await RestaurantSettingsAccessor.GetAsync(db, cancellationToken);
 
         var tableNumber = await db.RestaurantTables
             .Where(t => t.Id == order.TableId)
@@ -41,11 +42,11 @@ public static class ReceiptDocumentFactory
 
         return new ReceiptDocumentDto(
             receipt.Number,
-            restaurant.Name,
-            restaurant.AddressLine1,
-            restaurant.AddressLine2,
-            restaurant.City,
-            restaurant.Phone,
+            settings.Name,
+            settings.AddressLine1,
+            settings.AddressLine2,
+            settings.City,
+            settings.Phone,
             order.OrderNumber,
             tableNumber,
             cashierName,
@@ -56,10 +57,12 @@ public static class ReceiptDocumentFactory
                 .Select(i => new ReceiptLineDto(i.MenuItemName, i.Quantity, i.UnitPrice, i.LineTotal))],
             order.Subtotal,
             order.DiscountAmount,
-            TaxAmount: 0m,
+            order.ServiceChargeAmount,
+            order.TaxAmount,
             order.Total,
             order.ChangeDue,
             [.. order.Payments.OrderBy(p => p.CreatedAtUtc).Select(p => p.ToDto())],
-            receipt.Number);
+            receipt.Number,
+            settings.ReceiptFooterMessage);
     }
 }

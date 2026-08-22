@@ -4,11 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 using RestaurantPOS.Application.Common.Interfaces;
 using RestaurantPOS.Infrastructure.Clock;
+using RestaurantPOS.Infrastructure.DataBackup;
 using RestaurantPOS.Infrastructure.Identity;
 using RestaurantPOS.Infrastructure.Persistence;
 using RestaurantPOS.Infrastructure.Persistence.Interceptors;
 using RestaurantPOS.Infrastructure.Persistence.Seeding;
-using RestaurantPOS.Infrastructure.Settings;
 using RestaurantPOS.Infrastructure.Storage;
 
 namespace RestaurantPOS.Infrastructure;
@@ -28,10 +28,6 @@ public static class DependencyInjection
         services.AddOptions<SeedAdminOptions>()
             .Bind(configuration.GetSection(SeedAdminOptions.SectionName));
 
-        var restaurantProfile = new RestaurantProfileOptions();
-        configuration.GetSection(RestaurantProfileOptions.SectionName).Bind(restaurantProfile);
-        services.AddSingleton<IRestaurantProfile>(restaurantProfile);
-
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddSingleton<IApprovalPinThrottle, ApprovalPinThrottle>();
@@ -39,6 +35,8 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, JwtTokenService>();
 
         services.AddSingleton<IExpenseAttachmentStore, FileSystemExpenseAttachmentStore>();
+        services.AddSingleton<IBackupFolderProbe, BackupFolderProbe>();
+        services.AddScoped<IBackupService, BackupService>();
 
         services.AddScoped<AuditableEntityInterceptor>();
 

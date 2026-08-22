@@ -42,12 +42,15 @@ public sealed record ReceiptDocumentDto(
     IReadOnlyCollection<ReceiptLineDto> Lines,
     decimal Subtotal,
     decimal DiscountAmount,
-    /// <summary>Always zero — the restaurant applies no VAT or GST (BR-POS-011).</summary>
+    /// <summary>Zero unless the restaurant has configured a service charge rate (BR-POS-012).</summary>
+    decimal ServiceChargeAmount,
+    /// <summary>Zero unless the restaurant has configured a tax rate (BR-POS-011).</summary>
     decimal TaxAmount,
     decimal Total,
     decimal ChangeGiven,
     IReadOnlyCollection<OrderPaymentDto> Payments,
     /// <summary>Encoded on the slip as a QR code so a bill can be looked up from paper (POS-028).</summary>
-    string QrPayload);
+    string QrPayload,
+    string FooterMessage);
 
 public sealed record ReceiptLineDto(string MenuItemName, int Quantity, decimal UnitPrice, decimal LineTotal);

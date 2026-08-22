@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Ban, CreditCard, Percent, Send } from "lucide-react";
 import { toast } from "sonner";
@@ -38,6 +38,17 @@ export default function OrderScreen() {
   const [discountOpen, setDiscountOpen] = useState(false);
   const [approval, setApproval] = useState<PendingApproval | null>(null);
 
+  // A bill already frozen for payment has nothing to do here — the menu and the bill are both
+  // read-only in this state, and only the checkout screen can move it forward. Reachable whenever
+  // something other than "Back to the order" brings a cashier back to this screen mid-payment:
+  // Electron's own back navigation, a table tapped again from the floor plan before that list
+  // refreshes, or a tab left open on this order from an earlier visit.
+  useEffect(() => {
+    if (order?.status === "Checkout") {
+      navigate(`/pos/orders/${order.id}/checkout`, { replace: true });
+    }
+  }, [order?.status, order?.id, navigate]);
+
   const busy =
     mutations.addItems.isPending ||
     mutations.changeQuantity.isPending ||
@@ -47,7 +58,7 @@ export default function OrderScreen() {
     mutations.setDiscount.isPending ||
     mutations.startCheckout.isPending;
 
-  if (isLoading || !order) {
+  if (isLoading || !order || order.status === "Checkout") {
     return <LoadingState label="Loading the bill…" className="h-96" />;
   }
 

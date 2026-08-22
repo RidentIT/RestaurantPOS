@@ -29,7 +29,7 @@ public sealed class CancelOrderCommandValidator : AbstractValidator<CancelOrderC
 }
 
 internal sealed class CancelOrderCommandHandler(
-    IAppDbContext db, IDateTimeProvider clock, IRestaurantProfile restaurant, ISender sender)
+    IAppDbContext db, IDateTimeProvider clock, ISender sender)
     : IRequestHandler<CancelOrderCommand, Result<OrderMutationDto>>
 {
     public async Task<Result<OrderMutationDto>> Handle(
@@ -69,6 +69,6 @@ internal sealed class CancelOrderCommandHandler(
         var ticket = order.Cancel(approvedBy, clock.UtcNow);
         await db.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(await OrderResultFactory.BuildAsync(db, order, ticket, restaurant, cancellationToken));
+        return Result.Success(await OrderResultFactory.BuildAsync(db, order, ticket, cancellationToken));
     }
 }

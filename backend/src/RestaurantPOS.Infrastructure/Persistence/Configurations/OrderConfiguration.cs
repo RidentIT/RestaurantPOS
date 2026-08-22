@@ -58,6 +58,8 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         // changes without it.
         builder.Ignore(o => o.Subtotal);
         builder.Ignore(o => o.DiscountAmount);
+        builder.Ignore(o => o.ServiceChargeAmount);
+        builder.Ignore(o => o.TaxAmount);
         builder.Ignore(o => o.Total);
         builder.Ignore(o => o.AmountPaid);
         builder.Ignore(o => o.ChangeDue);

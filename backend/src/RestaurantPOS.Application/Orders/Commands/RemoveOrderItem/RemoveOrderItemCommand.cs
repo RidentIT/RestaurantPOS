@@ -31,7 +31,7 @@ public sealed class RemoveOrderItemCommandValidator : AbstractValidator<RemoveOr
 }
 
 internal sealed class RemoveOrderItemCommandHandler(
-    IAppDbContext db, IDateTimeProvider clock, IRestaurantProfile restaurant, ISender sender)
+    IAppDbContext db, IDateTimeProvider clock, ISender sender)
     : IRequestHandler<RemoveOrderItemCommand, Result<OrderMutationDto>>
 {
     public async Task<Result<OrderMutationDto>> Handle(
@@ -75,6 +75,6 @@ internal sealed class RemoveOrderItemCommandHandler(
         var ticket = order.RemoveItem(request.OrderItemId, clock.UtcNow);
         await db.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(await OrderResultFactory.BuildAsync(db, order, ticket, restaurant, cancellationToken));
+        return Result.Success(await OrderResultFactory.BuildAsync(db, order, ticket, cancellationToken));
     }
 }

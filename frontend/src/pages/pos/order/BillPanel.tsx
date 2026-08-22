@@ -122,6 +122,18 @@ export function BillPanel({
           </dt>
           <dd className="tabular">−{order.discountAmount.toFixed(2)}</dd>
         </div>
+        {order.serviceChargeAmount > 0 && (
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">Service charge ({order.serviceChargeRatePercent}%)</dt>
+            <dd className="tabular">{order.serviceChargeAmount.toFixed(2)}</dd>
+          </div>
+        )}
+        {order.taxAmount > 0 && (
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">Tax / VAT ({order.taxRatePercent}%)</dt>
+            <dd className="tabular">{order.taxAmount.toFixed(2)}</dd>
+          </div>
+        )}
         <div className="flex justify-between pt-1 text-lg font-semibold">
           <dt>Total</dt>
           <dd className="tabular">{order.total.toFixed(2)}</dd>

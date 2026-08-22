@@ -22,7 +22,7 @@ public sealed class StartCheckoutCommandValidator : AbstractValidator<StartCheck
     public StartCheckoutCommandValidator() => RuleFor(x => x.OrderId).NotEmpty();
 }
 
-internal sealed class StartCheckoutCommandHandler(IAppDbContext db, IRestaurantProfile restaurant)
+internal sealed class StartCheckoutCommandHandler(IAppDbContext db)
     : IRequestHandler<StartCheckoutCommand, Result<OrderMutationDto>>
 {
     public async Task<Result<OrderMutationDto>> Handle(
@@ -43,6 +43,6 @@ internal sealed class StartCheckoutCommandHandler(IAppDbContext db, IRestaurantP
         order.StartCheckout();
         await db.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(await OrderResultFactory.BuildAsync(db, order, null, restaurant, cancellationToken));
+        return Result.Success(await OrderResultFactory.BuildAsync(db, order, null, cancellationToken));
     }
 }

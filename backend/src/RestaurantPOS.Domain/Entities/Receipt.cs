@@ -26,7 +26,7 @@ public sealed class Receipt : BaseEntity
 
     public Guid OrderId { get; private set; }
 
-    /// <summary>Customer-facing reference, e.g. "REC-001-2026".</summary>
+    /// <summary>Customer-facing reference, e.g. "REC-20260809-001".</summary>
     public string Number { get; private set; } = string.Empty;
 
     public DateTime IssuedAtUtc { get; private set; }

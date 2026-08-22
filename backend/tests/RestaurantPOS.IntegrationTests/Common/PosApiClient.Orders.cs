@@ -19,6 +19,10 @@ public sealed record OrderResponse(
     decimal DiscountValue,
     decimal Subtotal,
     decimal DiscountAmount,
+    decimal ServiceChargeRatePercent,
+    decimal ServiceChargeAmount,
+    decimal TaxRatePercent,
+    decimal TaxAmount,
     decimal Total,
     decimal AmountPaid,
     decimal ChangeDue,
@@ -55,11 +59,13 @@ public sealed record ReceiptDocumentResponse(
     IReadOnlyCollection<ReceiptLineResponse> Lines,
     decimal Subtotal,
     decimal DiscountAmount,
+    decimal ServiceChargeAmount,
     decimal TaxAmount,
     decimal Total,
     decimal ChangeGiven,
     IReadOnlyCollection<OrderPaymentResponse> Payments,
-    string QrPayload);
+    string QrPayload,
+    string FooterMessage);
 
 public sealed record ReceiptLineResponse(string MenuItemName, int Quantity, decimal UnitPrice, decimal LineTotal);
 

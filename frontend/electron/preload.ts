@@ -2,6 +2,9 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   ping: () => ipcRenderer.invoke('system:ping'),
+  version: () => ipcRenderer.invoke('system:version'),
+  quit: () => ipcRenderer.invoke('system:quit'),
+  selectFolder: () => ipcRenderer.invoke('system:selectFolder'),
   printHtml: (html: string, options?: unknown) => ipcRenderer.invoke('printer:printHtml', html, options),
   listPrinters: () => ipcRenderer.invoke('printer:list'),
   onMainProcessMessage: (callback: (message: string) => void) => {

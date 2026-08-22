@@ -65,5 +65,13 @@ public interface IAppDbContext
 
     DbSet<RecurringExpense> RecurringExpenses { get; }
 
+    DbSet<Notification> Notifications { get; }
+
+    DbSet<NotificationPreference> NotificationPreferences { get; }
+
+    DbSet<NotificationSetting> NotificationSettings { get; }
+
+    DbSet<RestaurantSettings> RestaurantSettings { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

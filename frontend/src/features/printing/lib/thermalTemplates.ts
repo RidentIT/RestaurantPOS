@@ -154,7 +154,8 @@ export function renderReceiptHtml(receipt: ReceiptDocument, qrDataUri: string | 
     <div class="rule"></div>
     <div class="row"><span>Subtotal</span><span>${money(receipt.subtotal)}</span></div>
     <div class="row"><span>Discount</span><span>${money(receipt.discountAmount)}</span></div>
-    <div class="row"><span>Tax / GST</span><span>${money(receipt.taxAmount)}</span></div>
+    ${receipt.serviceChargeAmount > 0 ? `<div class="row"><span>Service Charge</span><span>${money(receipt.serviceChargeAmount)}</span></div>` : ""}
+    ${receipt.taxAmount > 0 ? `<div class="row"><span>Tax / VAT</span><span>${money(receipt.taxAmount)}</span></div>` : ""}
     <div class="solid"></div>
     <div class="row bold lg"><span>TOTAL</span><span>${money(receipt.total)}</span></div>
     <div class="rule"></div>
@@ -163,7 +164,7 @@ export function renderReceiptHtml(receipt: ReceiptDocument, qrDataUri: string | 
     ${receipt.changeGiven > 0 ? `<div class="row bold"><span>Change</span><span>${money(receipt.changeGiven)}</span></div>` : ""}
     <div class="rule"></div>
     ${qrDataUri ? `<div class="center"><img src="${qrDataUri}" alt="" style="width: 28mm; height: 28mm;"></div>` : ""}
-    <div class="center bold">Thank You! Come Again!</div>
+    <div class="center bold">${escapeHtml(receipt.footerMessage)}</div>
     ${receipt.printCount > 1 ? `<div class="center muted">-- REPRINT #${receipt.printCount} --</div>` : ""}
   `;
 
