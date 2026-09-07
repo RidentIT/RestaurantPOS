@@ -12,6 +12,7 @@ export {
   useLogin,
   useLogout,
   useChangePassword,
+  useUpdateProfile,
   useModules,
   useRestoreSession,
 } from "./model/useAuth";

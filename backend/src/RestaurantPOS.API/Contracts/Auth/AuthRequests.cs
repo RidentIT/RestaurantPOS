@@ -14,6 +14,9 @@ public sealed record LogoutRequest(string? RefreshToken);
 /// <summary>Changes the signed-in user's own password.</summary>
 public sealed record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 
+/// <summary>Updates the signed-in user's own display name and email.</summary>
+public sealed record UpdateProfileRequest(string FullName, string? Email);
+
 /// <summary>
 /// Sets the signed-in administrator's approval PIN. Leave <paramref name="Pin"/> null to have
 /// the server generate a random <see cref="User.ApprovalPinLength"/>-digit PIN.

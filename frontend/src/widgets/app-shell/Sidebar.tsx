@@ -1,3 +1,4 @@
+import { UserCircle } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { groupModules, type ModuleDescriptor } from "@/entities/user";
 import { useAuth } from "@/features/auth";
@@ -48,6 +49,23 @@ export function Sidebar({ catalog }: SidebarProps) {
             </div>
           ))}
       </nav>
+
+      <div className="border-t px-3 py-3">
+        <NavLink
+          to="/account"
+          className={({ isActive }) =>
+            cn(
+              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              isActive
+                ? "bg-primary/10 text-primary"
+                : "text-foreground/80 hover:bg-accent hover:text-accent-foreground",
+            )
+          }
+        >
+          <UserCircle className="size-4 shrink-0" />
+          <span className="truncate">My account</span>
+        </NavLink>
+      </div>
     </aside>
   );
 }

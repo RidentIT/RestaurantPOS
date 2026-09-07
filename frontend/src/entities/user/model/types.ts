@@ -68,6 +68,7 @@ export interface CreateUserPayload {
 }
 
 export interface UpdateUserPayload {
+  username: string;
   fullName: string;
   email: string | null;
   role: UserRole;

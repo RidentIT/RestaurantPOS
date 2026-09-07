@@ -56,7 +56,7 @@ public sealed record StockReleaseDto(
 public sealed record StockMovementLineDto(
     Guid RawMaterialId, string RawMaterialName, UnitOfMeasurement UnitOfMeasurement, decimal Quantity);
 
-/// <summary>A GRN's header for a list screen, without its lines.</summary>
+/// <summary>A GRN's header for a list screen, with material names but not quantities.</summary>
 public sealed record GoodsReceivedNoteSummaryDto(
     Guid Id,
     Guid SupplierId,
@@ -68,9 +68,10 @@ public sealed record GoodsReceivedNoteSummaryDto(
     Guid? PurchaseOrderId,
     int? QualityRating,
     bool HasIssue,
-    int LineCount);
+    int LineCount,
+    IReadOnlyCollection<string> RawMaterialNames);
 
-/// <summary>A stock release's header for a list screen, without its lines.</summary>
+/// <summary>A stock release's header for a list screen, with material names but not quantities.</summary>
 public sealed record StockReleaseSummaryDto(
     Guid Id,
     Guid RequestedByUserId,
@@ -80,7 +81,8 @@ public sealed record StockReleaseSummaryDto(
     string ApprovedByName,
     DateTime ApprovedAtUtc,
     string? Notes,
-    int LineCount);
+    int LineCount,
+    IReadOnlyCollection<string> RawMaterialNames);
 
 /// <summary>One raw material and quantity deducted when a menu item's recipe was applied to a sale.</summary>
 public sealed record ConsumedLineDto(

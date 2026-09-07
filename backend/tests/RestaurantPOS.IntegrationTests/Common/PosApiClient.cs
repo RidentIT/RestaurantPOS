@@ -93,11 +93,12 @@ public sealed partial class PosApiClient(HttpClient http)
 
     public Task<HttpResponseMessage> UpdateUserAsync(
         Guid id,
+        string username,
         string fullName,
         string role,
         string[] modules,
         string? email = null) =>
-        Http.PutAsJsonAsync($"{BaseUrl}/users/{id}", new { fullName, email, role, modules }, Json);
+        Http.PutAsJsonAsync($"{BaseUrl}/users/{id}", new { username, fullName, email, role, modules }, Json);
 
     public Task<HttpResponseMessage> SetUserActiveAsync(Guid id, bool isActive) =>
         Http.PutAsJsonAsync($"{BaseUrl}/users/{id}/status", new { isActive }, Json);
@@ -113,10 +114,24 @@ public sealed partial class PosApiClient(HttpClient http)
     public Task<HttpResponseMessage> VerifyApprovalPinAsync(string pin, string? reason = null) =>
         Http.PostAsJsonAsync($"{BaseUrl}/auth/pin/verify", new { pin, reason }, Json);
 
-    /// <summary>Deserialises a response body, failing loudly if it is empty.</summary>
+    /// <summary>
+    /// Deserialises a response body, failing loudly if the call itself failed or the body is
+    /// empty. Without the status check, a 4xx problem-details body would deserialise as a mostly
+    /// null <typeparamref name="T"/> instead of an obvious failure — a genuine bug in the code
+    /// under test would then read as a confusing assertion mismatch several lines away, instead of
+    /// as the actual HTTP failure at the point it happened.
+    /// </summary>
     public static async Task<T> ReadAsync<T>(HttpResponseMessage response)
     {
         ArgumentNullException.ThrowIfNull(response);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync();
+
+            throw new InvalidOperationException(
+                $"Expected a successful response but got {response.StatusCode}. Body: {body}");
+        }
 
         var value = await response.Content.ReadFromJsonAsync<T>(Json);
 

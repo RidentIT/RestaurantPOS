@@ -3,7 +3,16 @@ import { AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useLogin } from "@/features/auth";
 import { toApiError } from "@/shared/api/problem";
-import { Alert, AlertDescription, Button, Card, CardContent, FormField, Input } from "@/shared/ui";
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Card,
+  CardContent,
+  FormField,
+  Input,
+  PasswordInput,
+} from "@/shared/ui";
 
 interface LoginFormValues {
   username: string;
@@ -59,9 +68,8 @@ export default function LoginPage() {
             </FormField>
 
             <FormField htmlFor="password" label="Password" required error={errors.password?.message}>
-              <Input
+              <PasswordInput
                 {...register("password", { required: "Password is required." })}
-                type="password"
                 autoComplete="current-password"
               />
             </FormField>

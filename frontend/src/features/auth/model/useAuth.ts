@@ -63,6 +63,17 @@ export function useLogin() {
   });
 }
 
+/** Updates the signed-in user's own display name and email. */
+export function useUpdateProfile() {
+  const dispatch = useAppDispatch();
+
+  return useMutation({
+    mutationFn: ({ fullName, email }: { fullName: string; email: string | null }) =>
+      authApi.updateProfile(fullName, email),
+    onSuccess: (user) => dispatch(userLoaded(user)),
+  });
+}
+
 /** Changes the signed-in user's password and adopts the fresh session it returns. */
 export function useChangePassword() {
   const dispatch = useAppDispatch();

@@ -60,7 +60,7 @@ export interface PurchaseOrderLineInput {
   unitPrice: number;
 }
 
-/** A purchase order's header for a list screen, without its lines. */
+/** A purchase order's header for a list screen, with the lines that identify what was ordered. */
 export interface PurchaseOrderSummary {
   id: string;
   supplierId: string;
@@ -72,6 +72,7 @@ export interface PurchaseOrderSummary {
   amountPaid: number;
   balance: number;
   lineCount: number;
+  lines: PurchaseOrderLine[];
 }
 
 export interface PurchaseOrder {

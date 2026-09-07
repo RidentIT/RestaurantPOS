@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BarChart3, ClipboardList, Plus, Tag, Truck } from "lucide-react";
+import { BarChart3, ClipboardList, Plus, Search, Tag, Truck } from "lucide-react";
 import type { PurchaseOrderStatus, PurchaseOrderSummary, Supplier } from "@/entities/supplier";
 import { PURCHASE_ORDER_STATUSES } from "@/entities/supplier";
 import {
@@ -13,6 +13,7 @@ import { SupplierFormDialog, useSuppliers } from "@/features/suppliers";
 import {
   Button,
   Card,
+  Input,
   Select,
   SelectContent,
   SelectItem,
@@ -34,18 +35,30 @@ const TABS: ReadonlyArray<{ value: Tab; label: string; icon: React.ReactNode }> 
   { value: "performance", label: "Performance", icon: <BarChart3 className="size-4" /> },
 ];
 
+type SupplierStatusFilter = "all" | "active" | "inactive";
+
 export default function SuppliersPage() {
   const [tab, setTab] = useState<Tab>("suppliers");
-  const [statusFilter, setStatusFilter] = useState<PurchaseOrderStatus | "All">("All");
+  const [poStatusFilter, setPoStatusFilter] = useState<PurchaseOrderStatus | "All">("All");
+  const [supplierSearch, setSupplierSearch] = useState("");
+  const [supplierStatusFilter, setSupplierStatusFilter] = useState<SupplierStatusFilter>("all");
 
   const { data: suppliers, isLoading: suppliersLoading } = useSuppliers();
   const { data: rawMaterials } = useRawMaterials();
   const { data: orders, isLoading: ordersLoading } = usePurchaseOrders(
-    statusFilter === "All" ? {} : { status: statusFilter },
+    poStatusFilter === "All" ? {} : { status: poStatusFilter },
   );
 
   const activeSuppliers = (suppliers ?? []).filter((s) => s.isActive);
   const activeRawMaterials = (rawMaterials ?? []).filter((r) => r.isActive);
+
+  const filteredSuppliers = (suppliers ?? []).filter((s) => {
+    const matchesSearch = !supplierSearch || s.name.toLowerCase().includes(supplierSearch.trim().toLowerCase());
+    const matchesStatus =
+      supplierStatusFilter === "all" ? true : supplierStatusFilter === "active" ? s.isActive : !s.isActive;
+    return matchesSearch && matchesStatus;
+  });
+  const isSupplierFilterActive = supplierSearch !== "" || supplierStatusFilter !== "all";
 
   const [supplierForm, setSupplierForm] = useState<Supplier | null | undefined>(undefined);
   const [poCreateOpen, setPoCreateOpen] = useState(false);
@@ -81,14 +94,47 @@ export default function SuppliersPage() {
 
       <Card>
         {tab === "suppliers" && (
-          <SuppliersTable suppliers={suppliers} isLoading={suppliersLoading} onEdit={setSupplierForm} />
+          <>
+            <div className="flex flex-wrap gap-3 p-4 pb-0">
+              <div className="relative w-full max-w-xs">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={supplierSearch}
+                  onChange={(e) => setSupplierSearch(e.target.value)}
+                  placeholder="Search by name…"
+                  className="pl-9"
+                />
+              </div>
+
+              <Select
+                value={supplierStatusFilter}
+                onValueChange={(v) => setSupplierStatusFilter(v as SupplierStatusFilter)}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Deactivated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <SuppliersTable
+              suppliers={filteredSuppliers}
+              isLoading={suppliersLoading}
+              onEdit={setSupplierForm}
+              isFiltered={isSupplierFilterActive}
+            />
+          </>
         )}
 
         {tab === "purchase-orders" && (
           <>
             <div className="flex justify-end p-4 pb-0">
               <div className="w-48">
-                <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as PurchaseOrderStatus | "All")}>
+                <Select value={poStatusFilter} onValueChange={(v) => setPoStatusFilter(v as PurchaseOrderStatus | "All")}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

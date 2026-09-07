@@ -16,6 +16,7 @@ export {
 export { ExpenseFormDialog } from "./ui/ExpenseFormDialog";
 export { ExpenseCategoryDialog } from "./ui/ExpenseCategoryDialog";
 export { RecurringExpenseDialog } from "./ui/RecurringExpenseDialog";
+export { ProfitSummaryCards, PeriodComparisonCard } from "./ui/ProfitSummaryCards";
 export {
   exportDailyReportPdf,
   exportMonthlyReportPdf,

@@ -41,7 +41,9 @@ export function GoodsReceivedTable({
               {new Date(note.receivedAtUtc).toLocaleString()}
             </TableCell>
             <TableCell className="font-medium">{note.supplierName}</TableCell>
-            <TableCell className="tabular">{note.lineCount}</TableCell>
+            <TableCell className="max-w-56 truncate text-sm" title={(note.rawMaterialNames ?? []).join(", ")}>
+              {note.rawMaterialNames?.length ? note.rawMaterialNames.join(", ") : note.lineCount}
+            </TableCell>
             <TableCell className="text-sm text-muted-foreground">{note.receivedByName}</TableCell>
             <TableCell className="max-w-56 truncate text-sm text-muted-foreground">{note.notes ?? "—"}</TableCell>
           </TableRow>

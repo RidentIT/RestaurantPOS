@@ -78,13 +78,47 @@ public class UserManagementTests : IntegrationTestBase
         var user = await PosApiClient.ReadAsync<UserResponse>(created);
 
         var updated = await Client.UpdateUserAsync(
-            user.Id, "Ravi K. Kumar", "User", ["ReportsAnalytics", "ExpensesManagement"]);
+            user.Id, user.Username, "Ravi K. Kumar", "User", ["ReportsAnalytics", "ExpensesManagement"]);
 
         updated.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var result = await PosApiClient.ReadAsync<UserResponse>(updated);
         result.FullName.Should().Be("Ravi K. Kumar");
         result.Modules.Should().BeEquivalentTo(["ReportsAnalytics", "ExpensesManagement"]);
+    }
+
+    [Fact]
+    public async Task AnAdminCanRenameAUser()
+    {
+        await SignInAsAdminAsync();
+        var created = await Client.CreateUserAsync(
+            "cashier01", "Cashier@2026", "User", "Ravi Kumar", null, "PosBilling");
+        var user = await PosApiClient.ReadAsync<UserResponse>(created);
+
+        var updated = await Client.UpdateUserAsync(
+            user.Id, "ravi.k", user.FullName, "User", ["PosBilling"]);
+
+        updated.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await PosApiClient.ReadAsync<UserResponse>(updated)).Username.Should().Be("ravi.k");
+
+        // The new name signs in; the old one no longer does.
+        (await NewClient().LoginAsync("ravi.k", "Cashier@2026")).StatusCode.Should().Be(HttpStatusCode.OK);
+        (await NewClient().LoginAsync("cashier01", "Cashier@2026")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task RenamingAUser_ToAnAlreadyTakenUsername_IsRejected()
+    {
+        await SignInAsAdminAsync();
+        await Client.CreateUserAsync("cashier01", "Cashier@2026", "User", "Ravi Kumar", null, "PosBilling");
+        var second = await PosApiClient.ReadAsync<UserResponse>(
+            await Client.CreateUserAsync("cashier02", "Cashier@2026", "User", "Priya Fernando", null, "PosBilling"));
+
+        var response = await Client.UpdateUserAsync(
+            second.Id, "cashier01", second.FullName, "User", ["PosBilling"]);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await PosApiClient.ReadErrorCodeAsync(response)).Should().Be("User.UsernameTaken");
     }
 
     [Fact]
@@ -96,7 +130,7 @@ public class UserManagementTests : IntegrationTestBase
         var user = await PosApiClient.ReadAsync<UserResponse>(created);
 
         var promoted = await PosApiClient.ReadAsync<UserResponse>(
-            await Client.UpdateUserAsync(user.Id, "Priya", "Admin", []));
+            await Client.UpdateUserAsync(user.Id, user.Username, "Priya", "Admin", []));
 
         var catalog = await PosApiClient.ReadAsync<List<ModuleResponse>>(await Client.GetModulesAsync());
         promoted.Role.Should().Be("Admin");
@@ -147,7 +181,8 @@ public class UserManagementTests : IntegrationTestBase
         deactivate.StatusCode.Should().Be(HttpStatusCode.Conflict);
         (await PosApiClient.ReadErrorCodeAsync(deactivate)).Should().Be("User.CannotDeactivateSelf");
 
-        var demote = await Client.UpdateUserAsync(session.User.Id, session.User.FullName, "User", []);
+        var demote = await Client.UpdateUserAsync(
+            session.User.Id, session.User.Username, session.User.FullName, "User", []);
         demote.StatusCode.Should().Be(HttpStatusCode.Conflict);
         (await PosApiClient.ReadErrorCodeAsync(demote)).Should().Be("User.CannotDemoteSelf");
     }

@@ -75,7 +75,13 @@ public sealed record CategoryBreakdownResponse(
     decimal? BudgetUsedPercentage);
 
 public sealed record ProfitSummaryResponse(
-    decimal Revenue, decimal Expenses, decimal Profit, decimal? ExpenseRatio, decimal? ProfitMargin);
+    decimal Revenue,
+    decimal Expenses,
+    decimal Profit,
+    decimal? ExpenseRatio,
+    decimal? ProfitMargin,
+    int OrderCount,
+    decimal? AverageOrderValue);
 
 public sealed record PeriodComparisonResponse(
     string PreviousLabel,

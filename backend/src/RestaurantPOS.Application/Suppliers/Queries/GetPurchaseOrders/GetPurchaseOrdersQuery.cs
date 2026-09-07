@@ -40,6 +40,11 @@ internal sealed class GetPurchaseOrdersQueryHandler(IAppDbContext db)
         var supplierNames = await db.Suppliers.AsNoTracking()
             .ToDictionaryAsync(s => s.Id, s => s.Name, cancellationToken);
 
+        var rawMaterialIds = orders.SelectMany(o => o.Lines).Select(l => l.RawMaterialId).Distinct().ToList();
+        var rawMaterials = await db.RawMaterials.AsNoTracking()
+            .Where(r => rawMaterialIds.Contains(r.Id))
+            .ToDictionaryAsync(r => r.Id, cancellationToken);
+
         var orderIds = orders.Select(o => o.Id).ToList();
         var paidByOrder = await db.SupplierPayments.AsNoTracking()
             .Where(p => orderIds.Contains(p.PurchaseOrderId))
@@ -63,7 +68,19 @@ internal sealed class GetPurchaseOrdersQueryHandler(IAppDbContext db)
                     o.TotalAmount,
                     paid,
                     o.TotalAmount - paid,
-                    o.Lines.Count);
+                    o.Lines.Count,
+                    [
+                        .. o.Lines
+                            .Where(l => rawMaterials.ContainsKey(l.RawMaterialId))
+                            .Select(l => new PurchaseOrderLineDto(
+                                l.RawMaterialId,
+                                rawMaterials[l.RawMaterialId].Name,
+                                rawMaterials[l.RawMaterialId].UnitOfMeasurement,
+                                l.Quantity,
+                                l.UnitPrice,
+                                l.LineTotal))
+                            .OrderBy(l => l.RawMaterialName),
+                    ]);
             }),
         ];
 

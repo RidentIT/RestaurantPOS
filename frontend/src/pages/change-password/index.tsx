@@ -6,7 +6,16 @@ import { toast } from "sonner";
 import { useAuth, useChangePassword } from "@/features/auth";
 import { changePasswordSchema, ChangePasswordForm, PASSWORD_HINT } from "@/features/users/model/userSchema";
 import { toApiError } from "@/shared/api/problem";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, FormField, Input } from "@/shared/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  FormField,
+  PasswordInput,
+} from "@/shared/ui";
 
 /**
  * Forced for any account with a pending password change (the seeded admin, anyone just
@@ -71,7 +80,7 @@ export default function ChangePasswordPage() {
               required
               error={errors.currentPassword?.message}
             >
-              <Input {...register("currentPassword")} type="password" autoComplete="current-password" autoFocus />
+              <PasswordInput {...register("currentPassword")} autoComplete="current-password" autoFocus />
             </FormField>
 
             <FormField
@@ -81,7 +90,7 @@ export default function ChangePasswordPage() {
               hint={PASSWORD_HINT}
               error={errors.newPassword?.message}
             >
-              <Input {...register("newPassword")} type="password" autoComplete="new-password" />
+              <PasswordInput {...register("newPassword")} autoComplete="new-password" />
             </FormField>
 
             <FormField
@@ -90,7 +99,7 @@ export default function ChangePasswordPage() {
               required
               error={errors.confirmPassword?.message}
             >
-              <Input {...register("confirmPassword")} type="password" autoComplete="new-password" />
+              <PasswordInput {...register("confirmPassword")} autoComplete="new-password" />
             </FormField>
 
             <Button type="submit" className="w-full" size="lg" loading={changePassword.isPending}>

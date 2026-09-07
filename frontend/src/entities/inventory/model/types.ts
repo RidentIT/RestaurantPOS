@@ -68,6 +68,7 @@ export interface GoodsReceivedNoteSummary {
   qualityRating: number | null;
   hasIssue: boolean;
   lineCount: number;
+  rawMaterialNames: string[];
 }
 
 export interface StockRelease {
@@ -90,6 +91,7 @@ export interface StockReleaseSummary {
   approvedAtUtc: string;
   notes: string | null;
   lineCount: number;
+  rawMaterialNames: string[];
 }
 
 export interface StockLineInput {

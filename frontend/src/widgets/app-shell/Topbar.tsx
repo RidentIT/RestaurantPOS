@@ -1,7 +1,8 @@
-import { Bell, LogOut, ShieldCheck, User as UserIcon } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Bell, Home, LogOut, ShieldCheck, User as UserIcon } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth, useLogout } from "@/features/auth";
 import { NotificationBell } from "@/features/notifications";
+import { cn } from "@/shared/lib/utils";
 import {
   Badge,
   DropdownMenu,
@@ -22,7 +23,22 @@ export function Topbar() {
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b bg-card px-6">
-      <div />
+      <NavLink
+        to="/"
+        end
+        title="Home"
+        aria-label="Home"
+        className={({ isActive }) =>
+          cn(
+            "flex size-9 items-center justify-center rounded-md transition-colors",
+            isActive
+              ? "bg-primary/10 text-primary"
+              : "text-foreground/70 hover:bg-accent hover:text-accent-foreground",
+          )
+        }
+      >
+        <Home className="size-5" />
+      </NavLink>
 
       <div className="flex items-center gap-1">
         {/* Polling is paused while a forced password change is outstanding, since the API refuses

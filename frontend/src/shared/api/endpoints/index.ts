@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
     REFRESH: "/auth/refresh",
     LOGOUT: "/auth/logout",
     ME: "/auth/me",
+    PROFILE: "/auth/profile",
     CHANGE_PASSWORD: "/auth/change-password",
     PIN: "/auth/pin",
     VERIFY_PIN: "/auth/pin/verify",
@@ -101,6 +102,10 @@ export const API_ENDPOINTS = {
     TICKETS: "/kitchen/tickets",
     TICKET_STATUS: (id: string) => `/kitchen/tickets/${id}/status`,
     TICKET_REPRINT: (id: string) => `/kitchen/tickets/${id}/reprint`,
+  },
+  REPORTS: {
+    SALES_DAILY: "/reports/sales/daily",
+    SALES_MONTHLY: "/reports/sales/monthly",
   },
   SETTINGS: {
     BASE: "/settings",

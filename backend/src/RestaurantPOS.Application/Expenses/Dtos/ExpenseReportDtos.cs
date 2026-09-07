@@ -22,8 +22,16 @@ public sealed record DailyFigureDto(DateOnly Date, decimal Revenue, decimal Expe
 /// <param name="Expenses">Approved expenses only (BR-EXP-010).</param>
 /// <param name="ExpenseRatio">Expenses as a share of revenue, 0-100. Null when nothing was sold.</param>
 /// <param name="ProfitMargin">Profit as a share of revenue, 0-100. Null when nothing was sold.</param>
+/// <param name="OrderCount">Bills settled in the period.</param>
+/// <param name="AverageOrderValue">Revenue divided by <paramref name="OrderCount"/>. Null when nothing was sold.</param>
 public sealed record ProfitSummaryDto(
-    decimal Revenue, decimal Expenses, decimal Profit, decimal? ExpenseRatio, decimal? ProfitMargin);
+    decimal Revenue,
+    decimal Expenses,
+    decimal Profit,
+    decimal? ExpenseRatio,
+    decimal? ProfitMargin,
+    int OrderCount,
+    decimal? AverageOrderValue);
 
 /// <summary>How a period compares with the one before it (EXP-025).</summary>
 public sealed record PeriodComparisonDto(

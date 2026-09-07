@@ -179,6 +179,8 @@ export interface ProfitSummary {
   profit: number;
   expenseRatio: number | null;
   profitMargin: number | null;
+  orderCount: number;
+  averageOrderValue: number | null;
 }
 
 export interface PeriodComparison {
