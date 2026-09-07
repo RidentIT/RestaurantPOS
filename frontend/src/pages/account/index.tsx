@@ -1,8 +1,17 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Pencil, X } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { useAuth, useChangePassword } from "@/features/auth";
-import { ChangePasswordForm, PASSWORD_HINT, changePasswordSchema } from "@/features/users/model/userSchema";
+import { useAuth, useChangePassword, useUpdateProfile } from "@/features/auth";
+import {
+  ChangePasswordForm,
+  PASSWORD_HINT,
+  UpdateProfileForm,
+  changePasswordSchema,
+  toNullableEmail,
+  updateProfileSchema,
+} from "@/features/users/model/userSchema";
 import { toApiError } from "@/shared/api/problem";
 import {
   Badge,
@@ -14,6 +23,7 @@ import {
   CardTitle,
   FormField,
   Input,
+  PasswordInput,
 } from "@/shared/ui";
 import { ApprovalPinCard } from "./ApprovalPinCard";
 
@@ -31,34 +41,109 @@ export default function AccountPage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Full name</p>
-            <p className="font-medium">{user.fullName}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Username</p>
-            <p className="font-medium">@{user.username}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Email</p>
-            <p className="font-medium">{user.email ?? "—"}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Role</p>
-            <Badge variant={user.role === "Admin" ? "default" : "secondary"}>{user.role}</Badge>
-          </div>
-        </CardContent>
-      </Card>
+      <ProfileCard />
 
       <ChangePasswordCard />
 
       {user.role === "Admin" && <ApprovalPinCard />}
     </div>
+  );
+}
+
+function ProfileCard() {
+  const { user } = useAuth();
+  const updateProfile = useUpdateProfile();
+  const [isEditing, setIsEditing] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<UpdateProfileForm>({
+    resolver: zodResolver(updateProfileSchema),
+    defaultValues: { fullName: user?.fullName ?? "", email: user?.email ?? "" },
+  });
+
+  if (!user) return null;
+
+  const startEditing = () => {
+    reset({ fullName: user.fullName, email: user.email ?? "" });
+    setIsEditing(true);
+  };
+
+  const onSubmit = handleSubmit(async ({ fullName, email }) => {
+    try {
+      await updateProfile.mutateAsync({ fullName, email: toNullableEmail(email) });
+      toast.success("Your profile has been updated.");
+      setIsEditing(false);
+    } catch (error) {
+      toast.error(toApiError(error).message);
+    }
+  });
+
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardTitle>Profile</CardTitle>
+        {!isEditing && (
+          <Button type="button" variant="ghost" size="icon" onClick={startEditing} title="Edit profile">
+            <Pencil className="size-4" />
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent>
+        {isEditing ? (
+          <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2" noValidate>
+            <FormField htmlFor="fullName" label="Full name" required error={errors.fullName?.message}>
+              <Input {...register("fullName")} autoFocus />
+            </FormField>
+
+            <FormField
+              htmlFor="email"
+              label="Email"
+              hint="Optional — not required for floor staff."
+              error={errors.email?.message}
+            >
+              <Input {...register("email")} type="email" />
+            </FormField>
+
+            <div className="flex gap-2 sm:col-span-2">
+              <Button type="submit" loading={updateProfile.isPending}>
+                Save changes
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditing(false)}
+                disabled={updateProfile.isPending}
+              >
+                <X className="size-4" /> Cancel
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Full name</p>
+              <p className="font-medium">{user.fullName}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Username</p>
+              <p className="font-medium">@{user.username}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Email</p>
+              <p className="font-medium">{user.email ?? "—"}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Role</p>
+              <Badge variant={user.role === "Admin" ? "default" : "secondary"}>{user.role}</Badge>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -106,7 +191,7 @@ function ChangePasswordCard() {
             required
             error={errors.currentPassword?.message}
           >
-            <Input {...register("currentPassword")} type="password" autoComplete="current-password" />
+            <PasswordInput {...register("currentPassword")} autoComplete="current-password" />
           </FormField>
 
           <FormField
@@ -116,7 +201,7 @@ function ChangePasswordCard() {
             hint={PASSWORD_HINT}
             error={errors.newPassword?.message}
           >
-            <Input {...register("newPassword")} type="password" autoComplete="new-password" />
+            <PasswordInput {...register("newPassword")} autoComplete="new-password" />
           </FormField>
 
           <FormField
@@ -125,7 +210,7 @@ function ChangePasswordCard() {
             required
             error={errors.confirmPassword?.message}
           >
-            <Input {...register("confirmPassword")} type="password" autoComplete="new-password" />
+            <PasswordInput {...register("confirmPassword")} autoComplete="new-password" />
           </FormField>
 
           <div className="sm:col-span-3">

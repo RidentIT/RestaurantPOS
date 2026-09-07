@@ -54,8 +54,17 @@ export const createUserSchema = z.object({
   password: passwordSchema,
 });
 
-/** Existing account: the username is immutable and the password is changed separately. */
-export const updateUserSchema = z.object(baseUserFields);
+/** Existing account: only an administrator can rename it here; the password is changed separately. */
+export const updateUserSchema = z.object({
+  ...baseUserFields,
+  username: usernameSchema,
+});
+
+/** A user editing their own name and email — unlike {@link updateUserSchema}, role is not theirs to change. */
+export const updateProfileSchema = z.object({
+  fullName: baseUserFields.fullName,
+  email: baseUserFields.email,
+});
 
 export const resetPasswordSchema = z.object({
   newPassword: passwordSchema,
@@ -82,5 +91,6 @@ export const approvalPinSchema = z
 
 export type CreateUserForm = z.infer<typeof createUserSchema>;
 export type UpdateUserForm = z.infer<typeof updateUserSchema>;
+export type UpdateProfileForm = z.infer<typeof updateProfileSchema>;
 export type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
 export type ChangePasswordForm = z.infer<typeof changePasswordSchema>;

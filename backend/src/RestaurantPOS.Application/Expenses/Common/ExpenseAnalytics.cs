@@ -41,6 +41,21 @@ public static class ExpenseAnalytics
             .SumAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// How many bills were settled in a range — what turns "revenue" into "average ticket size",
+    /// the figure an owner actually compares night to night.
+    /// </summary>
+    public static Task<int> OrderCountBetweenAsync(
+        IAppDbContext db, DateOnly from, DateOnly to, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(db);
+
+        return db.Orders.AsNoTracking()
+            .Where(o => o.Status == OrderStatus.Completed && o.OrderDate != null
+                && o.OrderDate >= from && o.OrderDate <= to)
+            .CountAsync(cancellationToken);
+    }
+
     /// <summary>Takings per business day, for a trend line.</summary>
     public static async Task<Dictionary<DateOnly, decimal>> RevenueByDayAsync(
         IAppDbContext db, DateOnly from, DateOnly to, CancellationToken cancellationToken)
@@ -79,7 +94,7 @@ public static class ExpenseAnalytics
     }
 
     /// <summary>Revenue against expenses, with the ratios an owner actually reads.</summary>
-    public static ProfitSummaryDto BuildProfitSummary(decimal revenue, decimal expenses)
+    public static ProfitSummaryDto BuildProfitSummary(decimal revenue, decimal expenses, int orderCount = 0)
     {
         var profit = revenue - expenses;
 
@@ -87,8 +102,9 @@ public static class ExpenseAnalytics
         // it is a day with nothing to compare against. Null says that; zero would lie.
         var expenseRatio = revenue > 0 ? Round(expenses / revenue * 100m) : (decimal?)null;
         var profitMargin = revenue > 0 ? Round(profit / revenue * 100m) : (decimal?)null;
+        var averageOrderValue = orderCount > 0 ? Math.Round(revenue / orderCount, 2, MidpointRounding.AwayFromZero) : (decimal?)null;
 
-        return new ProfitSummaryDto(revenue, expenses, profit, expenseRatio, profitMargin);
+        return new ProfitSummaryDto(revenue, expenses, profit, expenseRatio, profitMargin, orderCount, averageOrderValue);
     }
 
     /// <summary>Splits a period's spending by category, with each one's share and budget usage.</summary>

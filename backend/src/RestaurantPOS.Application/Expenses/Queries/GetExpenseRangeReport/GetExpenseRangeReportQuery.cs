@@ -55,10 +55,12 @@ internal sealed class GetExpenseRangeReportQueryHandler(IAppDbContext db)
             })
             .ToList();
 
+        var orderCount = await ExpenseAnalytics.OrderCountBetweenAsync(db, request.From, request.To, cancellationToken);
+
         return Result.Success(new ExpenseRangeReportDto(
             request.From,
             request.To,
-            ExpenseAnalytics.BuildProfitSummary(revenueByDay.Values.Sum(), expenses.Sum(e => e.Amount)),
+            ExpenseAnalytics.BuildProfitSummary(revenueByDay.Values.Sum(), expenses.Sum(e => e.Amount), orderCount),
             ExpenseAnalytics.BuildCategoryBreakdown(expenses, categories),
             dailyFigures));
     }

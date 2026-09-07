@@ -91,6 +91,8 @@ public class ExpenseReportTests : IntegrationTestBase
         report.Summary.Profit.Should().Be(36_500m);
         report.Summary.ProfitMargin.Should().BeApproximately(81.1m, 0.2m);
         report.Summary.ExpenseRatio.Should().BeApproximately(18.9m, 0.2m);
+        report.Summary.OrderCount.Should().Be(2);
+        report.Summary.AverageOrderValue.Should().Be(22_500m);
     }
 
     [Fact]

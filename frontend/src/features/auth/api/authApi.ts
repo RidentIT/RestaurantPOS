@@ -12,6 +12,10 @@ export const authApi = {
   /** Re-reads the signed-in user so permissions are never trusted from cached client state. */
   me: () => apiService.get<User>(API_ENDPOINTS.AUTH.ME),
 
+  /** Updates the signed-in user's own display name and email. */
+  updateProfile: (fullName: string, email: string | null) =>
+    apiService.put<User>(API_ENDPOINTS.AUTH.PROFILE, { fullName, email }),
+
   changePassword: (currentPassword: string, newPassword: string) =>
     apiService.post<Session>(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, {
       currentPassword,

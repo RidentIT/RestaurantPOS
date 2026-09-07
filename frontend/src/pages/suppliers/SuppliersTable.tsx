@@ -24,10 +24,13 @@ export function SuppliersTable({
   suppliers,
   isLoading,
   onEdit,
+  isFiltered = false,
 }: {
   suppliers: Supplier[] | undefined;
   isLoading: boolean;
   onEdit: (supplier: Supplier) => void;
+  /** True when `suppliers` has already been narrowed by a search or status filter. */
+  isFiltered?: boolean;
 }) {
   const { setActive } = useSupplierMutations();
 
@@ -45,7 +48,13 @@ export function SuppliersTable({
   }
 
   if (!suppliers || suppliers.length === 0) {
-    return (
+    return isFiltered ? (
+      <EmptyState
+        icon={<Truck className="size-6" />}
+        title="No suppliers match your filters"
+        description="Try clearing the search or status filter."
+      />
+    ) : (
       <EmptyState icon={<Truck className="size-6" />} title="No suppliers yet" description="Add one to get started." />
     );
   }

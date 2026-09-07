@@ -15,9 +15,10 @@ using RestaurantPOS.Domain.Errors;
 
 namespace RestaurantPOS.Application.Users.Commands.UpdateUser;
 
-/// <summary>Updates a user's profile, role and module grants in one operation.</summary>
+/// <summary>Updates a user's profile, username, role and module grants in one operation.</summary>
 public sealed record UpdateUserCommand(
     Guid UserId,
+    string Username,
     string FullName,
     string? Email,
     UserRole Role,
@@ -28,6 +29,13 @@ public sealed class UpdateUserCommandValidator : AbstractValidator<UpdateUserCom
     public UpdateUserCommandValidator()
     {
         RuleFor(x => x.UserId).NotEmpty();
+
+        RuleFor(x => x.Username)
+            .NotEmpty().WithMessage("Username is required.")
+            .Must(User.IsValidUsername)
+            .WithMessage(
+                $"Username must be {User.UsernameMinLength}-{User.UsernameMaxLength} characters and may " +
+                "contain only letters, digits, dots, hyphens and underscores.");
 
         RuleFor(x => x.FullName)
             .NotEmpty().WithMessage("Full name is required.")
@@ -56,6 +64,22 @@ internal sealed class UpdateUserCommandHandler(IAppDbContext db, ICurrentUser cu
         if (user is null)
         {
             return Result.Failure<UserDto>(UserErrors.NotFound(request.UserId));
+        }
+
+        var username = request.Username.Trim().ToLowerInvariant();
+
+        if (username != user.Username)
+        {
+            var usernameTaken = await db.Users.AnyAsync(
+                u => u.Id != user.Id && u.Username == username,
+                cancellationToken);
+
+            if (usernameTaken)
+            {
+                return Result.Failure<UserDto>(UserErrors.UsernameTaken);
+            }
+
+            user.ChangeUsername(username);
         }
 
         var roleIsChanging = user.Role != request.Role;

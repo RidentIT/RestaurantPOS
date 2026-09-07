@@ -1,11 +1,19 @@
 import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { ClipboardCheck } from "lucide-react";
 import { toast } from "sonner";
 import type { StockLineInput } from "@/entities/inventory";
 import type { RawMaterial } from "@/entities/raw-material";
+import { UNIT_ABBREVIATIONS } from "@/entities/raw-material";
 import type { Supplier } from "@/entities/supplier";
-import { usePurchaseOrders } from "@/features/purchase-orders";
 import {
+  PURCHASE_ORDER_STATUS_BADGE,
+  describeOrderContents,
+  purchaseOrderRef,
+  usePurchaseOrders,
+} from "@/features/purchase-orders";
+import {
+  Badge,
   Button,
   Checkbox,
   Dialog,
@@ -73,6 +81,7 @@ export function GoodsReceivedNoteDialog({ open, onOpenChange, suppliers, rawMate
   } = useForm<FormValues>({ defaultValues: defaults });
 
   const supplierId = watch("supplierId");
+  const purchaseOrderId = watch("purchaseOrderId");
 
   // Only orders already sent to (or received from) this supplier make sense to link a delivery
   // to — a draft has not been placed yet, and a cancelled order cannot be fulfilled.
@@ -81,6 +90,32 @@ export function GoodsReceivedNoteDialog({ open, onOpenChange, suppliers, rawMate
     () => (supplierOrders ?? []).filter((o) => o.status !== "Draft" && o.status !== "Cancelled"),
     [supplierOrders],
   );
+
+  const selectedOrder = useMemo(
+    () => linkableOrders.find((o) => o.id === purchaseOrderId),
+    [linkableOrders, purchaseOrderId],
+  );
+
+  /**
+   * Copies the ordered materials and quantities onto the delivery. A delivery usually matches
+   * what was ordered, so keying it in a second time is wasted effort — and every line stays
+   * editable afterwards for the times it arrives short.
+   */
+  const fillFromOrder = () => {
+    if (!selectedOrder) return;
+
+    const known = selectedOrder.lines.filter((line) =>
+      rawMaterials.some((material) => material.id === line.rawMaterialId),
+    );
+
+    if (known.length === 0) {
+      toast.error("None of this order's materials are available to receive.");
+      return;
+    }
+
+    setLines(known.map((line) => ({ rawMaterialId: line.rawMaterialId, quantity: line.quantity })));
+    toast.success(`Filled in ${known.length} line${known.length === 1 ? "" : "s"} from the order.`);
+  };
 
   const close = (isOpen: boolean) => {
     if (!isOpen) {
@@ -159,11 +194,17 @@ export function GoodsReceivedNoteDialog({ open, onOpenChange, suppliers, rawMate
                     <SelectTrigger id="purchaseOrderId">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-w-[var(--radix-select-trigger-width)]">
                       <SelectItem value={NO_PURCHASE_ORDER}>Not linked to an order</SelectItem>
                       {linkableOrders.map((order) => (
                         <SelectItem key={order.id} value={order.id}>
-                          {order.status} · {new Date(order.createdAtUtc).toLocaleDateString()} · {order.totalAmount.toFixed(2)}
+                          <span className="font-mono text-xs text-muted-foreground">
+                            {purchaseOrderRef(order.id)}
+                          </span>
+                          {" · "}
+                          {describeOrderContents(order.lines)}
+                          {" · "}
+                          <span className="tabular">{order.totalAmount.toFixed(2)}</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -171,6 +212,56 @@ export function GoodsReceivedNoteDialog({ open, onOpenChange, suppliers, rawMate
                 )}
               />
             </FormField>
+          )}
+
+          {/* What was actually ordered, so the storekeeper can check the delivery against it
+              without leaving this screen. */}
+          {selectedOrder && (
+            <div className="space-y-3 rounded-lg border bg-muted/30 p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-mono text-xs text-muted-foreground">
+                  {purchaseOrderRef(selectedOrder.id)}
+                </span>
+                <Badge variant={PURCHASE_ORDER_STATUS_BADGE[selectedOrder.status]}>
+                  {selectedOrder.status}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  Ordered {new Date(selectedOrder.createdAtUtc).toLocaleDateString()}
+                  {selectedOrder.expectedDeliveryDate &&
+                    ` · Expected ${new Date(selectedOrder.expectedDeliveryDate).toLocaleDateString()}`}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="ml-auto"
+                  onClick={fillFromOrder}
+                  disabled={selectedOrder.lines.length === 0}
+                >
+                  <ClipboardCheck /> Fill in what was ordered
+                </Button>
+              </div>
+
+              {selectedOrder.lines.length === 0 ? (
+                <p className="text-sm text-muted-foreground">This order has no materials on it.</p>
+              ) : (
+                <ul className="space-y-1 text-sm">
+                  {selectedOrder.lines.map((line) => (
+                    <li key={line.rawMaterialId} className="flex items-baseline gap-2">
+                      <span className="min-w-0 flex-1 truncate">{line.rawMaterialName}</span>
+                      <span className="shrink-0 tabular text-muted-foreground">
+                        {line.quantity} {UNIT_ABBREVIATIONS[line.unitOfMeasurement]} × {line.unitPrice.toFixed(2)}
+                      </span>
+                      <span className="w-20 shrink-0 text-right tabular">{line.lineTotal.toFixed(2)}</span>
+                    </li>
+                  ))}
+                  <li className="flex items-baseline gap-2 border-t pt-1 font-medium">
+                    <span className="flex-1">Order total</span>
+                    <span className="w-20 text-right tabular">{selectedOrder.totalAmount.toFixed(2)}</span>
+                  </li>
+                </ul>
+              )}
+            </div>
           )}
 
           <div>

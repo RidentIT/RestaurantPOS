@@ -42,7 +42,19 @@ describe("createUserSchema", () => {
 });
 
 describe("updateUserSchema", () => {
-  it("does not require a username or password", () => {
+  const validUpdate = {
+    username: "cashier01",
+    fullName: "Ravi Kumar",
+    email: "",
+    role: "User" as const,
+    modules: ["PosBilling"],
+  };
+
+  it("does not require a password — that's changed separately", () => {
+    expect(updateUserSchema.safeParse(validUpdate).success).toBe(true);
+  });
+
+  it("requires a username, since editing an account can rename it", () => {
     const result = updateUserSchema.safeParse({
       fullName: "Ravi Kumar",
       email: "",
@@ -50,7 +62,12 @@ describe("updateUserSchema", () => {
       modules: [],
     });
 
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+  });
+
+  it.each(["ab", "has spaces", "bad!char"])("rejects a malformed username %s", (username) => {
+    const result = updateUserSchema.safeParse({ ...validUpdate, username });
+    expect(result.success).toBe(false);
   });
 });
 

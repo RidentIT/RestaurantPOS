@@ -9,6 +9,7 @@ using RestaurantPOS.Application.Authentication.Commands.Login;
 using RestaurantPOS.Application.Authentication.Commands.Logout;
 using RestaurantPOS.Application.Authentication.Commands.RefreshSession;
 using RestaurantPOS.Application.Authentication.Commands.SetApprovalPin;
+using RestaurantPOS.Application.Authentication.Commands.UpdateProfile;
 using RestaurantPOS.Application.Authentication.Commands.VerifyApprovalPin;
 using RestaurantPOS.Application.Authentication.Queries.GetCurrentUser;
 
@@ -64,6 +65,16 @@ public static class AuthEndpoints
             .WithMetadata(new AllowPendingPasswordChangeAttribute())
             .WithName("GetCurrentUser")
             .WithSummary("Returns the signed-in user and their effective module access.");
+
+        group.MapPut("/profile", async (UpdateProfileRequest request, ISender sender, CancellationToken ct) =>
+            {
+                var command = new UpdateProfileCommand(request.FullName, request.Email);
+                var result = await sender.Send(command, ct);
+                return result.ToHttpResult();
+            })
+            .RequireAuthorization()
+            .WithName("UpdateProfile")
+            .WithSummary("Updates the signed-in user's own display name and email.");
 
         group.MapPost("/change-password",
                 async (ChangePasswordRequest request, ISender sender, CancellationToken ct) =>

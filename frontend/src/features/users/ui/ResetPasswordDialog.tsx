@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
   FormField,
-  Input,
+  PasswordInput,
 } from "@/shared/ui";
 import { useUserMutations } from "../model/useUsers";
 import { PASSWORD_HINT, ResetPasswordForm, resetPasswordSchema } from "../model/userSchema";
@@ -84,7 +84,7 @@ export function ResetPasswordDialog({ open, onOpenChange, user }: ResetPasswordD
             hint={PASSWORD_HINT}
             error={errors.newPassword?.message}
           >
-            <Input {...register("newPassword")} type="password" autoComplete="new-password" autoFocus />
+            <PasswordInput {...register("newPassword")} autoComplete="new-password" autoFocus />
           </FormField>
 
           <DialogFooter>
