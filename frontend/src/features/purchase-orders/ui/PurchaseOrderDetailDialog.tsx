@@ -19,6 +19,7 @@ import {
 import { toApiError } from "@/shared/api/problem";
 import { usePurchaseOrder, usePurchaseOrderMutations, usePurchaseOrderPayments } from "../model/usePurchaseOrders";
 import { PURCHASE_ORDER_STATUS_BADGE } from "../lib/status";
+import { purchaseOrderRef } from "../lib/describe";
 import { RecordPaymentDialog } from "./RecordPaymentDialog";
 
 export interface PurchaseOrderDetailDialogProps {
@@ -56,7 +57,7 @@ export function PurchaseOrderDetailDialog({ open, onOpenChange, purchaseOrderId 
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Purchase order</DialogTitle>
+            <DialogTitle>{order ? `Purchase order ${purchaseOrderRef(order.id)}` : "Purchase order"}</DialogTitle>
           </DialogHeader>
 
           {isLoading || !order ? (

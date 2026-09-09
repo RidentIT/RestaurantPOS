@@ -174,6 +174,47 @@ public class SettingsTests : IntegrationTestBase
     }
 
     [Fact]
+    public async Task PrinterSettings_RouteKitchenTicketsAndReceiptsToTheirOwnPrinters()
+    {
+        await SignInAsAdminAsync();
+        var table = await CreateTableAsync("7");
+        var dish = await CreateMenuItemAsync("Kottu", 900m);
+
+        (await Client.UpdateDefaultPrinterAsync("EPSON Counter", "EPSON Kitchen")).EnsureSuccessStatusCode();
+
+        var settings = await PosApiClient.ReadAsync<RestaurantSettingsResponse>(await Client.GetRestaurantSettingsAsync());
+        settings.DefaultPrinterName.Should().Be("EPSON Counter");
+        settings.KitchenPrinterName.Should().Be("EPSON Kitchen");
+
+        var order = await PosApiClient.ReadAsync<OrderResponse>(await Client.CreateOrderAsync(table));
+        await Client.AddOrderItemsAsync(order.Id, (dish, 1, null));
+
+        var confirmed = await PosApiClient.ReadAsync<OrderMutationResponse>(await Client.ConfirmOrderAsync(order.Id));
+        confirmed.Kot!.PrinterName.Should().Be("EPSON Kitchen", "a KOT goes to the kitchen printer");
+
+        await Client.StartCheckoutAsync(order.Id);
+        var receipt = await PosApiClient.ReadAsync<ReceiptDocumentResponse>(
+            await Client.PayOrderAsync(order.Id, ("Cash", 900m, 900m)));
+        receipt.PrinterName.Should().Be("EPSON Counter", "a receipt goes to the counter printer");
+    }
+
+    [Fact]
+    public async Task KitchenTickets_FallBackToTheReceiptPrinterWhenNoKitchenPrinterIsSet()
+    {
+        await SignInAsAdminAsync();
+        var table = await CreateTableAsync("8");
+        var dish = await CreateMenuItemAsync("String Hoppers", 400m);
+
+        (await Client.UpdateDefaultPrinterAsync("EPSON Counter", kitchenPrinterName: null)).EnsureSuccessStatusCode();
+
+        var order = await PosApiClient.ReadAsync<OrderResponse>(await Client.CreateOrderAsync(table));
+        await Client.AddOrderItemsAsync(order.Id, (dish, 1, null));
+
+        var confirmed = await PosApiClient.ReadAsync<OrderMutationResponse>(await Client.ConfirmOrderAsync(order.Id));
+        confirmed.Kot!.PrinterName.Should().Be("EPSON Counter", "with one printer, the KOT prints there too");
+    }
+
+    [Fact]
     public async Task UpdateApprovalPinPolicy_ChangesHowManyAttemptsATerminalGetsBeforeLockout()
     {
         await SignInAsAdminAsync();

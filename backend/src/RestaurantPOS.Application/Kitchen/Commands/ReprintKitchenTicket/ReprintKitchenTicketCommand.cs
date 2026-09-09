@@ -60,6 +60,6 @@ internal sealed class ReprintKitchenTicketCommandHandler(IAppDbContext db)
 
         var settings = await RestaurantSettingsAccessor.GetAsync(db, cancellationToken);
 
-        return Result.Success(ticket.ToKotDocument(order, settings.Name, tableNumber, cashierName));
+        return Result.Success(ticket.ToKotDocument(order, settings, tableNumber, cashierName));
     }
 }

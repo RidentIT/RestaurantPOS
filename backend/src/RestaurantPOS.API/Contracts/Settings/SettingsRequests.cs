@@ -13,7 +13,7 @@ public sealed record UpdateBillChargesRequest(decimal TaxRatePercent, decimal Se
 
 public sealed record UpdateReceiptFooterRequest(string Message);
 
-public sealed record UpdateDefaultPrinterRequest(string? PrinterName);
+public sealed record UpdateDefaultPrinterRequest(string? PrinterName, string? KitchenPrinterName);
 
 public sealed record UpdateApprovalPinPolicyRequest(int MaxAttempts, int LockoutMinutes);
 

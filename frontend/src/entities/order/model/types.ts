@@ -136,6 +136,8 @@ export interface KotDocument {
   cashierName: string;
   printedAtUtc: string;
   printCount: number;
+  /** The Windows printer this slip should go to. Null uses the till's default printer. */
+  printerName: string | null;
   lines: KotDocumentLine[];
 }
 
@@ -171,6 +173,8 @@ export interface ReceiptDocument {
   cashierName: string;
   issuedAtUtc: string;
   printCount: number;
+  /** The Windows printer this receipt should go to. Null uses the till's default printer. */
+  printerName: string | null;
   lines: ReceiptLine[];
   subtotal: number;
   discountAmount: number;

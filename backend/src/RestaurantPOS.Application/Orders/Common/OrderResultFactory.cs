@@ -35,7 +35,7 @@ public static class OrderResultFactory
         if (ticket is not null)
         {
             var settings = await RestaurantSettingsAccessor.GetAsync(db, cancellationToken);
-            kot = ticket.ToKotDocument(order, settings.Name, tableNumber, cashierName);
+            kot = ticket.ToKotDocument(order, settings, tableNumber, cashierName);
         }
 
         return new OrderMutationDto(order.ToDto(tableNumber, cashierName), kot);

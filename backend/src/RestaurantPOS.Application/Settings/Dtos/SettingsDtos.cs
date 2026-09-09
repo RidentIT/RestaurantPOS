@@ -13,6 +13,7 @@ public sealed record RestaurantSettingsDto(
     decimal ServiceChargeRatePercent,
     string ReceiptFooterMessage,
     string? DefaultPrinterName,
+    string? KitchenPrinterName,
     int ApprovalPinMaxAttempts,
     int ApprovalPinLockoutMinutes,
     string? BackupFolderPath,

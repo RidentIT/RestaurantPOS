@@ -82,8 +82,18 @@ public sealed class RestaurantSettings : BaseEntity
 
     // ----- Printing -----
 
-    /// <summary>The printer bills and KOTs go to. Null uses the system default.</summary>
+    /// <summary>
+    /// The printer customer receipts go to, and the fallback for kitchen tickets when
+    /// <see cref="KitchenPrinterName"/> is not set. Null uses the till's own Windows default.
+    /// </summary>
     public string? DefaultPrinterName { get; private set; }
+
+    /// <summary>
+    /// The printer kitchen tickets (KOTs) go to — typically a second thermal printer on the pass.
+    /// Null falls back to <see cref="DefaultPrinterName"/>, and then to the system default, so a
+    /// restaurant with one printer never has to configure this.
+    /// </summary>
+    public string? KitchenPrinterName { get; private set; }
 
     // ----- Security -----
 
@@ -133,8 +143,11 @@ public sealed class RestaurantSettings : BaseEntity
     public void UpdateReceiptFooter(string message) =>
         ReceiptFooterMessage = NormaliseRequired(message, ReceiptFooterMaxLength, nameof(message));
 
-    public void UpdateDefaultPrinter(string? printerName) =>
-        DefaultPrinterName = NormaliseOptional(printerName, PrinterNameMaxLength);
+    public void UpdatePrinters(string? receiptPrinterName, string? kitchenPrinterName)
+    {
+        DefaultPrinterName = NormaliseOptional(receiptPrinterName, PrinterNameMaxLength);
+        KitchenPrinterName = NormaliseOptional(kitchenPrinterName, PrinterNameMaxLength);
+    }
 
     public void UpdateApprovalPinPolicy(int maxAttempts, int lockoutMinutes)
     {

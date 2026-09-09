@@ -23,9 +23,9 @@ import {
 
 const SYSTEM_DEFAULT = "__system_default__";
 
-/** The footer message printed on every receipt, and which Windows printer bills and KOTs go to. */
+/** The footer message printed on every receipt, and which Windows printer receipts and KOTs go to. */
 export function ReceiptPrintingSection({ settings }: { settings: RestaurantSettings }) {
-  const { updateReceiptFooter, updateDefaultPrinter } = useSettingsMutations();
+  const { updateReceiptFooter, updatePrinters } = useSettingsMutations();
 
   const [footer, setFooter] = useState(settings.receiptFooterMessage);
   useEffect(() => setFooter(settings.receiptFooterMessage), [settings.receiptFooterMessage]);
@@ -53,10 +53,27 @@ export function ReceiptPrintingSection({ settings }: { settings: RestaurantSetti
     }
   };
 
-  const savePrinter = async (value: string) => {
+  const fromSelect = (value: string) => (value === SYSTEM_DEFAULT ? null : value);
+
+  const saveReceiptPrinter = async (value: string) => {
     try {
-      await updateDefaultPrinter.mutateAsync(value === SYSTEM_DEFAULT ? null : value);
-      toast.success("Default printer updated.");
+      await updatePrinters.mutateAsync({
+        printerName: fromSelect(value),
+        kitchenPrinterName: settings.kitchenPrinterName,
+      });
+      toast.success("Receipt printer updated.");
+    } catch (error) {
+      toast.error(toApiError(error).message);
+    }
+  };
+
+  const saveKitchenPrinter = async (value: string) => {
+    try {
+      await updatePrinters.mutateAsync({
+        printerName: settings.defaultPrinterName,
+        kitchenPrinterName: fromSelect(value),
+      });
+      toast.success("Kitchen printer updated.");
     } catch (error) {
       toast.error(toApiError(error).message);
     }
@@ -80,7 +97,7 @@ export function ReceiptPrintingSection({ settings }: { settings: RestaurantSetti
 
       <Card>
         <CardHeader>
-          <CardTitle>Default printer</CardTitle>
+          <CardTitle>Printers</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {!inDesktopShell ? (
@@ -90,25 +107,51 @@ export function ReceiptPrintingSection({ settings }: { settings: RestaurantSetti
               </AlertDescription>
             </Alert>
           ) : (
-            <FormField htmlFor="settings-printer" label="Bills and kitchen tickets print to">
-              <Select
-                value={settings.defaultPrinterName ?? SYSTEM_DEFAULT}
-                onValueChange={savePrinter}
-                disabled={printersLoading || updateDefaultPrinter.isPending}
+            <>
+              <FormField htmlFor="settings-receipt-printer" label="Customer receipts print to">
+                <Select
+                  value={settings.defaultPrinterName ?? SYSTEM_DEFAULT}
+                  onValueChange={saveReceiptPrinter}
+                  disabled={printersLoading || updatePrinters.isPending}
+                >
+                  <SelectTrigger id="settings-receipt-printer">
+                    <SelectValue placeholder="System default" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={SYSTEM_DEFAULT}>System default</SelectItem>
+                    {(printers ?? []).map((name) => (
+                      <SelectItem key={name} value={name}>
+                        {name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormField>
+
+              <FormField
+                htmlFor="settings-kitchen-printer"
+                label="Kitchen tickets (KOTs) print to"
+                hint="Leave on the receipt printer if the kitchen shares one printer with the counter."
               >
-                <SelectTrigger id="settings-printer">
-                  <SelectValue placeholder="System default" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={SYSTEM_DEFAULT}>System default</SelectItem>
-                  {(printers ?? []).map((name) => (
-                    <SelectItem key={name} value={name}>
-                      {name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormField>
+                <Select
+                  value={settings.kitchenPrinterName ?? SYSTEM_DEFAULT}
+                  onValueChange={saveKitchenPrinter}
+                  disabled={printersLoading || updatePrinters.isPending}
+                >
+                  <SelectTrigger id="settings-kitchen-printer">
+                    <SelectValue placeholder="Same as receipt printer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={SYSTEM_DEFAULT}>Same as receipt printer</SelectItem>
+                    {(printers ?? []).map((name) => (
+                      <SelectItem key={name} value={name}>
+                        {name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormField>
+            </>
           )}
         </CardContent>
       </Card>

@@ -40,7 +40,8 @@ public sealed record OrderPaymentResponse(
 
 public sealed record KotDocumentResponse(
     Guid TicketId, string RestaurantName, int? OrderNumber, string? TableNumber, int TicketNumber,
-    string Kind, string CashierName, int PrintCount, IReadOnlyCollection<KotLineResponse> Lines);
+    string Kind, string CashierName, int PrintCount, string? PrinterName,
+    IReadOnlyCollection<KotLineResponse> Lines);
 
 public sealed record KotLineResponse(string MenuItemName, int Quantity, string? SpecialInstructions, string? Note);
 
@@ -57,6 +58,7 @@ public sealed record ReceiptDocumentResponse(
     string? TableNumber,
     string CashierName,
     int PrintCount,
+    string? PrinterName,
     IReadOnlyCollection<ReceiptLineResponse> Lines,
     decimal Subtotal,
     decimal DiscountAmount,
