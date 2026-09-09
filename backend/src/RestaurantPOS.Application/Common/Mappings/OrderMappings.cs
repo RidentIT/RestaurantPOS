@@ -91,14 +91,15 @@ public static class OrderMappings
 
     /// <summary>Builds the printable slip for a ticket the kitchen has just been sent.</summary>
     public static KotDocumentDto ToKotDocument(
-        this KitchenTicket ticket, Order order, string restaurantName, string? tableNumber, string cashierName)
+        this KitchenTicket ticket, Order order, RestaurantSettings settings, string? tableNumber, string cashierName)
     {
         ArgumentNullException.ThrowIfNull(ticket);
         ArgumentNullException.ThrowIfNull(order);
+        ArgumentNullException.ThrowIfNull(settings);
 
         return new KotDocumentDto(
             ticket.Id,
-            restaurantName,
+            settings.Name,
             order.OrderNumber,
             tableNumber,
             ticket.TicketNumber,
@@ -106,6 +107,7 @@ public static class OrderMappings
             cashierName,
             ticket.PrintedAtUtc,
             ticket.PrintCount,
+            settings.KitchenPrinterName ?? settings.DefaultPrinterName,
             [.. ticket.Lines.Select(l => new KotDocumentLineDto(
                 l.MenuItemName, l.Quantity, l.SpecialInstructions, l.Note))]);
     }

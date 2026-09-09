@@ -22,6 +22,8 @@ public sealed record KotDocumentDto(
     string CashierName,
     DateTime PrintedAtUtc,
     int PrintCount,
+    /// <summary>The Windows printer this slip should go to. Null uses the till's default printer.</summary>
+    string? PrinterName,
     IReadOnlyCollection<KotDocumentLineDto> Lines);
 
 public sealed record KotDocumentLineDto(
@@ -43,6 +45,8 @@ public sealed record ReceiptDocumentDto(
     string CashierName,
     DateTime IssuedAtUtc,
     int PrintCount,
+    /// <summary>The Windows printer this receipt should go to. Null uses the till's default printer.</summary>
+    string? PrinterName,
     IReadOnlyCollection<ReceiptLineDto> Lines,
     decimal Subtotal,
     decimal DiscountAmount,

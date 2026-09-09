@@ -21,6 +21,7 @@ public static class SettingsMappings
             settings.ServiceChargeRatePercent,
             settings.ReceiptFooterMessage,
             settings.DefaultPrinterName,
+            settings.KitchenPrinterName,
             settings.ApprovalPinMaxAttempts,
             settings.ApprovalPinLockoutMinutes,
             settings.BackupFolderPath,

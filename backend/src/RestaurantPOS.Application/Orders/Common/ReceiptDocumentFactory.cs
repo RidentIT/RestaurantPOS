@@ -50,6 +50,7 @@ public static class ReceiptDocumentFactory
             cashierName,
             receipt.IssuedAtUtc,
             receipt.PrintCount,
+            settings.DefaultPrinterName,
             [.. order.ActiveItems
                 .OrderBy(i => i.CreatedAtUtc)
                 .Select(i => new ReceiptLineDto(i.MenuItemName, i.Quantity, i.UnitPrice, i.LineTotal))],

@@ -14,6 +14,7 @@ public sealed record RestaurantSettingsResponse(
     decimal ServiceChargeRatePercent,
     string ReceiptFooterMessage,
     string? DefaultPrinterName,
+    string? KitchenPrinterName,
     int ApprovalPinMaxAttempts,
     int ApprovalPinLockoutMinutes,
     string? BackupFolderPath,
@@ -42,8 +43,9 @@ public sealed partial class PosApiClient
     public Task<HttpResponseMessage> UpdateReceiptFooterAsync(string message) =>
         Http.PutAsJsonAsync($"{BaseUrl}/settings/receipt-footer", new { message }, Json);
 
-    public Task<HttpResponseMessage> UpdateDefaultPrinterAsync(string? printerName) =>
-        Http.PutAsJsonAsync($"{BaseUrl}/settings/printer", new { printerName }, Json);
+    public Task<HttpResponseMessage> UpdateDefaultPrinterAsync(
+        string? printerName, string? kitchenPrinterName = null) =>
+        Http.PutAsJsonAsync($"{BaseUrl}/settings/printer", new { printerName, kitchenPrinterName }, Json);
 
     public Task<HttpResponseMessage> UpdateApprovalPinPolicyAsync(int maxAttempts, int lockoutMinutes) =>
         Http.PutAsJsonAsync(

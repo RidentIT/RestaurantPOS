@@ -12,15 +12,20 @@ using RestaurantPOS.Domain.Entities;
 namespace RestaurantPOS.Application.Settings.Commands.UpdateDefaultPrinter;
 
 /// <summary>
-/// The printer bills and KOTs go to. Null falls back to the system default — the till's own
-/// Windows printer, whatever that happens to be.
+/// Which printer receipts go to (<paramref name="PrinterName"/>) and which kitchen tickets go to
+/// (<paramref name="KitchenPrinterName"/>). Either being null falls back — the kitchen printer to
+/// the receipt printer, the receipt printer to the till's own Windows default.
 /// </summary>
-public sealed record UpdateDefaultPrinterCommand(string? PrinterName) : IRequest<Result<RestaurantSettingsDto>>;
+public sealed record UpdateDefaultPrinterCommand(string? PrinterName, string? KitchenPrinterName)
+    : IRequest<Result<RestaurantSettingsDto>>;
 
 public sealed class UpdateDefaultPrinterCommandValidator : AbstractValidator<UpdateDefaultPrinterCommand>
 {
-    public UpdateDefaultPrinterCommandValidator() =>
+    public UpdateDefaultPrinterCommandValidator()
+    {
         RuleFor(x => x.PrinterName).MaximumLength(RestaurantSettings.PrinterNameMaxLength);
+        RuleFor(x => x.KitchenPrinterName).MaximumLength(RestaurantSettings.PrinterNameMaxLength);
+    }
 }
 
 internal sealed class UpdateDefaultPrinterCommandHandler(IAppDbContext db)
@@ -31,7 +36,7 @@ internal sealed class UpdateDefaultPrinterCommandHandler(IAppDbContext db)
     {
         var settings = await RestaurantSettingsAccessor.GetTrackedAsync(db, cancellationToken);
 
-        settings.UpdateDefaultPrinter(request.PrinterName);
+        settings.UpdatePrinters(request.PrinterName, request.KitchenPrinterName);
 
         await db.SaveChangesAsync(cancellationToken);
 
