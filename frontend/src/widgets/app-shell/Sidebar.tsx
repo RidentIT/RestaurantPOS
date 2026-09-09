@@ -2,7 +2,7 @@ import { UserCircle } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { groupModules, type ModuleDescriptor } from "@/entities/user";
 import { useAuth } from "@/features/auth";
-import { settingsApi, useRestaurantSettings } from "@/features/settings";
+import { settingsApi, useBranding } from "@/features/settings";
 import { MODULE_ROUTES, DEFAULT_MODULE_ICON } from "@/shared/config/moduleRoutes";
 import { cn } from "@/shared/lib/utils";
 import { BrandMark } from "@/shared/ui";
@@ -18,18 +18,17 @@ export interface SidebarProps {
  */
 export function Sidebar({ catalog }: SidebarProps) {
   const { can } = useAuth();
-  const { data: settings } = useRestaurantSettings();
+  // The public branding query, not the admin-only full settings one: the sidebar renders for
+  // every signed-in role, and a cashier's own request for the full settings would be refused
+  // with a 403 — which is exactly what left this blank for anyone who wasn't an admin.
+  const { data: branding } = useBranding();
   const groups = groupModules(catalog).map((group) => ({
     ...group,
     modules: group.modules.filter((m) => can(m.module)),
   }));
 
-  const name = settings?.name ?? "";
-  // The logo path changes to a fresh name on every upload (see FileSystemLogoStore), so using it
-  // as a cache-busting query param means a newly-uploaded logo shows immediately here without
-  // needing to restart the app — the browser has no reason to think this is the same image it
-  // already cached under the old URL.
-  const logoSrc = settings?.logoPath ? `${settingsApi.logoUrl()}?v=${encodeURIComponent(settings.logoPath)}` : undefined;
+  const name = branding?.name ?? "";
+  const logoSrc = name ? settingsApi.logoUrl() : undefined;
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r bg-card">
