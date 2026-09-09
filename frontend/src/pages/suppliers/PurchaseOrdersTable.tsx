@@ -1,7 +1,12 @@
 import { ClipboardList, Eye, MoreHorizontal, Pencil, Send, ShieldCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { PurchaseOrderSummary } from "@/entities/supplier";
-import { PURCHASE_ORDER_STATUS_BADGE, usePurchaseOrderMutations } from "@/features/purchase-orders";
+import {
+  PURCHASE_ORDER_STATUS_BADGE,
+  describeOrderContents,
+  purchaseOrderRef,
+  usePurchaseOrderMutations,
+} from "@/features/purchase-orders";
 import { toApiError } from "@/shared/api/problem";
 import {
   Badge,
@@ -78,6 +83,7 @@ export function PurchaseOrdersTable({
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead>Reference</TableHead>
           <TableHead>Date</TableHead>
           <TableHead>Supplier</TableHead>
           <TableHead>Status</TableHead>
@@ -89,6 +95,12 @@ export function PurchaseOrdersTable({
       <TableBody>
         {orders.map((order) => (
           <TableRow key={order.id}>
+            <TableCell>
+              <div className="font-medium tabular">{purchaseOrderRef(order.id)}</div>
+              <div className="max-w-48 truncate text-xs text-muted-foreground">
+                {describeOrderContents(order.lines)}
+              </div>
+            </TableCell>
             <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
               {new Date(order.createdAtUtc).toLocaleDateString()}
             </TableCell>

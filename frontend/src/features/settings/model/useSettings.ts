@@ -60,8 +60,14 @@ export function useSettingsMutations() {
     onSuccess: invalidate,
   });
 
-  const updateDefaultPrinter = useMutation({
-    mutationFn: (printerName: string | null) => settingsApi.updateDefaultPrinter(printerName),
+  const updatePrinters = useMutation({
+    mutationFn: ({
+      printerName,
+      kitchenPrinterName,
+    }: {
+      printerName: string | null;
+      kitchenPrinterName: string | null;
+    }) => settingsApi.updatePrinters(printerName, kitchenPrinterName),
     onSuccess: invalidate,
   });
 
@@ -83,7 +89,7 @@ export function useSettingsMutations() {
     removeLogo,
     updateBillCharges,
     updateReceiptFooter,
-    updateDefaultPrinter,
+    updatePrinters,
     updateApprovalPinPolicy,
     updateBackupSettings,
   };

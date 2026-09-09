@@ -39,8 +39,8 @@ export const settingsApi = {
   updateReceiptFooter: (message: string) =>
     apiService.put<RestaurantSettings>(API_ENDPOINTS.SETTINGS.RECEIPT_FOOTER, { message }),
 
-  updateDefaultPrinter: (printerName: string | null) =>
-    apiService.put<RestaurantSettings>(API_ENDPOINTS.SETTINGS.PRINTER, { printerName }),
+  updatePrinters: (printerName: string | null, kitchenPrinterName: string | null) =>
+    apiService.put<RestaurantSettings>(API_ENDPOINTS.SETTINGS.PRINTER, { printerName, kitchenPrinterName }),
 
   updateApprovalPinPolicy: (maxAttempts: number, lockoutMinutes: number) =>
     apiService.put<RestaurantSettings>(API_ENDPOINTS.SETTINGS.APPROVAL_PIN_POLICY, {

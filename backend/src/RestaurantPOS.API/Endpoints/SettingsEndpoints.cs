@@ -137,12 +137,13 @@ public static class SettingsEndpoints
 
         group.MapPut("/printer", async (UpdateDefaultPrinterRequest request, ISender sender, CancellationToken ct) =>
             {
-                var result = await sender.Send(new UpdateDefaultPrinterCommand(request.PrinterName), ct);
+                var result = await sender.Send(
+                    new UpdateDefaultPrinterCommand(request.PrinterName, request.KitchenPrinterName), ct);
                 return result.ToHttpResult();
             })
             .RequireAuthorization(AuthorizationPolicies.AdminOnly)
             .WithName("UpdateDefaultPrinter")
-            .WithSummary("Sets which printer bills and KOTs are sent to.");
+            .WithSummary("Sets which printer receipts are sent to, and which kitchen tickets are sent to.");
 
         group.MapPut("/approval-pin-policy", async (
                 UpdateApprovalPinPolicyRequest request, ISender sender, CancellationToken ct) =>

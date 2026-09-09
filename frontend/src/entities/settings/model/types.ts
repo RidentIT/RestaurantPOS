@@ -12,7 +12,10 @@ export interface RestaurantSettings {
   taxRatePercent: number;
   serviceChargeRatePercent: number;
   receiptFooterMessage: string;
+  /** Where customer receipts print, and the fallback for kitchen tickets. Null = Windows default. */
   defaultPrinterName: string | null;
+  /** Where kitchen tickets (KOTs) print. Null falls back to {@link defaultPrinterName}. */
+  kitchenPrinterName: string | null;
   approvalPinMaxAttempts: number;
   approvalPinLockoutMinutes: number;
   /** Null uses the default Backups folder beside the app. */

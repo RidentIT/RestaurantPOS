@@ -27,6 +27,7 @@ internal sealed class RestaurantSettingsConfiguration : IEntityTypeConfiguration
         builder.Property(s => s.ServiceChargeRatePercent).IsRequired();
         builder.Property(s => s.ReceiptFooterMessage).IsRequired().HasMaxLength(RestaurantSettings.ReceiptFooterMaxLength);
         builder.Property(s => s.DefaultPrinterName).HasMaxLength(RestaurantSettings.PrinterNameMaxLength);
+        builder.Property(s => s.KitchenPrinterName).HasMaxLength(RestaurantSettings.PrinterNameMaxLength);
         builder.Property(s => s.ApprovalPinMaxAttempts).IsRequired();
         builder.Property(s => s.ApprovalPinLockoutMinutes).IsRequired();
         builder.Property(s => s.BackupFolderPath).HasMaxLength(RestaurantSettings.BackupFolderPathMaxLength);
