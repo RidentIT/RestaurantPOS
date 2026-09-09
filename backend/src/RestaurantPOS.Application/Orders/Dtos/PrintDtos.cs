@@ -15,7 +15,8 @@ public sealed record KotDocumentDto(
     Guid TicketId,
     string RestaurantName,
     int? OrderNumber,
-    string TableNumber,
+    /// <summary>Null for a takeaway order.</summary>
+    string? TableNumber,
     int TicketNumber,
     KitchenTicketKind Kind,
     string CashierName,
@@ -34,8 +35,11 @@ public sealed record ReceiptDocumentDto(
     string? AddressLine2,
     string? City,
     string? Phone,
+    /// <summary>Null when the restaurant hasn't set one — plenty of small operations aren't VAT-registered at all.</summary>
+    string? VatRegistrationNumber,
     int? OrderNumber,
-    string TableNumber,
+    /// <summary>Null for a takeaway order.</summary>
+    string? TableNumber,
     string CashierName,
     DateTime IssuedAtUtc,
     int PrintCount,

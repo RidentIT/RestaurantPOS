@@ -30,10 +30,7 @@ public static class ReceiptDocumentFactory
 
         var settings = await RestaurantSettingsAccessor.GetAsync(db, cancellationToken);
 
-        var tableNumber = await db.RestaurantTables
-            .Where(t => t.Id == order.TableId)
-            .Select(t => t.Number)
-            .FirstAsync(cancellationToken);
+        var tableNumber = await TableNumberResolver.ResolveAsync(db, order.TableId, cancellationToken);
 
         var cashierName = await db.Users
             .Where(u => u.Id == order.CashierUserId)
@@ -47,6 +44,7 @@ public static class ReceiptDocumentFactory
             settings.AddressLine2,
             settings.City,
             settings.Phone,
+            settings.VatRegistrationNumber,
             order.OrderNumber,
             tableNumber,
             cashierName,

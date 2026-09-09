@@ -28,7 +28,8 @@ public class SettingsTests : IntegrationTestBase
         var response = await Client.CreateMenuItemAsync(name, "Mains", price);
         response.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        return (await PosApiClient.ReadAsync<MenuItemResponse>(response)).Id;
+        var item = await PosApiClient.ReadAsync<MenuItemResponse>(response);
+        return item.Variants.Single().Id;
     }
 
     /// <summary>
@@ -77,16 +78,30 @@ public class SettingsTests : IntegrationTestBase
         await SignInAsAdminAsync();
 
         var response = await Client.UpdateBusinessProfileAsync(
-            "New Name Restaurant", "New Address", "Suite 2", "Colombo", "0112345678", "logo.png");
+            "New Name Restaurant", "New Address", "Suite 2", "Colombo", "0112345678", "logo.png", "VAT123456");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var updated = await PosApiClient.ReadAsync<RestaurantSettingsResponse>(response);
         updated.Name.Should().Be("New Name Restaurant");
         updated.City.Should().Be("Colombo");
+        updated.VatRegistrationNumber.Should().Be("VAT123456");
 
         var reloaded = await PosApiClient.ReadAsync<RestaurantSettingsResponse>(
             await Client.GetRestaurantSettingsAsync());
         reloaded.Name.Should().Be("New Name Restaurant");
+        reloaded.VatRegistrationNumber.Should().Be("VAT123456");
+    }
+
+    [Fact]
+    public async Task VatRegistrationNumber_IsOptional()
+    {
+        await SignInAsAdminAsync();
+
+        var response = await Client.UpdateBusinessProfileAsync("A Restaurant", "An Address");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var updated = await PosApiClient.ReadAsync<RestaurantSettingsResponse>(response);
+        updated.VatRegistrationNumber.Should().BeNull("plenty of small operations aren't VAT-registered at all");
     }
 
     [Theory]
@@ -281,5 +296,110 @@ public class SettingsTests : IntegrationTestBase
         {
             Directory.Delete(folder, recursive: true);
         }
+    }
+
+    // A real, minimal 1x1 transparent PNG — valid enough to save and serve back, tiny enough to
+    // keep the test fast.
+    private static readonly byte[] TinyPng = Convert.FromBase64String(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
+
+    [Fact]
+    public async Task Branding_IsReachableWithoutSigningIn()
+    {
+        var response = await Client.GetBrandingAsync();
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var branding = await PosApiClient.ReadAsync<BrandingResponse>(response);
+        branding.Name.Should().NotBeNullOrWhiteSpace("the sign-in screen has no session to read it from any other way");
+    }
+
+    [Fact]
+    public async Task Logo_IsNotFoundBeforeAnyIsUploaded()
+    {
+        var response = await Client.GetLogoAsync();
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task UploadingALogo_MakesItReachableWithoutSigningIn()
+    {
+        await SignInAsAdminAsync();
+
+        var uploaded = await Client.UploadLogoAsync("logo.png", "image/png", TinyPng);
+        uploaded.StatusCode.Should().Be(HttpStatusCode.OK);
+        var settings = await PosApiClient.ReadAsync<RestaurantSettingsResponse>(uploaded);
+        settings.LogoPath.Should().NotBeNullOrWhiteSpace();
+
+        // The sign-in screen fetches this with no session at all, same as branding.
+        var fetched = await Client.GetLogoAsync();
+        fetched.StatusCode.Should().Be(HttpStatusCode.OK);
+        fetched.Content.Headers.ContentType!.MediaType.Should().Be("image/png");
+        (await fetched.Content.ReadAsByteArrayAsync()).Should().Equal(TinyPng);
+    }
+
+    [Fact]
+    public async Task UploadingASecondLogo_ReplacesTheFirstRatherThanKeepingBoth()
+    {
+        await SignInAsAdminAsync();
+
+        var first = await PosApiClient.ReadAsync<RestaurantSettingsResponse>(
+            await Client.UploadLogoAsync("first.png", "image/png", TinyPng));
+
+        var secondBytes = TinyPng.Concat(TinyPng).ToArray(); // just needs to differ from the first
+        var second = await PosApiClient.ReadAsync<RestaurantSettingsResponse>(
+            await Client.UploadLogoAsync("second.png", "image/png", secondBytes));
+
+        second.LogoPath.Should().NotBe(first.LogoPath, "each upload gets its own file rather than overwriting in place");
+
+        var fetched = await Client.GetLogoAsync();
+        (await fetched.Content.ReadAsByteArrayAsync()).Should().Equal(secondBytes, "the old file is no longer what's served");
+    }
+
+    [Fact]
+    public async Task RemovingTheLogo_ClearsItAndMakesItNotFoundAgain()
+    {
+        await SignInAsAdminAsync();
+        await Client.UploadLogoAsync("logo.png", "image/png", TinyPng);
+
+        var removed = await Client.RemoveLogoAsync();
+        removed.StatusCode.Should().Be(HttpStatusCode.OK);
+        var settings = await PosApiClient.ReadAsync<RestaurantSettingsResponse>(removed);
+        settings.LogoPath.Should().BeNull();
+
+        (await Client.GetLogoAsync()).StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task UploadingALogo_RejectsADisallowedFileType()
+    {
+        await SignInAsAdminAsync();
+
+        var response = await Client.UploadLogoAsync("logo.pdf", "application/pdf", TinyPng);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await PosApiClient.ReadErrorCodeAsync(response)).Should().Be("Settings.LogoTypeNotAllowed");
+    }
+
+    [Fact]
+    public async Task UploadingALogo_RejectsAFileOverTheSizeLimit()
+    {
+        await SignInAsAdminAsync();
+        var tooLarge = new byte[(2 * 1024 * 1024) + 1];
+
+        var response = await Client.UploadLogoAsync("logo.png", "image/png", tooLarge);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await PosApiClient.ReadErrorCodeAsync(response)).Should().Be("Settings.LogoTooLarge");
+    }
+
+    [Fact]
+    public async Task NonAdminStaff_CannotUploadOrRemoveTheLogo()
+    {
+        await SignInAsAdminAsync();
+        var (staff, _) = await CreateAndSignInStaffAsync();
+
+        (await staff.UploadLogoAsync("logo.png", "image/png", TinyPng)).StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        (await staff.RemoveLogoAsync()).StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 }

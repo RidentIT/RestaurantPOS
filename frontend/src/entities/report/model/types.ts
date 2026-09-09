@@ -2,7 +2,7 @@ import type { OrderPaymentMethod } from "@/entities/order";
 import type { ProfitSummary } from "@/entities/expense";
 
 export interface TopMenuItem {
-  menuItemId: string;
+  menuItemVariantId: string;
   name: string;
   category: string;
   quantitySold: number;

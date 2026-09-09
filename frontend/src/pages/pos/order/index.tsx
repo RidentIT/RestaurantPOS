@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Ban, CreditCard, Percent, Send } from "lucide-react";
 import { toast } from "sonner";
-import type { MenuItem } from "@/entities/menu-item";
 import type { DiscountType, OrderItem } from "@/entities/order";
 import { useMenuItems } from "@/features/menu-items";
 import { ManagerPinDialog, useOrder, useOrderMutations } from "@/features/orders";
 import { toApiError } from "@/shared/api/problem";
 import { Badge, Button, Card, LoadingState } from "@/shared/ui";
+import type { PickedMenuItem } from "./AddItemDialog";
 import { AddItemDialog } from "./AddItemDialog";
 import { BillPanel } from "./BillPanel";
 import { DiscountDialog } from "./DiscountDialog";
@@ -34,7 +34,7 @@ export default function OrderScreen() {
   const { data: menuItems } = useMenuItems();
   const mutations = useOrderMutations();
 
-  const [picked, setPicked] = useState<MenuItem | null>(null);
+  const [picked, setPicked] = useState<PickedMenuItem | null>(null);
   const [discountOpen, setDiscountOpen] = useState(false);
   const [approval, setApproval] = useState<PendingApproval | null>(null);
 
@@ -82,7 +82,7 @@ export default function OrderScreen() {
     try {
       await mutations.addItems.mutateAsync({
         id: order.id,
-        items: [{ menuItemId: picked.id, quantity, specialInstructions }],
+        items: [{ menuItemVariantId: picked.variant.id, quantity, specialInstructions }],
       });
       setPicked(null);
     } catch (error) {
@@ -141,11 +141,11 @@ export default function OrderScreen() {
         <div className="space-y-1">
           <Button variant="ghost" size="sm" asChild className="-ml-2">
             <Link to="/pos">
-              <ArrowLeft /> All tables
+              <ArrowLeft /> POS &amp; Billing
             </Link>
           </Button>
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-semibold">Table {order.tableNumber}</h1>
+            <h1 className="text-2xl font-semibold">{order.tableNumber ? `Table ${order.tableNumber}` : "Takeaway"}</h1>
             {order.orderNumber && (
               <Badge variant="secondary">Order #{String(order.orderNumber).padStart(3, "0")}</Badge>
             )}
@@ -189,7 +189,7 @@ export default function OrderScreen() {
         <Card className="min-h-0 overflow-hidden p-4">
           <MenuPicker
             menuItems={(menuItems ?? []).filter((m) => m.isActive)}
-            onPick={setPicked}
+            onPick={(item, variant) => setPicked({ item, variant })}
             disabled={busy || (!isDraft && !isOpen)}
           />
         </Card>
@@ -201,7 +201,7 @@ export default function OrderScreen() {
       </div>
 
       <AddItemDialog
-        item={picked}
+        picked={picked}
         onOpenChange={(open) => !open && setPicked(null)}
         onAdd={addItem}
         pending={mutations.addItems.isPending}

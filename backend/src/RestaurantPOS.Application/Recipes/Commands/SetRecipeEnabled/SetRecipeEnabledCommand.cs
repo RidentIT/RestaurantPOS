@@ -12,7 +12,7 @@ using RestaurantPOS.Domain.Errors;
 namespace RestaurantPOS.Application.Recipes.Commands.SetRecipeEnabled;
 
 /// <summary>Enables or disables a recipe (BR-REC-006). A disabled recipe cannot be used for a new sale.</summary>
-public sealed record SetRecipeEnabledCommand(Guid MenuItemId, bool IsEnabled) : IRequest<Result<RecipeDto>>;
+public sealed record SetRecipeEnabledCommand(Guid MenuItemVariantId, bool IsEnabled) : IRequest<Result<RecipeDto>>;
 
 internal sealed class SetRecipeEnabledCommandHandler(IAppDbContext db, ICurrentUser currentUser, IDateTimeProvider clock)
     : IRequestHandler<SetRecipeEnabledCommand, Result<RecipeDto>>
@@ -21,11 +21,11 @@ internal sealed class SetRecipeEnabledCommandHandler(IAppDbContext db, ICurrentU
     {
         var recipe = await db.Recipes
             .Include(r => r.Lines)
-            .FirstOrDefaultAsync(r => r.MenuItemId == request.MenuItemId, cancellationToken);
+            .FirstOrDefaultAsync(r => r.MenuItemVariantId == request.MenuItemVariantId, cancellationToken);
 
         if (recipe is null)
         {
-            return Result.Failure<RecipeDto>(RecipeErrors.RecipeNotFound(request.MenuItemId));
+            return Result.Failure<RecipeDto>(RecipeErrors.RecipeNotFound(request.MenuItemVariantId));
         }
 
         if (request.IsEnabled)

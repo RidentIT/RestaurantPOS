@@ -65,7 +65,7 @@ export function useOrderMutations() {
     }
   };
 
-  const create = useMutation<Order, Error, string>({
+  const create = useMutation<Order, Error, string | null>({
     mutationFn: ordersApi.create,
     onSuccess: (order) => refresh(order.id),
   });

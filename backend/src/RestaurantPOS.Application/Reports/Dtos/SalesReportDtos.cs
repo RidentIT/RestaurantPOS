@@ -3,9 +3,9 @@ using RestaurantPOS.Domain.Enums;
 
 namespace RestaurantPOS.Application.Reports.Dtos;
 
-/// <summary>One menu item's contribution to a period's sales, best sellers first.</summary>
+/// <summary>One menu item size's contribution to a period's sales, best sellers first.</summary>
 public sealed record TopMenuItemDto(
-    Guid MenuItemId, string Name, string Category, int QuantitySold, decimal Revenue);
+    Guid MenuItemVariantId, string Name, string Category, int QuantitySold, decimal Revenue);
 
 /// <summary>One menu category's share of a period's sales.</summary>
 public sealed record CategorySalesDto(

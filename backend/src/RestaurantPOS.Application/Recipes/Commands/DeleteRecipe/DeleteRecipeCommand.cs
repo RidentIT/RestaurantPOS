@@ -15,7 +15,7 @@ namespace RestaurantPOS.Application.Recipes.Commands.DeleteRecipe;
 /// Removes a menu item's recipe. The audit log keeps a full snapshot of what was deleted
 /// (BR-REC-007), even though the live row is gone — a fresh recipe can be created afterwards.
 /// </summary>
-public sealed record DeleteRecipeCommand(Guid MenuItemId) : IRequest<Result>;
+public sealed record DeleteRecipeCommand(Guid MenuItemVariantId) : IRequest<Result>;
 
 internal sealed class DeleteRecipeCommandHandler(IAppDbContext db, ICurrentUser currentUser, IDateTimeProvider clock)
     : IRequestHandler<DeleteRecipeCommand, Result>
@@ -24,11 +24,11 @@ internal sealed class DeleteRecipeCommandHandler(IAppDbContext db, ICurrentUser 
     {
         var recipe = await db.Recipes
             .Include(r => r.Lines)
-            .FirstOrDefaultAsync(r => r.MenuItemId == request.MenuItemId, cancellationToken);
+            .FirstOrDefaultAsync(r => r.MenuItemVariantId == request.MenuItemVariantId, cancellationToken);
 
         if (recipe is null)
         {
-            return Result.Failure(RecipeErrors.RecipeNotFound(request.MenuItemId));
+            return Result.Failure(RecipeErrors.RecipeNotFound(request.MenuItemVariantId));
         }
 
         var snapshot = recipe.Lines.Select(l => new { l.RawMaterialId, l.Quantity }).ToList();

@@ -77,7 +77,8 @@ public class RestaurantSettingsTests
     {
         var settings = NewSettings();
 
-        settings.UpdateProfile("  New Name  ", " New Address ", "Suite 2", "Colombo", "0112345678", "logo.png");
+        settings.UpdateProfile(
+            "  New Name  ", " New Address ", "Suite 2", "Colombo", "0112345678", "logo.png", " VAT123 ");
 
         settings.Name.Should().Be("New Name");
         settings.AddressLine1.Should().Be("New Address");
@@ -85,6 +86,17 @@ public class RestaurantSettingsTests
         settings.City.Should().Be("Colombo");
         settings.Phone.Should().Be("0112345678");
         settings.LogoPath.Should().Be("logo.png");
+        settings.VatRegistrationNumber.Should().Be("VAT123");
+    }
+
+    [Fact]
+    public void UpdateProfile_VatRegistrationNumberIsOptional()
+    {
+        var settings = NewSettings();
+
+        settings.UpdateProfile("Name", "Address", null, null, null, null, null);
+
+        settings.VatRegistrationNumber.Should().BeNull();
     }
 
     [Fact]
@@ -92,7 +104,7 @@ public class RestaurantSettingsTests
     {
         var settings = NewSettings();
 
-        var act = () => settings.UpdateProfile("   ", "Address", null, null, null, null);
+        var act = () => settings.UpdateProfile("   ", "Address", null, null, null, null, null);
 
         act.Should().Throw<ArgumentException>();
     }

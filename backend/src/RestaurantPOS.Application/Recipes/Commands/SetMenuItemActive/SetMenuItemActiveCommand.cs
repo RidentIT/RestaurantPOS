@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 using RestaurantPOS.Application.Common.Interfaces;
+using RestaurantPOS.Application.Common.Mappings;
 using RestaurantPOS.Application.Recipes.Dtos;
 using RestaurantPOS.Domain.Common;
 using RestaurantPOS.Domain.Errors;
@@ -20,7 +21,9 @@ internal sealed class SetMenuItemActiveCommandHandler(IAppDbContext db)
 {
     public async Task<Result<MenuItemDto>> Handle(SetMenuItemActiveCommand request, CancellationToken cancellationToken)
     {
-        var menuItem = await db.MenuItems.FirstOrDefaultAsync(m => m.Id == request.MenuItemId, cancellationToken);
+        var menuItem = await db.MenuItems
+            .Include(m => m.Variants)
+            .FirstOrDefaultAsync(m => m.Id == request.MenuItemId, cancellationToken);
 
         if (menuItem is null)
         {
@@ -36,12 +39,10 @@ internal sealed class SetMenuItemActiveCommandHandler(IAppDbContext db)
             menuItem.Deactivate();
         }
 
-        var hasRecipe = await db.Recipes.AnyAsync(r => r.MenuItemId == menuItem.Id, cancellationToken);
-
         await db.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(new MenuItemDto(
-            menuItem.Id, menuItem.Name, menuItem.Category, menuItem.Price, menuItem.IsActive,
-            hasRecipe, menuItem.CreatedAtUtc));
+        var dto = await menuItem.ToDtoAsync(db, cancellationToken);
+
+        return Result.Success(dto);
     }
 }

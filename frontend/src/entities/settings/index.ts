@@ -1,1 +1,1 @@
-export type { RestaurantSettings, Backup } from "./model/types";
+export type { RestaurantSettings, Backup, Branding } from "./model/types";

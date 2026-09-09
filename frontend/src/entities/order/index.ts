@@ -8,6 +8,7 @@ export type {
   OrderPayment,
   Order,
   OrderSummary,
+  OrderDisplayStatus,
   AddOrderItemInput,
   OrderPaymentInput,
   KotDocument,
@@ -16,4 +17,4 @@ export type {
   ReceiptDocument,
   ReceiptLine,
 } from "./model/types";
-export { ORDER_PAYMENT_METHODS, PAYMENT_METHOD_LABELS } from "./model/types";
+export { ORDER_PAYMENT_METHODS, PAYMENT_METHOD_LABELS, orderDisplayStatus } from "./model/types";

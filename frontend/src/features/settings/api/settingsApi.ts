@@ -1,8 +1,24 @@
-import type { Backup, RestaurantSettings } from "@/entities/settings";
+import type { Backup, Branding, RestaurantSettings } from "@/entities/settings";
+import { axiosClient } from "@/shared/api/axiosClient";
 import { API_ENDPOINTS, apiService } from "@/shared/api/endpoints";
 
 export const settingsApi = {
   get: () => apiService.get<RestaurantSettings>(API_ENDPOINTS.SETTINGS.BASE),
+
+  /** Reachable without signing in — the sign-in screen itself needs this. */
+  getBranding: () => apiService.get<Branding>(API_ENDPOINTS.SETTINGS.BRANDING),
+
+  /** Where the logo image can be loaded from directly, e.g. as an `<img src>`. */
+  logoUrl: () => `${axiosClient.defaults.baseURL ?? ""}${API_ENDPOINTS.SETTINGS.LOGO}`,
+
+  uploadLogo: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+
+    return apiService.uploadFile<RestaurantSettings>(API_ENDPOINTS.SETTINGS.LOGO, form);
+  },
+
+  removeLogo: () => apiService.delete<RestaurantSettings>(API_ENDPOINTS.SETTINGS.LOGO),
 
   updateProfile: (input: {
     name: string;
@@ -11,6 +27,7 @@ export const settingsApi = {
     city: string | null;
     phone: string | null;
     logoPath: string | null;
+    vatRegistrationNumber: string | null;
   }) => apiService.put<RestaurantSettings>(API_ENDPOINTS.SETTINGS.PROFILE, input),
 
   updateBillCharges: (taxRatePercent: number, serviceChargeRatePercent: number) =>

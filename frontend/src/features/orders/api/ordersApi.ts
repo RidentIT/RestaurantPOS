@@ -14,6 +14,8 @@ export interface OrderFilters {
   openOnly?: boolean;
   status?: OrderStatus;
   search?: string;
+  /** Restricts to takeaway orders (true) or dine-in ones (false) when supplied. */
+  isTakeaway?: boolean;
 }
 
 export const ordersApi = {
@@ -22,11 +24,13 @@ export const ordersApi = {
       openOnly: filters.openOnly,
       status: filters.status,
       search: filters.search || undefined,
+      isTakeaway: filters.isTakeaway,
     }),
 
   getById: (id: string) => apiService.get<Order>(API_ENDPOINTS.ORDERS.BY_ID(id)),
 
-  create: (tableId: string) => apiService.post<Order>(API_ENDPOINTS.ORDERS.BASE, { tableId }),
+  /** Null opens a takeaway order instead of one on a table. */
+  create: (tableId: string | null) => apiService.post<Order>(API_ENDPOINTS.ORDERS.BASE, { tableId }),
 
   addItems: (id: string, items: AddOrderItemInput[]) =>
     apiService.post<OrderMutationResult>(API_ENDPOINTS.ORDERS.ITEMS(id), { items }),

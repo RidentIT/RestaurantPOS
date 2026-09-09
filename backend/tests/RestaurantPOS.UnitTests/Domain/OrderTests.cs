@@ -37,6 +37,14 @@ public class OrderTests
     }
 
     [Fact]
+    public void Create_WithNoTable_OpensATakeawayOrder()
+    {
+        var order = Order.Create(tableId: null, Guid.NewGuid());
+
+        order.TableId.Should().BeNull();
+    }
+
+    [Fact]
     public void AddItems_OnADraft_RaisesNoKitchenTicket()
     {
         var order = NewOrder();

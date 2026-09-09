@@ -7,8 +7,9 @@ public sealed record OrderDto(
     Guid Id,
     int? OrderNumber,
     DateOnly? OrderDate,
-    Guid TableId,
-    string TableNumber,
+    Guid? TableId,
+    /// <summary>Null for a takeaway order.</summary>
+    string? TableNumber,
     OrderStatus Status,
     Guid CashierUserId,
     string CashierName,
@@ -33,7 +34,7 @@ public sealed record OrderDto(
 
 public sealed record OrderItemDto(
     Guid Id,
-    Guid MenuItemId,
+    Guid MenuItemVariantId,
     string MenuItemName,
     decimal UnitPrice,
     int Quantity,
@@ -64,8 +65,9 @@ public sealed record OrderMutationDto(OrderDto Order, KotDocumentDto? Kot);
 public sealed record OrderSummaryDto(
     Guid Id,
     int? OrderNumber,
-    Guid TableId,
-    string TableNumber,
+    Guid? TableId,
+    /// <summary>Null for a takeaway order.</summary>
+    string? TableNumber,
     OrderStatus Status,
     string CashierName,
     DateTime CreatedAtUtc,

@@ -23,10 +23,7 @@ public static class OrderResultFactory
         ArgumentNullException.ThrowIfNull(db);
         ArgumentNullException.ThrowIfNull(order);
 
-        var tableNumber = await db.RestaurantTables
-            .Where(t => t.Id == order.TableId)
-            .Select(t => t.Number)
-            .FirstAsync(cancellationToken);
+        var tableNumber = await TableNumberResolver.ResolveAsync(db, order.TableId, cancellationToken);
 
         var cashierName = await db.Users
             .Where(u => u.Id == order.CashierUserId)

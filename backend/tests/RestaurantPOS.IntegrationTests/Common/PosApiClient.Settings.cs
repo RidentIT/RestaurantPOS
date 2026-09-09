@@ -9,6 +9,7 @@ public sealed record RestaurantSettingsResponse(
     string? City,
     string? Phone,
     string? LogoPath,
+    string? VatRegistrationNumber,
     decimal TaxRatePercent,
     decimal ServiceChargeRatePercent,
     string ReceiptFooterMessage,
@@ -20,16 +21,18 @@ public sealed record RestaurantSettingsResponse(
 
 public sealed record BackupResponse(string FileName, DateTime CreatedAtUtc, long SizeBytes);
 
+public sealed record BrandingResponse(string Name);
+
 public sealed partial class PosApiClient
 {
     public Task<HttpResponseMessage> GetRestaurantSettingsAsync() => Http.GetAsync($"{BaseUrl}/settings");
 
     public Task<HttpResponseMessage> UpdateBusinessProfileAsync(
         string name, string addressLine1, string? addressLine2 = null, string? city = null,
-        string? phone = null, string? logoPath = null) =>
+        string? phone = null, string? logoPath = null, string? vatRegistrationNumber = null) =>
         Http.PutAsJsonAsync(
             $"{BaseUrl}/settings/profile",
-            new { name, addressLine1, addressLine2, city, phone, logoPath },
+            new { name, addressLine1, addressLine2, city, phone, logoPath, vatRegistrationNumber },
             Json);
 
     public Task<HttpResponseMessage> UpdateBillChargesAsync(decimal taxRatePercent, decimal serviceChargeRatePercent) =>
@@ -60,4 +63,24 @@ public sealed partial class PosApiClient
 
     public Task<HttpResponseMessage> RunDailyBackupAsync() =>
         Http.PostAsync($"{BaseUrl}/settings/backups/run-daily", null);
+
+    public Task<HttpResponseMessage> GetBrandingAsync() => Http.GetAsync($"{BaseUrl}/settings/branding");
+
+    public Task<HttpResponseMessage> GetLogoAsync() => Http.GetAsync($"{BaseUrl}/settings/logo");
+
+    /// <summary>
+    /// Awaited rather than returning the task directly: the multipart content has to outlive the
+    /// request, and disposing it at the end of a non-async method closes the stream mid-flight.
+    /// </summary>
+    public async Task<HttpResponseMessage> UploadLogoAsync(string fileName, string contentType, byte[] content)
+    {
+        using var form = new MultipartFormDataContent();
+        var file = new ByteArrayContent(content);
+        file.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+        form.Add(file, "file", fileName);
+
+        return await Http.PostAsync($"{BaseUrl}/settings/logo", form);
+    }
+
+    public Task<HttpResponseMessage> RemoveLogoAsync() => Http.DeleteAsync($"{BaseUrl}/settings/logo");
 }

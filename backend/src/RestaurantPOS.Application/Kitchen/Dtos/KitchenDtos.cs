@@ -7,7 +7,8 @@ public sealed record KitchenTicketDto(
     Guid Id,
     Guid OrderId,
     int? OrderNumber,
-    string TableNumber,
+    /// <summary>Null for a takeaway order.</summary>
+    string? TableNumber,
     int TicketNumber,
     KitchenTicketKind Kind,
     KitchenTicketStatus Status,

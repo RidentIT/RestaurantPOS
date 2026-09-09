@@ -88,11 +88,12 @@ public class NotificationTests : IntegrationTestBase
             await Client.CreateRawMaterialAsync("Rice", "Kilogram"));
         var item = await PosApiClient.ReadAsync<MenuItemResponse>(
             await Client.CreateMenuItemAsync("Fried Rice", "Mains", 250m));
+        var variantId = item.Variants.Single().Id;
 
-        await Client.UpsertRecipeAsync(item.Id, (rice.Id, 1m));
+        await Client.UpsertRecipeAsync(variantId, (rice.Id, 1m));
 
         // Nothing was ever released to the kitchen, so this drives the balance negative.
-        (await Client.ConsumeStockAsync(item.Id, 2)).EnsureSuccessStatusCode();
+        (await Client.ConsumeStockAsync(variantId, 2)).EnsureSuccessStatusCode();
 
         await Client.EvaluateNotificationsAsync();
         var feed = await FeedAsync();
@@ -297,7 +298,7 @@ public class NotificationTests : IntegrationTestBase
             await Client.CreateMenuItemAsync("Fried Rice", "Mains", 250m));
 
         var order = await PosApiClient.ReadAsync<OrderResponse>(await Client.CreateOrderAsync(table.Id));
-        await Client.AddOrderItemsAsync(order.Id, (item.Id, 1, null));
+        await Client.AddOrderItemsAsync(order.Id, (item.Variants.Single().Id, 1, null));
         (await Client.ConfirmOrderAsync(order.Id)).EnsureSuccessStatusCode();
         (await Client.CancelOrderAsync(order.Id, "4417", "Customer left")).EnsureSuccessStatusCode();
 

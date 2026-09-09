@@ -15,6 +15,7 @@ const AccountPage = lazy(() => import("@/pages/account"));
 const UsersPage = lazy(() => import("@/pages/users"));
 const ReportsPage = lazy(() => import("@/pages/reports"));
 const RecipesPage = lazy(() => import("@/pages/recipes"));
+const MenuItemDetailPage = lazy(() => import("@/pages/recipes/item"));
 const MainStorePage = lazy(() => import("@/pages/inventory/main-store"));
 const KitchenPage = lazy(() => import("@/pages/inventory/kitchen"));
 const ReleasesPage = lazy(() => import("@/pages/inventory/releases"));
@@ -86,7 +87,13 @@ export const router = createBrowserRouter([
           },
           {
             element: <RequireModule module="RecipeManagement" />,
-            children: [{ path: "recipes", element: withSuspense(<RecipesPage />) }],
+            children: [
+              { path: "recipes", element: withSuspense(<RecipesPage />) },
+              // Listed before the ":id" route: react-router ranks a static segment ahead of a
+              // dynamic one regardless of order, but this keeps the intent obvious on read.
+              { path: "recipes/new", element: withSuspense(<MenuItemDetailPage />) },
+              { path: "recipes/:id", element: withSuspense(<MenuItemDetailPage />) },
+            ],
           },
           {
             element: <RequireModule module="StoreStockManagement" />,

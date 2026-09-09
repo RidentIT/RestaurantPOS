@@ -1,11 +1,13 @@
 namespace RestaurantPOS.Application.Recipes.Dtos;
 
-/// <summary>A menu item as presented to the client.</summary>
+/// <summary>One sellable size of a menu item, as presented to the client.</summary>
+public sealed record MenuItemVariantDto(Guid Id, string? Name, decimal Price, bool HasRecipe);
+
+/// <summary>A menu item as presented to the client, with every size it's sold in.</summary>
 public sealed record MenuItemDto(
     Guid Id,
     string Name,
     string Category,
-    decimal Price,
     bool IsActive,
-    bool HasRecipe,
+    IReadOnlyCollection<MenuItemVariantDto> Variants,
     DateTime CreatedAtUtc);

@@ -21,7 +21,7 @@ public class SalesReportTests : IntegrationTestBase
 
     private async Task<Guid> MenuItemAsync(string name, string category, decimal price) =>
         (await PosApiClient.ReadAsync<MenuItemResponse>(
-            await Client.CreateMenuItemAsync(name, category, price))).Id;
+            await Client.CreateMenuItemAsync(name, category, price))).Variants.Single().Id;
 
     /// <summary>Rings a sale through the till with a chosen quantity, payment method and discount.</summary>
     private async Task<OrderResponse> TakeSaleAsync(

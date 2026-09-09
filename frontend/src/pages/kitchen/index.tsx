@@ -13,6 +13,16 @@ import { cn } from "@/shared/lib/utils";
 const LATE_AFTER_MINUTES = 15;
 const OVERDUE_AFTER_MINUTES = 25;
 
+/** "45m", or "2h 15m" once it's been sitting long enough that raw minutes stop being readable. */
+function formatWaiting(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+
+  return rest === 0 ? `${hours}h` : `${hours}h ${rest}m`;
+}
+
 const STATUS_BADGE: Record<KitchenTicketStatus, "outline" | "warning" | "success" | "secondary"> = {
   New: "outline",
   Preparing: "warning",
@@ -47,7 +57,7 @@ function TicketCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-2xl font-semibold">Table {ticket.tableNumber}</p>
+          <p className="text-2xl font-semibold">{ticket.tableNumber ? `Table ${ticket.tableNumber}` : "Takeaway"}</p>
           <p className="text-sm text-muted-foreground">
             Order #{String(ticket.orderNumber ?? 0).padStart(3, "0")} · KOT-{ticket.ticketNumber}
           </p>
@@ -63,7 +73,7 @@ function TicketCard({
             )}
           >
             <Clock className="size-3.5" />
-            {ticket.waitingMinutes}m
+            {formatWaiting(ticket.waitingMinutes)}
           </span>
         </div>
       </div>
@@ -101,7 +111,7 @@ function TicketCard({
         <Button
           variant="outline"
           size="icon"
-          aria-label={`Reprint KOT-${ticket.ticketNumber} for table ${ticket.tableNumber}`}
+          aria-label={`Reprint KOT-${ticket.ticketNumber} for ${ticket.tableNumber ? `table ${ticket.tableNumber}` : "this takeaway order"}`}
           disabled={busy}
           onClick={() => onReprint(ticket)}
         >
@@ -152,6 +162,7 @@ export default function KitchenDisplayPage() {
           <h1 className="text-2xl font-semibold">Kitchen</h1>
           <p className="text-sm text-muted-foreground">
             {waiting === 0 ? "Nothing waiting." : `${waiting} ticket${waiting === 1 ? "" : "s"} on the pass`}
+            {showServed && " · showing today's served and cancelled tickets too"}
           </p>
         </div>
         <Button variant="outline" onClick={() => setShowServed((current) => !current)}>

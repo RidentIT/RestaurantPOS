@@ -2,9 +2,10 @@ using RestaurantPOS.Domain.Enums;
 
 namespace RestaurantPOS.API.Contracts.Orders;
 
-public sealed record CreateOrderRequest(Guid TableId);
+/// <summary>Null <paramref name="TableId"/> opens a takeaway order instead of a dine-in one.</summary>
+public sealed record CreateOrderRequest(Guid? TableId);
 
-public sealed record OrderItemRequest(Guid MenuItemId, int Quantity, string? SpecialInstructions);
+public sealed record OrderItemRequest(Guid MenuItemVariantId, int Quantity, string? SpecialInstructions);
 
 public sealed record AddOrderItemsRequest(IReadOnlyCollection<OrderItemRequest> Items);
 

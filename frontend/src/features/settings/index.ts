@@ -1,6 +1,7 @@
 export { settingsApi } from "./api/settingsApi";
 export {
   useRestaurantSettings,
+  useBranding,
   useSettingsMutations,
   useBackups,
   useBackupMutations,

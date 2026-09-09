@@ -17,4 +17,7 @@ export const handlers = [
   http.get(`${API}/modules`, () => HttpResponse.json(moduleCatalog)),
 
   http.get(`${API}/users`, () => HttpResponse.json([])),
+
+  // Fetched by the sign-in screen itself, so it fires with no session in play.
+  http.get(`${API}/settings/branding`, () => HttpResponse.json({ name: "Test Restaurant" })),
 ];

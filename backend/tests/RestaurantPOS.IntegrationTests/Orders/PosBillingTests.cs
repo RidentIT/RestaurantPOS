@@ -24,12 +24,14 @@ public class PosBillingTests : IntegrationTestBase
         return (await PosApiClient.ReadAsync<TableResponse>(response)).Id;
     }
 
+    /// <summary>Creates a single-size item and returns that size's id, which is what an order line keys off.</summary>
     private async Task<Guid> CreateMenuItemAsync(string name, decimal price)
     {
         var response = await Client.CreateMenuItemAsync(name, "Mains", price);
         response.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        return (await PosApiClient.ReadAsync<MenuItemResponse>(response)).Id;
+        var item = await PosApiClient.ReadAsync<MenuItemResponse>(response);
+        return item.Variants.Single().Id;
     }
 
     /// <summary>Sets the administrator's approval PIN so PIN-gated actions can be exercised.</summary>
@@ -234,10 +236,32 @@ public class PosBillingTests : IntegrationTestBase
         receipt.ChangeGiven.Should().Be(100m);
         receipt.Lines.Should().HaveCount(2);
         receipt.QrPayload.Should().NotBeNullOrWhiteSpace("the slip carries a QR code (POS-028)");
+        receipt.Payments.Single().TenderedAmount.Should().Be(500m, "the receipt must show what cash was handed over, not just the change");
 
         var tables = await PosApiClient.ReadAsync<List<TableResponse>>(await Client.GetTablesAsync());
         tables.Single(t => t.Id == tableId).CurrentOrder
             .Should().BeNull("the table is free again once the bill is paid (POS-032)");
+    }
+
+    [Fact]
+    public async Task ReceiptCarriesTheVatRegistrationNumberOnlyWhenTheRestaurantHasSetOne()
+    {
+        await SignInAsAdminAsync();
+        var tableId = await CreateTableAsync("2");
+        var friedRice = await CreateMenuItemAsync("Fried Rice", 250m);
+        var order = await OpenOrderAsync(tableId, (friedRice, 1));
+        await Client.StartCheckoutAsync(order.Id);
+
+        var beforeSet = await PosApiClient.ReadAsync<ReceiptDocumentResponse>(
+            await Client.PayOrderAsync(order.Id, ("Cash", 250m, null)));
+        beforeSet.VatRegistrationNumber.Should().BeNull("plenty of small operations aren't VAT-registered at all");
+
+        (await Client.UpdateBusinessProfileAsync(
+            "Sri Lakshmi Family Restaurant", "Jaffna Road, Sandamalgama", vatRegistrationNumber: "VAT-987654"))
+            .EnsureSuccessStatusCode();
+
+        var afterSet = await PosApiClient.ReadAsync<ReceiptDocumentResponse>(await Client.ReprintReceiptAsync(order.Id));
+        afterSet.VatRegistrationNumber.Should().Be("VAT-987654", "a reprint reflects the current business profile");
     }
 
     [Fact]

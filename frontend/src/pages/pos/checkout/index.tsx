@@ -120,7 +120,8 @@ export default function CheckoutScreen() {
           <div>
             <h1 className="text-2xl font-semibold">Payment complete</h1>
             <p className="text-sm text-muted-foreground">
-              Table {order.tableNumber} is free again · Receipt {order.receiptNumber}
+              {order.tableNumber ? `Table ${order.tableNumber} is free again` : "Takeaway order settled"} · Receipt{" "}
+              {order.receiptNumber}
             </p>
           </div>
           <p className="text-3xl font-semibold tabular">{order.total.toFixed(2)}</p>
@@ -138,7 +139,7 @@ export default function CheckoutScreen() {
             >
               <Printer /> Reprint receipt
             </Button>
-            <Button onClick={() => navigate("/pos")}>Back to tables</Button>
+            <Button onClick={() => navigate("/pos")}>Back to POS &amp; Billing</Button>
           </div>
         </Card>
       </div>
@@ -152,7 +153,9 @@ export default function CheckoutScreen() {
           <ArrowLeft /> Back to the order
         </Button>
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold">Checkout · Table {order.tableNumber}</h1>
+          <h1 className="text-2xl font-semibold">
+            Checkout · {order.tableNumber ? `Table ${order.tableNumber}` : "Takeaway"}
+          </h1>
           {order.orderNumber && (
             <Badge variant="secondary">Order #{String(order.orderNumber).padStart(3, "0")}</Badge>
           )}

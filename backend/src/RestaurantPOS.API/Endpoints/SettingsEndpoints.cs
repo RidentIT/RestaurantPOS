@@ -1,11 +1,13 @@
 using MediatR;
 
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 
 using RestaurantPOS.API.Contracts.Settings;
 using RestaurantPOS.API.Extensions;
 using RestaurantPOS.API.Security;
 using RestaurantPOS.Application.Settings.Commands.CreateBackup;
+using RestaurantPOS.Application.Settings.Commands.RemoveLogo;
 using RestaurantPOS.Application.Settings.Commands.RestoreBackup;
 using RestaurantPOS.Application.Settings.Commands.RunDailyBackup;
 using RestaurantPOS.Application.Settings.Commands.UpdateApprovalPinPolicy;
@@ -14,7 +16,10 @@ using RestaurantPOS.Application.Settings.Commands.UpdateBillCharges;
 using RestaurantPOS.Application.Settings.Commands.UpdateBusinessProfile;
 using RestaurantPOS.Application.Settings.Commands.UpdateDefaultPrinter;
 using RestaurantPOS.Application.Settings.Commands.UpdateReceiptFooter;
+using RestaurantPOS.Application.Settings.Commands.UploadLogo;
 using RestaurantPOS.Application.Settings.Queries.GetBackups;
+using RestaurantPOS.Application.Settings.Queries.GetBranding;
+using RestaurantPOS.Application.Settings.Queries.GetLogo;
 using RestaurantPOS.Application.Settings.Queries.GetRestaurantSettings;
 
 namespace RestaurantPOS.API.Endpoints;
@@ -22,6 +27,8 @@ namespace RestaurantPOS.API.Endpoints;
 /// <summary>Business profile, bill charges, receipt, security and backup configuration.</summary>
 public static class SettingsEndpoints
 {
+    private const long MaxLogoBytes = 2 * 1024 * 1024;
+
     public static IEndpointRouteBuilder MapSettingsEndpoints(this IEndpointRouteBuilder routes)
     {
         ArgumentNullException.ThrowIfNull(routes);
@@ -29,6 +36,8 @@ public static class SettingsEndpoints
         // Deliberately not AdminOnly at the group level: RunDailyBackup below is called by whoever
         // signs in first each day, cashier or administrator alike, so every other endpoint applies
         // the AdminOnly policy for itself instead of inheriting one that would wrongly cover it too.
+        // The branding and logo GETs go further still and allow anonymous access — the sign-in
+        // screen, which by definition has no session yet, is one of the places they're shown.
         var group = routes.MapGroup("/settings")
             .WithTags("Settings")
             .RequireAuthorization();
@@ -46,7 +55,7 @@ public static class SettingsEndpoints
             {
                 var command = new UpdateBusinessProfileCommand(
                     request.Name, request.AddressLine1, request.AddressLine2, request.City, request.Phone,
-                    request.LogoPath);
+                    request.LogoPath, request.VatRegistrationNumber);
 
                 var result = await sender.Send(command, ct);
                 return result.ToHttpResult();
@@ -54,6 +63,57 @@ public static class SettingsEndpoints
             .RequireAuthorization(AuthorizationPolicies.AdminOnly)
             .WithName("UpdateBusinessProfile")
             .WithSummary("Sets the name, address and phone printed on every receipt and KOT.");
+
+        group.MapGet("/branding", async (ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(new GetBrandingQuery(), ct);
+                return result.ToHttpResult();
+            })
+            .AllowAnonymous()
+            .WithName("GetBranding")
+            .WithSummary("The restaurant's name, for the sign-in screen.");
+
+        group.MapGet("/logo", async (ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(new GetLogoQuery(), ct);
+
+                if (result.IsFailure)
+                {
+                    return result.ToHttpResult();
+                }
+
+                var logo = result.Value;
+
+                return Results.File(logo.Content, logo.ContentType, logo.FileName);
+            })
+            .AllowAnonymous()
+            .WithName("GetLogo")
+            .WithSummary("The restaurant's logo image, or a 404 if none has been uploaded.");
+
+        group.MapPost("/logo", async (IFormFile file, ISender sender, CancellationToken ct) =>
+            {
+                await using var stream = file.OpenReadStream();
+
+                var command = new UploadLogoCommand(
+                    stream, file.FileName, file.ContentType ?? "application/octet-stream", file.Length);
+
+                var result = await sender.Send(command, ct);
+                return result.ToHttpResult();
+            })
+            .RequireAuthorization(AuthorizationPolicies.AdminOnly)
+            .WithName("UploadLogo")
+            .WithSummary("Replaces the restaurant's logo.")
+            .DisableAntiforgery()
+            .WithMetadata(new RequestSizeLimitAttribute(MaxLogoBytes));
+
+        group.MapDelete("/logo", async (ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(new RemoveLogoCommand(), ct);
+                return result.ToHttpResult();
+            })
+            .RequireAuthorization(AuthorizationPolicies.AdminOnly)
+            .WithName("RemoveLogo")
+            .WithSummary("Clears the restaurant's logo.");
 
         group.MapPut("/bill-charges", async (UpdateBillChargesRequest request, ISender sender, CancellationToken ct) =>
             {

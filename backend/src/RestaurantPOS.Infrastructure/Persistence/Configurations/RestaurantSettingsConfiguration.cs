@@ -22,6 +22,7 @@ internal sealed class RestaurantSettingsConfiguration : IEntityTypeConfiguration
         builder.Property(s => s.City).HasMaxLength(RestaurantSettings.CityMaxLength);
         builder.Property(s => s.Phone).HasMaxLength(RestaurantSettings.PhoneMaxLength);
         builder.Property(s => s.LogoPath).HasMaxLength(RestaurantSettings.LogoPathMaxLength);
+        builder.Property(s => s.VatRegistrationNumber).HasMaxLength(RestaurantSettings.VatRegistrationNumberMaxLength);
         builder.Property(s => s.TaxRatePercent).IsRequired();
         builder.Property(s => s.ServiceChargeRatePercent).IsRequired();
         builder.Property(s => s.ReceiptFooterMessage).IsRequired().HasMaxLength(RestaurantSettings.ReceiptFooterMaxLength);

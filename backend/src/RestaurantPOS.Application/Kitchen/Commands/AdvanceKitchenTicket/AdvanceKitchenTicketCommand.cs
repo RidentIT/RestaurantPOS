@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using RestaurantPOS.Application.Common.Interfaces;
 using RestaurantPOS.Application.Common.Mappings;
 using RestaurantPOS.Application.Kitchen.Dtos;
+using RestaurantPOS.Application.Orders.Common;
 using RestaurantPOS.Domain.Common;
 using RestaurantPOS.Domain.Enums;
 using RestaurantPOS.Domain.Errors;
@@ -58,10 +59,7 @@ internal sealed class AdvanceKitchenTicketCommandHandler(IAppDbContext db, IDate
             .Select(o => new { o.OrderNumber, o.TableId })
             .FirstAsync(cancellationToken);
 
-        var tableNumber = await db.RestaurantTables.AsNoTracking()
-            .Where(t => t.Id == order.TableId)
-            .Select(t => t.Number)
-            .FirstAsync(cancellationToken);
+        var tableNumber = await TableNumberResolver.ResolveAsync(db, order.TableId, cancellationToken);
 
         return Result.Success(ticket.ToDto(order.OrderNumber, tableNumber, clock.UtcNow));
     }

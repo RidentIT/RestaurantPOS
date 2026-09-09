@@ -34,4 +34,16 @@ public static class SettingsErrors
 
     public static readonly Error InvalidBackupArchive =
         Error.Validation("Backup.InvalidArchive", "That file is not a valid backup archive.");
+
+    public static readonly Error LogoTypeNotAllowed =
+        Error.Validation("Settings.LogoTypeNotAllowed", "Only JPEG, PNG and WebP images can be used as a logo.");
+
+    public static Error LogoTooLarge(int maxMegabytes) =>
+        Error.Validation("Settings.LogoTooLarge", $"A logo cannot be larger than {maxMegabytes} MB.");
+
+    public static readonly Error LogoNotSet =
+        Error.NotFound("Settings.LogoNotSet", "No logo has been uploaded yet.");
+
+    public static readonly Error LogoMissing =
+        Error.NotFound("Settings.LogoMissing", "The stored logo file could not be found.");
 }

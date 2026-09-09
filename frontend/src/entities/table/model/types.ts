@@ -1,4 +1,5 @@
-import type { OrderStatus, KitchenTicketStatus } from "@/entities/order";
+import type { KitchenTicketStatus, OrderStatus } from "@/entities/order";
+import { orderDisplayStatus } from "@/entities/order";
 
 /** A table on the floor plan. */
 export interface RestaurantTable {
@@ -44,20 +45,5 @@ export type TableDisplayStatus =
   | "Checkout";
 
 export function tableDisplayStatus(table: RestaurantTable): TableDisplayStatus {
-  const order = table.currentOrder;
-
-  if (!order) return "Available";
-  if (order.status === "Draft") return "Draft";
-  if (order.status === "Checkout") return "Checkout";
-
-  switch (order.kitchenStatus) {
-    case "Preparing":
-      return "Preparing";
-    case "Ready":
-      return "Ready";
-    case "Served":
-      return "Served";
-    default:
-      return "Ordered";
-  }
+  return table.currentOrder ? orderDisplayStatus(table.currentOrder) : "Available";
 }

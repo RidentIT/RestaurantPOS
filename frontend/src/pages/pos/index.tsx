@@ -1,14 +1,15 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LayoutGrid, Plus, Search, Settings2 } from "lucide-react";
+import { LayoutGrid, Plus, Search, Settings2, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import type { RestaurantTable } from "@/entities/table";
 import { tableDisplayStatus } from "@/entities/table";
-import { useOrderMutations } from "@/features/orders";
+import { useOrderMutations, useOrders } from "@/features/orders";
 import { useTables } from "@/features/tables";
 import { toApiError } from "@/shared/api/problem";
 import { Button, Card, EmptyState, Input, LoadingState } from "@/shared/ui";
 import { TableCard, TableStatusLegend } from "./TableCard";
+import { TakeawayOrders } from "./TakeawayOrders";
 
 /**
  * The cashier's home screen: the whole room at a glance (POS-034), with every table one tap from
@@ -19,6 +20,7 @@ export default function PosDashboardPage() {
   const [search, setSearch] = useState("");
 
   const { data: tables, isLoading } = useTables();
+  const { data: takeawayOrders } = useOrders({ openOnly: true, isTakeaway: true });
   const { create } = useOrderMutations();
 
   const visibleTables = useMemo(() => {
@@ -37,21 +39,28 @@ export default function PosDashboardPage() {
   const openTables = (tables ?? []).filter((t) => t.currentOrder);
   const readyCount = (tables ?? []).filter((t) => tableDisplayStatus(t) === "Ready").length;
 
+  // A bill already frozen for payment has nothing left to do on the order screen — send the
+  // cashier straight to where they can actually finish it.
+  const goToOrder = (orderId: string, status: string) =>
+    navigate(status === "Checkout" ? `/pos/orders/${orderId}/checkout` : `/pos/orders/${orderId}`);
+
   const openTable = async (table: RestaurantTable) => {
     if (table.currentOrder) {
-      // A bill already frozen for payment has nothing left to do on the order screen — send the
-      // cashier straight to where they can actually finish it.
-      const destination =
-        table.currentOrder.status === "Checkout"
-          ? `/pos/orders/${table.currentOrder.orderId}/checkout`
-          : `/pos/orders/${table.currentOrder.orderId}`;
-
-      navigate(destination);
+      goToOrder(table.currentOrder.orderId, table.currentOrder.status);
       return;
     }
 
     try {
       const order = await create.mutateAsync(table.id);
+      navigate(`/pos/orders/${order.id}`);
+    } catch (error) {
+      toast.error(toApiError(error).message);
+    }
+  };
+
+  const startTakeaway = async () => {
+    try {
+      const order = await create.mutateAsync(null);
       navigate(`/pos/orders/${order.id}`);
     } catch (error) {
       toast.error(toApiError(error).message);
@@ -72,6 +81,9 @@ export default function PosDashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={startTakeaway} loading={create.isPending}>
+            <ShoppingBag /> Take away
+          </Button>
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -91,6 +103,16 @@ export default function PosDashboardPage() {
       </div>
 
       <TableStatusLegend />
+
+      {takeawayOrders && takeawayOrders.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="font-semibold">Takeaway orders</h2>
+          <TakeawayOrders
+            orders={takeawayOrders}
+            onOpen={(order) => goToOrder(order.id, order.status)}
+          />
+        </div>
+      )}
 
       <Card className="p-4">
         {isLoading ? (

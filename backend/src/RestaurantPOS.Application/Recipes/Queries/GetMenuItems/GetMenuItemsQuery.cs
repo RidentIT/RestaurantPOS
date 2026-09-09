@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 using RestaurantPOS.Application.Common.Interfaces;
+using RestaurantPOS.Application.Common.Mappings;
 using RestaurantPOS.Application.Recipes.Dtos;
 using RestaurantPOS.Domain.Common;
 
@@ -39,20 +40,19 @@ internal sealed class GetMenuItemsQueryHandler(IAppDbContext db)
             query = query.Where(m => m.IsActive == request.IsActive.Value);
         }
 
-        var recipeMenuItemIds = await db.Recipes.AsNoTracking().Select(r => r.MenuItemId).ToListAsync(cancellationToken);
-        var withRecipe = recipeMenuItemIds.ToHashSet();
+        var recipedVariantIds = await db.Recipes.AsNoTracking()
+            .Select(r => r.MenuItemVariantId)
+            .ToListAsync(cancellationToken);
+        var recipedSet = recipedVariantIds.ToHashSet();
 
         var items = await query
+            .Include(m => m.Variants)
             .OrderByDescending(m => m.IsActive)
             .ThenBy(m => m.Category)
             .ThenBy(m => m.Name)
             .ToListAsync(cancellationToken);
 
-        IReadOnlyCollection<MenuItemDto> result =
-        [
-            .. items.Select(m => new MenuItemDto(
-                m.Id, m.Name, m.Category, m.Price, m.IsActive, withRecipe.Contains(m.Id), m.CreatedAtUtc)),
-        ];
+        IReadOnlyCollection<MenuItemDto> result = [.. items.Select(m => m.ToDto(recipedSet))];
 
         return Result.Success(result);
     }

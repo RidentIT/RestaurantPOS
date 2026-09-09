@@ -29,10 +29,21 @@ public static class SalesAnalytics
                 && o.OrderDate >= from && o.OrderDate <= to)
             .ToListAsync(cancellationToken);
 
-        var menuItemIds = orders.SelectMany(o => o.ActiveItems).Select(i => i.MenuItemId).Distinct().ToList();
-        var menuItems = await db.MenuItems.AsNoTracking()
-            .Where(m => menuItemIds.Contains(m.Id))
-            .ToDictionaryAsync(m => m.Id, cancellationToken);
+        // A recipe/price belongs to the variant that was actually sold, but its category lives on
+        // the parent menu item — so both are resolved and reduced to one variant-id-keyed lookup.
+        var variantIds = orders.SelectMany(o => o.ActiveItems).Select(i => i.MenuItemVariantId).Distinct().ToList();
+        var variants = await db.MenuItemVariants.AsNoTracking()
+            .Where(v => variantIds.Contains(v.Id))
+            .ToDictionaryAsync(v => v.Id, cancellationToken);
+
+        var parentIds = variants.Values.Select(v => v.MenuItemId).Distinct().ToList();
+        var categoriesByMenuItem = await db.MenuItems.AsNoTracking()
+            .Where(m => parentIds.Contains(m.Id))
+            .ToDictionaryAsync(m => m.Id, m => m.Category, cancellationToken);
+
+        var categoryByVariant = variants.ToDictionary(
+            kv => kv.Key,
+            kv => categoriesByMenuItem.GetValueOrDefault(kv.Value.MenuItemId, string.Empty));
 
         var revenue = orders.Sum(o => o.Total);
         var expenses = (await ExpenseAnalytics.ApprovedExpensesBetweenAsync(db, from, to, cancellationToken))
@@ -44,8 +55,8 @@ public static class SalesAnalytics
             to,
             periodLabel,
             summary,
-            BuildTopItems(orders, menuItems),
-            BuildCategorySales(orders, menuItems),
+            BuildTopItems(orders, categoryByVariant),
+            BuildCategorySales(orders, categoryByVariant),
             BuildPaymentMethods(orders),
             BuildHourlyPattern(orders),
             BuildDayOfWeekPattern(orders),
@@ -53,32 +64,27 @@ public static class SalesAnalytics
     }
 
     private static IReadOnlyCollection<TopMenuItemDto> BuildTopItems(
-        IEnumerable<Order> orders, IReadOnlyDictionary<Guid, MenuItem> menuItems)
+        IEnumerable<Order> orders, IReadOnlyDictionary<Guid, string> categoryByVariant)
     {
         return [.. orders
             .SelectMany(o => o.ActiveItems)
-            .GroupBy(i => i.MenuItemId)
-            .Select(g =>
-            {
-                var menuItem = menuItems.GetValueOrDefault(g.Key);
-
-                return new TopMenuItemDto(
-                    g.Key,
-                    g.First().MenuItemName,
-                    menuItem?.Category ?? string.Empty,
-                    g.Sum(i => i.Quantity),
-                    g.Sum(i => i.LineTotal));
-            })
+            .GroupBy(i => i.MenuItemVariantId)
+            .Select(g => new TopMenuItemDto(
+                g.Key,
+                g.First().MenuItemName,
+                categoryByVariant.GetValueOrDefault(g.Key, string.Empty),
+                g.Sum(i => i.Quantity),
+                g.Sum(i => i.LineTotal)))
             .OrderByDescending(i => i.Revenue)];
     }
 
     private static IReadOnlyCollection<CategorySalesDto> BuildCategorySales(
-        IEnumerable<Order> orders, IReadOnlyDictionary<Guid, MenuItem> menuItems)
+        IEnumerable<Order> orders, IReadOnlyDictionary<Guid, string> categoryByVariant)
     {
         var items = orders.SelectMany(o => o.ActiveItems).ToList();
 
         var grouped = items
-            .GroupBy(i => menuItems.GetValueOrDefault(i.MenuItemId)?.Category ?? "Uncategorised")
+            .GroupBy(i => categoryByVariant.TryGetValue(i.MenuItemVariantId, out var category) ? category : "Uncategorised")
             .Select(g => new { Category = g.Key, Revenue = g.Sum(i => i.LineTotal), Quantity = g.Sum(i => i.Quantity) })
             .ToList();
 

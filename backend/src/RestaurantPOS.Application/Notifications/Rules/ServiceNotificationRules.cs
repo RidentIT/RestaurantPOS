@@ -15,13 +15,15 @@ internal static class ServiceNotificationRules
         var candidates = new List<NotificationCandidate>();
         var since = nowUtc.AddHours(-12);
 
+        // Resolved once and threaded through every query below — a takeaway order has no table to
+        // join against, so every lookup here is a bulk dictionary read rather than an INNER JOIN,
+        // which would otherwise silently drop it from every alert in this file.
+        var tableNumbers = await db.RestaurantTables.AsNoTracking()
+            .ToDictionaryAsync(t => t.Id, t => t.Number, cancellationToken);
+
         var liveOrders = await db.Orders.AsNoTracking()
             .Where(o => o.Status == OrderStatus.Open || o.Status == OrderStatus.Checkout)
-            .Join(
-                db.RestaurantTables.AsNoTracking(),
-                order => order.TableId,
-                table => table.Id,
-                (order, table) => new { order.Id, order.OrderNumber, order.ConfirmedAtUtc, TableNumber = table.Number })
+            .Select(o => new { o.Id, o.OrderNumber, o.ConfirmedAtUtc, o.TableId })
             .ToListAsync(cancellationToken);
 
         var liveOrderIds = liveOrders.Select(o => o.Id).ToList();
@@ -38,6 +40,9 @@ internal static class ServiceNotificationRules
 
         foreach (var order in liveOrders)
         {
+            var tableNumber = order.TableId is { } tableId ? tableNumbers.GetValueOrDefault(tableId) : null;
+            var subject = Subject(tableNumber, order.OrderNumber, capitalized: true);
+
             var orderTickets = workableByOrder.GetValueOrDefault(order.Id, []);
 
             // Everything plated and nothing still cooking: the food is sitting on the pass.
@@ -46,7 +51,7 @@ internal static class ServiceNotificationRules
                 candidates.Add(new NotificationCandidate(
                     NotificationType.FoodReadyToServe,
                     $"FoodReady:{order.Id}:{orderTickets.Count}",
-                    $"Table {order.TableNumber} is ready to serve",
+                    $"{subject} is ready to serve",
                     $"Order #{order.OrderNumber:000} is plated and waiting.",
                     $"/pos/orders/{order.Id}"));
             }
@@ -62,28 +67,35 @@ internal static class ServiceNotificationRules
                 candidates.Add(new NotificationCandidate(
                     NotificationType.TableOpenTooLong,
                     $"TableOpenTooLong:{order.Id}",
-                    $"Table {order.TableNumber} has been open a long time",
+                    $"{subject} has been open a long time",
                     $"Order #{order.OrderNumber:000} was confirmed {(int)openMinutes} minutes ago and is not paid.",
                     $"/pos/orders/{order.Id}"));
             }
         }
 
-        candidates.AddRange(EvaluateTickets(tickets
-            .Select(t => (t.Id, t.OrderId, t.Status, t.Kind, t.PrintedAtUtc, t.TicketNumber))
-            .ToList(),
-            liveOrders.ToDictionary(o => o.Id, o => o.TableNumber),
+        candidates.AddRange(EvaluateTickets(
+            tickets.Select(t => (t.Id, t.OrderId, t.Status, t.Kind, t.PrintedAtUtc, t.TicketNumber)).ToList(),
+            liveOrders.ToDictionary(
+                o => o.Id,
+                o => (TableNumber: o.TableId is { } tableId ? tableNumbers.GetValueOrDefault(tableId) : null, o.OrderNumber)),
             nowUtc,
             thresholds));
 
-        candidates.AddRange(await CancelledOrdersAsync(db, since, cancellationToken));
-        candidates.AddRange(await LargeDiscountsAsync(db, since, thresholds, cancellationToken));
+        candidates.AddRange(await CancelledOrdersAsync(db, tableNumbers, since, cancellationToken));
+        candidates.AddRange(await LargeDiscountsAsync(db, tableNumbers, since, thresholds, cancellationToken));
 
         return candidates;
     }
 
+    /// <summary>"Table 4" for a dine-in order, "Takeaway order #007" for one with no table.</summary>
+    private static string Subject(string? tableNumber, int? orderNumber, bool capitalized = false) =>
+        tableNumber is not null
+            ? $"{(capitalized ? "Table" : "table")} {tableNumber}"
+            : $"{(capitalized ? "Takeaway" : "takeaway")} order #{orderNumber:000}";
+
     private static IEnumerable<NotificationCandidate> EvaluateTickets(
         IReadOnlyCollection<(Guid Id, Guid OrderId, KitchenTicketStatus Status, KitchenTicketKind Kind, DateTime PrintedAtUtc, int TicketNumber)> tickets,
-        IReadOnlyDictionary<Guid, string> tableNumbers,
+        IReadOnlyDictionary<Guid, (string? TableNumber, int? OrderNumber)> orders,
         DateTime nowUtc,
         NotificationThresholds thresholds)
     {
@@ -96,7 +108,8 @@ internal static class ServiceNotificationRules
                 continue;
             }
 
-            var table = tableNumbers.GetValueOrDefault(ticket.OrderId, "?");
+            var (tableNumber, orderNumber) = orders.GetValueOrDefault(ticket.OrderId, (null, null));
+            var subject = Subject(tableNumber, orderNumber, capitalized: true);
             var waiting = (nowUtc - ticket.PrintedAtUtc).TotalMinutes;
 
             if (ticket.Status == KitchenTicketStatus.New && waiting < 2)
@@ -104,7 +117,7 @@ internal static class ServiceNotificationRules
                 yield return new NotificationCandidate(
                     NotificationType.NewKitchenTicket,
                     $"NewTicket:{ticket.Id}",
-                    $"New ticket for table {table}",
+                    $"New ticket for {Subject(tableNumber, orderNumber)}",
                     $"KOT-{ticket.TicketNumber} has reached the pass.",
                     "/kitchen");
             }
@@ -114,7 +127,7 @@ internal static class ServiceNotificationRules
                 yield return new NotificationCandidate(
                     NotificationType.KitchenTicketWaitingTooLong,
                     $"TicketLate:{ticket.Id}",
-                    $"Table {table} has been waiting {(int)waiting} minutes",
+                    $"{subject} has been waiting {(int)waiting} minutes",
                     $"KOT-{ticket.TicketNumber} is still {ticket.Status.ToString().ToLowerInvariant()}.",
                     "/kitchen");
             }
@@ -122,27 +135,32 @@ internal static class ServiceNotificationRules
     }
 
     private static async Task<IReadOnlyCollection<NotificationCandidate>> CancelledOrdersAsync(
-        IAppDbContext db, DateTime since, CancellationToken cancellationToken)
+        IAppDbContext db, IReadOnlyDictionary<Guid, string> tableNumbers, DateTime since, CancellationToken cancellationToken)
     {
         var cancelled = await db.Orders.AsNoTracking()
             .Where(o => o.Status == OrderStatus.Cancelled && o.CancelledAtUtc >= since && o.OrderNumber != null)
-            .Join(
-                db.RestaurantTables.AsNoTracking(),
-                order => order.TableId,
-                table => table.Id,
-                (order, table) => new { order.Id, order.OrderNumber, TableNumber = table.Number })
+            .Select(o => new { o.Id, o.OrderNumber, o.TableId })
             .ToListAsync(cancellationToken);
 
-        return [.. cancelled.Select(o => new NotificationCandidate(
-            NotificationType.OrderCancelled,
-            $"OrderCancelled:{o.Id}",
-            $"Order #{o.OrderNumber:000} on table {o.TableNumber} was cancelled",
-            "The bill was written off and the kitchen told to stop.",
-            "/pos"))];
+        return [.. cancelled.Select(o =>
+        {
+            var tableNumber = o.TableId is { } tableId ? tableNumbers.GetValueOrDefault(tableId) : null;
+
+            return new NotificationCandidate(
+                NotificationType.OrderCancelled,
+                $"OrderCancelled:{o.Id}",
+                $"Order #{o.OrderNumber:000} on {Subject(tableNumber, o.OrderNumber)} was cancelled",
+                "The bill was written off and the kitchen told to stop.",
+                "/pos");
+        })];
     }
 
     private static async Task<IReadOnlyCollection<NotificationCandidate>> LargeDiscountsAsync(
-        IAppDbContext db, DateTime since, NotificationThresholds thresholds, CancellationToken cancellationToken)
+        IAppDbContext db,
+        IReadOnlyDictionary<Guid, string> tableNumbers,
+        DateTime since,
+        NotificationThresholds thresholds,
+        CancellationToken cancellationToken)
     {
         var minimum = thresholds.For(NotificationType.LargeDiscountApplied);
 
@@ -151,22 +169,21 @@ internal static class ServiceNotificationRules
                 && o.CompletedAtUtc >= since
                 && o.DiscountType != DiscountType.None)
             .Include(o => o.Items)
-            .Join(
-                db.RestaurantTables.AsNoTracking(),
-                order => order.TableId,
-                table => table.Id,
-                (order, table) => new { Order = order, TableNumber = table.Number })
             .ToListAsync(cancellationToken);
 
         return [.. discounted
             // The discount is computed from the lines, so it can only be filtered after loading.
-            .Where(x => x.Order.DiscountAmount >= minimum && minimum > 0)
-            .Select(x => new NotificationCandidate(
-                NotificationType.LargeDiscountApplied,
-                $"LargeDiscount:{x.Order.Id}",
-                $"{x.Order.DiscountAmount:0.00} discounted on table {x.TableNumber}",
-                $"Order #{x.Order.OrderNumber:000} was reduced from "
-                    + $"{x.Order.Subtotal:0.00} to {x.Order.Total:0.00}.",
-                "/pos"))];
+            .Where(o => o.DiscountAmount >= minimum && minimum > 0)
+            .Select(o =>
+            {
+                var tableNumber = o.TableId is { } tableId ? tableNumbers.GetValueOrDefault(tableId) : null;
+
+                return new NotificationCandidate(
+                    NotificationType.LargeDiscountApplied,
+                    $"LargeDiscount:{o.Id}",
+                    $"{o.DiscountAmount:0.00} discounted on {Subject(tableNumber, o.OrderNumber)}",
+                    $"Order #{o.OrderNumber:000} was reduced from {o.Subtotal:0.00} to {o.Total:0.00}.",
+                    "/pos");
+            })];
     }
 }

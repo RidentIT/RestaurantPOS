@@ -28,8 +28,54 @@ internal sealed class MenuItemConfiguration : IEntityTypeConfiguration<MenuItem>
             .IsRequired()
             .HasMaxLength(MenuItem.CategoryMaxLength);
 
-        builder.Property(m => m.Price).IsRequired();
-
         builder.Property(m => m.IsActive).IsRequired();
+
+        builder.Metadata
+            .FindNavigation(nameof(MenuItem.Variants))!
+            .SetPropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.HasMany(m => m.Variants)
+            .WithOne()
+            .HasForeignKey(v => v.MenuItemId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+internal sealed class MenuItemVariantConfiguration : IEntityTypeConfiguration<MenuItemVariant>
+{
+    public void Configure(EntityTypeBuilder<MenuItemVariant> builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.ToTable("MenuItemVariants");
+
+        builder.HasKey(v => v.Id);
+        builder.Property(v => v.Id).ValueGeneratedNever();
+
+        builder.Property(v => v.Name).HasMaxLength(MenuItemVariant.NameMaxLength);
+
+        builder.Property(v => v.Price).IsRequired();
+        builder.Property(v => v.SortOrder).IsRequired();
+
+        builder.HasIndex(v => v.MenuItemId);
+    }
+}
+
+internal sealed class MenuCategoryConfiguration : IEntityTypeConfiguration<MenuCategory>
+{
+    public void Configure(EntityTypeBuilder<MenuCategory> builder)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.ToTable("MenuCategories");
+
+        builder.HasKey(c => c.Id);
+        builder.Property(c => c.Id).ValueGeneratedNever();
+
+        builder.Property(c => c.Name)
+            .IsRequired()
+            .HasMaxLength(MenuCategory.NameMaxLength);
+
+        builder.HasIndex(c => c.Name).IsUnique();
     }
 }
