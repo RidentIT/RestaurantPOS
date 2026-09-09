@@ -7,8 +7,8 @@ using RestaurantPOS.Domain.Enums;
 
 namespace RestaurantPOS.Application.Inventory.Common;
 
-/// <summary>One menu item and how many of it were sold.</summary>
-public sealed record SoldItem(Guid MenuItemId, decimal Quantity);
+/// <summary>One menu item size and how many of it were sold.</summary>
+public sealed record SoldItem(Guid MenuItemVariantId, decimal Quantity);
 
 /// <summary>
 /// Turns a completed sale into kitchen stock deductions, following each dish's recipe
@@ -37,11 +37,11 @@ public static class SaleStockConsumption
         ArgumentNullException.ThrowIfNull(db);
         ArgumentNullException.ThrowIfNull(soldItems);
 
-        var menuItemIds = soldItems.Select(s => s.MenuItemId).Distinct().ToList();
+        var variantIds = soldItems.Select(s => s.MenuItemVariantId).Distinct().ToList();
 
         var recipes = await db.Recipes.AsNoTracking()
             .Include(r => r.Lines)
-            .Where(r => menuItemIds.Contains(r.MenuItemId) && r.IsEnabled)
+            .Where(r => variantIds.Contains(r.MenuItemVariantId) && r.IsEnabled)
             .ToListAsync(cancellationToken);
 
         if (recipes.Count == 0)
@@ -49,7 +49,7 @@ public static class SaleStockConsumption
             return Result.Success<IReadOnlyCollection<ConsumedLineDto>>([]);
         }
 
-        var recipesByMenuItem = recipes.ToDictionary(r => r.MenuItemId);
+        var recipesByVariant = recipes.ToDictionary(r => r.MenuItemVariantId);
 
         // Quantities are totalled per raw material first: one movement per ingredient reads far
         // better in the stock history than one per dish that happened to use it.
@@ -57,7 +57,7 @@ public static class SaleStockConsumption
 
         foreach (var sold in soldItems)
         {
-            if (!recipesByMenuItem.TryGetValue(sold.MenuItemId, out var recipe))
+            if (!recipesByVariant.TryGetValue(sold.MenuItemVariantId, out var recipe))
             {
                 continue;
             }

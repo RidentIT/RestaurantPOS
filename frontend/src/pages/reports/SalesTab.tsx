@@ -36,7 +36,7 @@ export function SalesTab({ report }: { report: SalesReport }) {
           <RankedBarChart
             emptyLabel="Nothing sold in this period yet."
             data={report.topItems.slice(0, 10).map((item) => ({
-              id: item.menuItemId,
+              id: item.menuItemVariantId,
               label: item.name,
               value: item.revenue,
               detail: `${item.quantitySold} sold`,

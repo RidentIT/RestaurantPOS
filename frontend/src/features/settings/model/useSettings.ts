@@ -16,13 +16,36 @@ export function useRestaurantSettings() {
   });
 }
 
+/** The restaurant's name for the sign-in screen — the one thing here that needs no session. */
+export function useBranding() {
+  return useQuery({
+    queryKey: ["restaurant-branding"],
+    queryFn: settingsApi.getBranding,
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+}
+
 /** Every "update one section" mutation the Settings page needs, all refreshing the same query. */
 export function useSettingsMutations() {
   const queryClient = useQueryClient();
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: [SETTINGS_KEY] });
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: [SETTINGS_KEY] });
+    queryClient.invalidateQueries({ queryKey: ["restaurant-branding"] });
+  };
 
   const updateProfile = useMutation({
     mutationFn: settingsApi.updateProfile,
+    onSuccess: invalidate,
+  });
+
+  const uploadLogo = useMutation({
+    mutationFn: (file: File) => settingsApi.uploadLogo(file),
+    onSuccess: invalidate,
+  });
+
+  const removeLogo = useMutation({
+    mutationFn: settingsApi.removeLogo,
     onSuccess: invalidate,
   });
 
@@ -56,6 +79,8 @@ export function useSettingsMutations() {
 
   return {
     updateProfile,
+    uploadLogo,
+    removeLogo,
     updateBillCharges,
     updateReceiptFooter,
     updateDefaultPrinter,

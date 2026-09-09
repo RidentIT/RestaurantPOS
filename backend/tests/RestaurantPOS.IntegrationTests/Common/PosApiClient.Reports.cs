@@ -1,7 +1,7 @@
 namespace RestaurantPOS.IntegrationTests.Common;
 
 public sealed record TopMenuItemResponse(
-    Guid MenuItemId, string Name, string Category, int QuantitySold, decimal Revenue);
+    Guid MenuItemVariantId, string Name, string Category, int QuantitySold, decimal Revenue);
 
 public sealed record CategorySalesResponse(
     string Category, decimal Revenue, decimal PercentageOfTotal, int QuantitySold);

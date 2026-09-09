@@ -6,6 +6,8 @@ export interface RestaurantSettings {
   city: string | null;
   phone: string | null;
   logoPath: string | null;
+  /** Printed under the address on receipts when set. Optional — not every restaurant is VAT-registered. */
+  vatRegistrationNumber: string | null;
   /** Percentage added on top of the discounted subtotal, 0-100. Zero by default. */
   taxRatePercent: number;
   serviceChargeRatePercent: number;
@@ -23,4 +25,9 @@ export interface Backup {
   fileName: string;
   createdAtUtc: string;
   sizeBytes: number;
+}
+
+/** What a sign-in screen is allowed to know before a session exists. */
+export interface Branding {
+  name: string;
 }

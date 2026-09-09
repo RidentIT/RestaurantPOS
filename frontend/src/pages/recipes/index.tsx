@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { ChefHat, MoreHorizontal, Pencil, Plus, Search, ShieldCheck, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
 import type { MenuItem, MenuItemFilters } from "@/entities/menu-item";
-import { MenuItemFormDialog, useMenuItemMutations, useMenuItems } from "@/features/menu-items";
-import { RecipeEditorDialog } from "@/features/recipes";
+import { getPriceRange, getRecipeCoverage } from "@/entities/menu-item";
+import { useMenuItemMutations, useMenuItems } from "@/features/menu-items";
 import { toApiError } from "@/shared/api/problem";
 import {
   Badge,
@@ -34,6 +35,7 @@ const STATUS_FILTER_ALL = "all";
 const currency = new Intl.NumberFormat("en-LK", { style: "currency", currency: "LKR" });
 
 export default function RecipesPage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(STATUS_FILTER_ALL);
 
@@ -44,9 +46,6 @@ export default function RecipesPage() {
 
   const { data: items, isLoading } = useMenuItems(filters);
   const { setActive } = useMenuItemMutations();
-
-  const [formItem, setFormItem] = useState<MenuItem | null | undefined>(undefined);
-  const [recipeItem, setRecipeItem] = useState<MenuItem | null>(null);
 
   const toggleActive = async (item: MenuItem) => {
     try {
@@ -66,8 +65,10 @@ export default function RecipesPage() {
             Manage your menu and attach a recipe to track what each dish consumes.
           </p>
         </div>
-        <Button onClick={() => setFormItem(null)}>
-          <Plus /> Add menu item
+        <Button asChild>
+          <Link to="/recipes/new">
+            <Plus /> Add menu item
+          </Link>
         </Button>
       </div>
 
@@ -116,16 +117,31 @@ export default function RecipesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((item) => (
+              {items.map((item) => {
+                const { min, max } = getPriceRange(item);
+                const coverage = getRecipeCoverage(item);
+
+                return (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {item.name}
+                    {item.variants.length > 1 && (
+                      <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                        ({item.variants.length} sizes)
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{item.category}</TableCell>
-                  <TableCell className="tabular">{currency.format(item.price)}</TableCell>
+                  <TableCell className="tabular">
+                    {min === max ? currency.format(min) : `${currency.format(min)} – ${currency.format(max)}`}
+                  </TableCell>
                   <TableCell>
-                    {item.hasRecipe ? (
+                    {coverage === true ? (
                       <Badge variant="success">Recipe set</Badge>
-                    ) : (
+                    ) : coverage === false ? (
                       <Badge variant="outline">No recipe</Badge>
+                    ) : (
+                      <Badge variant="warning">Partial</Badge>
                     )}
                   </TableCell>
                   <TableCell>
@@ -143,11 +159,8 @@ export default function RecipesPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => setRecipeItem(item)}>
-                          <ChefHat /> Manage recipe
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setFormItem(item)}>
-                          <Pencil /> Edit
+                        <DropdownMenuItem onSelect={() => navigate(`/recipes/${item.id}`)}>
+                          <Pencil /> Edit / manage recipe
                         </DropdownMenuItem>
                         <DropdownMenuItem destructive={item.isActive} onSelect={() => toggleActive(item)}>
                           {item.isActive ? (
@@ -164,25 +177,12 @@ export default function RecipesPage() {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         )}
       </Card>
-
-      <MenuItemFormDialog
-        open={formItem !== undefined}
-        onOpenChange={(open) => !open && setFormItem(undefined)}
-        item={formItem ?? undefined}
-      />
-
-      {recipeItem && (
-        <RecipeEditorDialog
-          open={!!recipeItem}
-          onOpenChange={(open) => !open && setRecipeItem(null)}
-          menuItem={recipeItem}
-        />
-      )}
     </div>
   );
 }

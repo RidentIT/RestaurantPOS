@@ -19,6 +19,7 @@ public sealed class RestaurantSettings : BaseEntity
     public const int CityMaxLength = 100;
     public const int PhoneMaxLength = 30;
     public const int LogoPathMaxLength = 400;
+    public const int VatRegistrationNumberMaxLength = 50;
     public const int ReceiptFooterMaxLength = 200;
     public const int PrinterNameMaxLength = 200;
     public const int BackupFolderPathMaxLength = 400;
@@ -55,6 +56,13 @@ public sealed class RestaurantSettings : BaseEntity
 
     /// <summary>Path to the logo file, relative to the attachments root. Null shows no logo.</summary>
     public string? LogoPath { get; private set; }
+
+    /// <summary>
+    /// Printed on the receipt right under the address when set. Optional — plenty of small
+    /// operations aren't VAT-registered at all, and this restaurant doesn't itemise VAT today
+    /// (<see cref="TaxRatePercent"/> defaults to zero).
+    /// </summary>
+    public string? VatRegistrationNumber { get; private set; }
 
     // ----- Bill charges -----
 
@@ -96,7 +104,13 @@ public sealed class RestaurantSettings : BaseEntity
         new(name, addressLine1, city, phone);
 
     public void UpdateProfile(
-        string name, string addressLine1, string? addressLine2, string? city, string? phone, string? logoPath)
+        string name,
+        string addressLine1,
+        string? addressLine2,
+        string? city,
+        string? phone,
+        string? logoPath,
+        string? vatRegistrationNumber)
     {
         Name = NormaliseRequired(name, NameMaxLength, nameof(name));
         AddressLine1 = NormaliseRequired(addressLine1, AddressLineMaxLength, nameof(addressLine1));
@@ -104,7 +118,11 @@ public sealed class RestaurantSettings : BaseEntity
         City = NormaliseOptional(city, CityMaxLength);
         Phone = NormaliseOptional(phone, PhoneMaxLength);
         LogoPath = NormaliseOptional(logoPath, LogoPathMaxLength);
+        VatRegistrationNumber = NormaliseOptional(vatRegistrationNumber, VatRegistrationNumberMaxLength);
     }
+
+    /// <summary>Sets or clears the logo, independently of the rest of the business profile.</summary>
+    public void SetLogo(string? logoPath) => LogoPath = NormaliseOptional(logoPath, LogoPathMaxLength);
 
     public void UpdateBillCharges(decimal taxRatePercent, decimal serviceChargeRatePercent)
     {

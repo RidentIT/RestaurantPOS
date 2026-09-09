@@ -2,8 +2,10 @@ import { UserCircle } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { groupModules, type ModuleDescriptor } from "@/entities/user";
 import { useAuth } from "@/features/auth";
+import { settingsApi, useRestaurantSettings } from "@/features/settings";
 import { MODULE_ROUTES, DEFAULT_MODULE_ICON } from "@/shared/config/moduleRoutes";
 import { cn } from "@/shared/lib/utils";
+import { BrandMark } from "@/shared/ui";
 
 export interface SidebarProps {
   catalog: ModuleDescriptor[];
@@ -16,20 +18,25 @@ export interface SidebarProps {
  */
 export function Sidebar({ catalog }: SidebarProps) {
   const { can } = useAuth();
+  const { data: settings } = useRestaurantSettings();
   const groups = groupModules(catalog).map((group) => ({
     ...group,
     modules: group.modules.filter((m) => can(m.module)),
   }));
 
+  const name = settings?.name ?? "";
+  // The logo path changes to a fresh name on every upload (see FileSystemLogoStore), so using it
+  // as a cache-busting query param means a newly-uploaded logo shows immediately here without
+  // needing to restart the app — the browser has no reason to think this is the same image it
+  // already cached under the old URL.
+  const logoSrc = settings?.logoPath ? `${settingsApi.logoUrl()}?v=${encodeURIComponent(settings.logoPath)}` : undefined;
+
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r bg-card">
       <div className="flex h-16 items-center gap-2 border-b px-5">
-        <div className="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
-          SL
-        </div>
-        <div className="leading-tight">
-          <p className="text-sm font-semibold">Sri Lakshmi</p>
-          <p className="text-xs text-muted-foreground">Family Restaurant</p>
+        <BrandMark src={logoSrc} name={name} className="size-8 shrink-0 text-sm" />
+        <div className="min-w-0 leading-tight">
+          <p className="truncate text-sm font-semibold">{name}</p>
         </div>
       </div>
 

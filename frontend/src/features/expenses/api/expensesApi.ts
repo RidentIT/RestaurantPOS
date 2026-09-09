@@ -51,9 +51,7 @@ export const expensesApi = {
     const form = new FormData();
     form.append("file", file);
 
-    return axiosClient
-      .post<Expense>(API_ENDPOINTS.EXPENSES.ATTACHMENTS(id), form)
-      .then((response) => response.data);
+    return apiService.uploadFile<Expense>(API_ENDPOINTS.EXPENSES.ATTACHMENTS(id), form);
   },
 
   removeAttachment: (id: string, attachmentId: string) =>

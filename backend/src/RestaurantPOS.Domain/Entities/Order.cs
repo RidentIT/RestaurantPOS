@@ -5,7 +5,7 @@ namespace RestaurantPOS.Domain.Entities;
 
 /// <summary>A dish being added to a bill, priced from the menu at the moment it is ordered.</summary>
 public sealed record NewOrderItem(
-    Guid MenuItemId, string MenuItemName, decimal UnitPrice, int Quantity, string? SpecialInstructions);
+    Guid MenuItemVariantId, string MenuItemName, decimal UnitPrice, int Quantity, string? SpecialInstructions);
 
 /// <summary>
 /// A table's bill, from the first dish keyed in to the receipt handed over.
@@ -29,7 +29,7 @@ public sealed class Order : BaseEntity
     {
     }
 
-    private Order(Guid tableId, Guid cashierUserId, decimal taxRatePercent, decimal serviceChargeRatePercent)
+    private Order(Guid? tableId, Guid cashierUserId, decimal taxRatePercent, decimal serviceChargeRatePercent)
     {
         TableId = tableId;
         CashierUserId = cashierUserId;
@@ -45,7 +45,8 @@ public sealed class Order : BaseEntity
     /// <summary>Business day the number belongs to; the sequence restarts each day.</summary>
     public DateOnly? OrderDate { get; private set; }
 
-    public Guid TableId { get; private set; }
+    /// <summary>Null for a takeaway order, which never holds a table (BR-POS-031 does not apply to it).</summary>
+    public Guid? TableId { get; private set; }
 
     /// <summary>Who keyed the order in (POS-012).</summary>
     public Guid CashierUserId { get; private set; }
@@ -132,8 +133,9 @@ public sealed class Order : BaseEntity
     /// <summary>True while the order still holds its table (BR-POS-017).</summary>
     public bool IsLive => Status is OrderStatus.Draft or OrderStatus.Open or OrderStatus.Checkout;
 
+    /// <param name="tableId">Null opens a takeaway order instead of a dine-in one.</param>
     public static Order Create(
-        Guid tableId, Guid cashierUserId, decimal taxRatePercent = 0m, decimal serviceChargeRatePercent = 0m) =>
+        Guid? tableId, Guid cashierUserId, decimal taxRatePercent = 0m, decimal serviceChargeRatePercent = 0m) =>
         new(tableId, cashierUserId, taxRatePercent, serviceChargeRatePercent);
 
     /// <summary>
@@ -147,7 +149,7 @@ public sealed class Order : BaseEntity
         EnsureEditable();
 
         var added = items
-            .Select(i => new OrderItem(Id, i.MenuItemId, i.MenuItemName, i.UnitPrice, i.Quantity, i.SpecialInstructions))
+            .Select(i => new OrderItem(Id, i.MenuItemVariantId, i.MenuItemName, i.UnitPrice, i.Quantity, i.SpecialInstructions))
             .ToList();
 
         if (added.Count == 0)

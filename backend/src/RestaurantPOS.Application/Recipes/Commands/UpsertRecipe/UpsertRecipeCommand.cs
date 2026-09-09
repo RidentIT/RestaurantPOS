@@ -24,14 +24,14 @@ public sealed record RecipeLineInput(Guid RawMaterialId, decimal Quantity);
 /// does (REC-006). One endpoint for both, since "one recipe per menu item" (BR-REC-001) makes
 /// create-vs-update a distinction the caller should not need to track.
 /// </summary>
-public sealed record UpsertRecipeCommand(Guid MenuItemId, IReadOnlyCollection<RecipeLineInput> Lines)
+public sealed record UpsertRecipeCommand(Guid MenuItemVariantId, IReadOnlyCollection<RecipeLineInput> Lines)
     : IRequest<Result<RecipeDto>>;
 
 public sealed class UpsertRecipeCommandValidator : AbstractValidator<UpsertRecipeCommand>
 {
     public UpsertRecipeCommandValidator()
     {
-        RuleFor(x => x.MenuItemId).NotEmpty();
+        RuleFor(x => x.MenuItemVariantId).NotEmpty();
 
         RuleFor(x => x.Lines)
             .NotEmpty().WithMessage("A recipe must contain at least one raw material.");
@@ -51,10 +51,10 @@ internal sealed class UpsertRecipeCommandHandler(IAppDbContext db, ICurrentUser 
 {
     public async Task<Result<RecipeDto>> Handle(UpsertRecipeCommand request, CancellationToken cancellationToken)
     {
-        var menuItemExists = await db.MenuItems.AnyAsync(m => m.Id == request.MenuItemId, cancellationToken);
-        if (!menuItemExists)
+        var variantExists = await db.MenuItemVariants.AnyAsync(v => v.Id == request.MenuItemVariantId, cancellationToken);
+        if (!variantExists)
         {
-            return Result.Failure<RecipeDto>(RecipeErrors.MenuItemNotFound(request.MenuItemId));
+            return Result.Failure<RecipeDto>(RecipeErrors.VariantNotFound(request.MenuItemVariantId));
         }
 
         var rawMaterialIds = request.Lines.Select(l => l.RawMaterialId).ToList();
@@ -77,12 +77,12 @@ internal sealed class UpsertRecipeCommandHandler(IAppDbContext db, ICurrentUser 
 
         var recipe = await db.Recipes
             .Include(r => r.Lines)
-            .FirstOrDefaultAsync(r => r.MenuItemId == request.MenuItemId, cancellationToken);
+            .FirstOrDefaultAsync(r => r.MenuItemVariantId == request.MenuItemVariantId, cancellationToken);
         var isNew = recipe is null;
 
         if (recipe is null)
         {
-            recipe = Recipe.Create(request.MenuItemId, lines);
+            recipe = Recipe.Create(request.MenuItemVariantId, lines);
             db.Recipes.Add(recipe);
         }
         else

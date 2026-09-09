@@ -109,6 +109,9 @@ logs/
 *.db
 *.db-shm
 *.db-wal
+*.db.bak-*
+*.db-shm.bak-*
+*.db-wal.bak-*
 integrationtests.db
 
 # Chutzpah Test files

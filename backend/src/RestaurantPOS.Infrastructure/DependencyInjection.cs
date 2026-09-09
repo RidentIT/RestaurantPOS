@@ -35,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, JwtTokenService>();
 
         services.AddSingleton<IExpenseAttachmentStore, FileSystemExpenseAttachmentStore>();
+        services.AddSingleton<ILogoStore, FileSystemLogoStore>();
         services.AddSingleton<IBackupFolderProbe, BackupFolderProbe>();
         services.AddScoped<IBackupService, BackupService>();
 

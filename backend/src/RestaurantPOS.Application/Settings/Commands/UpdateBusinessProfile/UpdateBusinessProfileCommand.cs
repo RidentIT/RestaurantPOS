@@ -13,7 +13,13 @@ namespace RestaurantPOS.Application.Settings.Commands.UpdateBusinessProfile;
 
 /// <summary>What goes at the top of every receipt and KOT (POS-027).</summary>
 public sealed record UpdateBusinessProfileCommand(
-    string Name, string AddressLine1, string? AddressLine2, string? City, string? Phone, string? LogoPath)
+    string Name,
+    string AddressLine1,
+    string? AddressLine2,
+    string? City,
+    string? Phone,
+    string? LogoPath,
+    string? VatRegistrationNumber)
     : IRequest<Result<RestaurantSettingsDto>>;
 
 public sealed class UpdateBusinessProfileCommandValidator : AbstractValidator<UpdateBusinessProfileCommand>
@@ -26,6 +32,7 @@ public sealed class UpdateBusinessProfileCommandValidator : AbstractValidator<Up
         RuleFor(x => x.City).MaximumLength(RestaurantSettings.CityMaxLength);
         RuleFor(x => x.Phone).MaximumLength(RestaurantSettings.PhoneMaxLength);
         RuleFor(x => x.LogoPath).MaximumLength(RestaurantSettings.LogoPathMaxLength);
+        RuleFor(x => x.VatRegistrationNumber).MaximumLength(RestaurantSettings.VatRegistrationNumberMaxLength);
     }
 }
 
@@ -38,7 +45,13 @@ internal sealed class UpdateBusinessProfileCommandHandler(IAppDbContext db)
         var settings = await RestaurantSettingsAccessor.GetTrackedAsync(db, cancellationToken);
 
         settings.UpdateProfile(
-            request.Name, request.AddressLine1, request.AddressLine2, request.City, request.Phone, request.LogoPath);
+            request.Name,
+            request.AddressLine1,
+            request.AddressLine2,
+            request.City,
+            request.Phone,
+            request.LogoPath,
+            request.VatRegistrationNumber);
 
         await db.SaveChangesAsync(cancellationToken);
 

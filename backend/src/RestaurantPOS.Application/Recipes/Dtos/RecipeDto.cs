@@ -11,7 +11,7 @@ public sealed record RecipeLineDto(
 
 public sealed record RecipeDto(
     Guid Id,
-    Guid MenuItemId,
+    Guid MenuItemVariantId,
     bool IsEnabled,
     IReadOnlyCollection<RecipeLineDto> Lines,
     DateTime CreatedAtUtc,

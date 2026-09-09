@@ -33,19 +33,31 @@ internal static class AdministrationNotificationRules
                 "/users"));
         }
 
-        // A menu item that sells but deducts nothing quietly drifts the kitchen's stock away from
-        // reality, and nothing else in the system will ever complain about it.
-        var withoutRecipe = await db.MenuItems.AsNoTracking()
-            .Where(m => m.IsActive && !db.Recipes.Any(r => r.MenuItemId == m.Id && r.IsEnabled))
-            .Select(m => new { m.Id, m.Name })
+        // A menu item size that sells but deducts nothing quietly drifts the kitchen's stock away
+        // from reality, and nothing else in the system will ever complain about it.
+        var withoutRecipe = await db.MenuItemVariants.AsNoTracking()
+            .Where(v => db.MenuItems.Any(m => m.Id == v.MenuItemId && m.IsActive)
+                && !db.Recipes.Any(r => r.MenuItemVariantId == v.Id && r.IsEnabled))
+            .Select(v => new { v.Id, v.Name, v.MenuItemId })
             .ToListAsync(cancellationToken);
 
-        candidates.AddRange(withoutRecipe.Select(m => new NotificationCandidate(
-            NotificationType.MenuItemWithoutRecipe,
-            $"NoRecipe:{m.Id}",
-            $"{m.Name} has no recipe",
-            "Selling it will not deduct any kitchen stock.",
-            "/recipes")));
+        var parentNames = await db.MenuItems.AsNoTracking()
+            .Where(m => withoutRecipe.Select(v => v.MenuItemId).Contains(m.Id))
+            .ToDictionaryAsync(m => m.Id, m => m.Name, cancellationToken);
+
+        candidates.AddRange(withoutRecipe.Select(v =>
+        {
+            var displayName = v.Name is null
+                ? parentNames[v.MenuItemId]
+                : $"{parentNames[v.MenuItemId]} ({v.Name})";
+
+            return new NotificationCandidate(
+                NotificationType.MenuItemWithoutRecipe,
+                $"NoRecipe:{v.Id}",
+                $"{displayName} has no recipe",
+                "Selling it will not deduct any kitchen stock.",
+                "/recipes");
+        }));
 
         return candidates;
     }

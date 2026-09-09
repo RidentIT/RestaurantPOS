@@ -54,7 +54,7 @@ public static class OrderErrors
             $"The payments taken come to {paid:0.00}, but the bill is {total:0.00}. They must match exactly.");
 
     public static Error MenuItemNotFound(Guid id) =>
-        Error.NotFound("Order.MenuItemNotFound", $"No menu item was found with id '{id}'.");
+        Error.NotFound("Order.MenuItemNotFound", $"No menu item size was found with id '{id}'.");
 
     public static readonly Error MenuItemInactive =
         Error.Validation("Order.MenuItemInactive", "This menu item is not currently available.");

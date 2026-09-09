@@ -16,6 +16,7 @@ public static class SettingsMappings
             settings.City,
             settings.Phone,
             settings.LogoPath,
+            settings.VatRegistrationNumber,
             settings.TaxRatePercent,
             settings.ServiceChargeRatePercent,
             settings.ReceiptFooterMessage,

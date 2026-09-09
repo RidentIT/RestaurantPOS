@@ -89,13 +89,14 @@ public static class OrderEndpoints
     private static void MapOrders(RouteGroupBuilder group)
     {
         group.MapGet("/", async (
-                bool? openOnly, OrderStatus? status, string? search, ISender sender, CancellationToken ct) =>
+                bool? openOnly, OrderStatus? status, string? search, bool? isTakeaway,
+                ISender sender, CancellationToken ct) =>
             {
-                var result = await sender.Send(new GetOrdersQuery(openOnly ?? false, status, search), ct);
+                var result = await sender.Send(new GetOrdersQuery(openOnly ?? false, status, search, isTakeaway), ct);
                 return result.ToHttpResult();
             })
             .WithName("GetOrders")
-            .WithSummary("Lists orders, optionally only those still holding a table.");
+            .WithSummary("Lists orders, optionally only those still live, and/or only takeaway or only dine-in.");
 
         group.MapGet("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
             {
@@ -111,7 +112,7 @@ public static class OrderEndpoints
                 return result.ToCreatedResult(o => $"/api/v1/orders/{o.Id}");
             })
             .WithName("CreateOrder")
-            .WithSummary("Opens a draft bill on a table.");
+            .WithSummary("Opens a draft bill on a table, or a takeaway order when no table is given.");
 
         group.MapPost("/{id:guid}/confirm", async (Guid id, ISender sender, CancellationToken ct) =>
             {
@@ -147,7 +148,7 @@ public static class OrderEndpoints
             {
                 var command = new AddOrderItemsCommand(
                     id,
-                    [.. request.Items.Select(i => new AddOrderItemInput(i.MenuItemId, i.Quantity, i.SpecialInstructions))]);
+                    [.. request.Items.Select(i => new AddOrderItemInput(i.MenuItemVariantId, i.Quantity, i.SpecialInstructions))]);
 
                 var result = await sender.Send(command, ct);
                 return result.ToHttpResult();

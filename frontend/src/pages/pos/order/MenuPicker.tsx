@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Search, UtensilsCrossed } from "lucide-react";
-import type { MenuItem } from "@/entities/menu-item";
+import type { MenuItem, MenuItemVariant } from "@/entities/menu-item";
 import { Button, EmptyState, Input } from "@/shared/ui";
 import { cn } from "@/shared/lib/utils";
 
@@ -8,7 +8,10 @@ import { cn } from "@/shared/lib/utils";
  * The menu, grouped by category (POS-002).
  *
  * Built as big tap targets rather than a dropdown: at a busy till the cashier is looking at the
- * customer, not the screen, and a grid can be hit by muscle memory in a way a select cannot.
+ * customer, not the screen, and a grid can be hit by muscle memory in a way a select cannot. A
+ * single-size item is one tap target, same as always; a sized item (Normal/Full…) shows its sizes
+ * as their own tap targets right on the card, rather than adding a second screen just to ask which
+ * size — the cashier already knows what the customer ordered.
  */
 export function MenuPicker({
   menuItems,
@@ -16,7 +19,7 @@ export function MenuPicker({
   disabled,
 }: {
   menuItems: MenuItem[];
-  onPick: (item: MenuItem) => void;
+  onPick: (item: MenuItem, variant: MenuItemVariant) => void;
   disabled: boolean;
 }) {
   const [search, setSearch] = useState("");
@@ -77,19 +80,41 @@ export function MenuPicker({
           />
         ) : (
           <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
-            {visible.map((item) => (
-              <Button
-                key={item.id}
-                type="button"
-                variant="outline"
-                disabled={disabled}
-                onClick={() => onPick(item)}
-                className="h-auto flex-col items-start gap-1 whitespace-normal p-3 text-left"
-              >
-                <span className="font-medium leading-snug">{item.name}</span>
-                <span className="text-sm text-muted-foreground tabular">{item.price.toFixed(2)}</span>
-              </Button>
-            ))}
+            {visible.map((item) =>
+              item.variants.length === 1 ? (
+                <Button
+                  key={item.id}
+                  type="button"
+                  variant="outline"
+                  disabled={disabled}
+                  onClick={() => onPick(item, item.variants[0])}
+                  className="h-auto flex-col items-start gap-1 whitespace-normal p-3 text-left"
+                >
+                  <span className="font-medium leading-snug">{item.name}</span>
+                  <span className="text-sm text-muted-foreground tabular">{item.variants[0].price.toFixed(2)}</span>
+                </Button>
+              ) : (
+                <div key={item.id} className="flex flex-col gap-1.5 rounded-lg border p-3">
+                  <span className="font-medium leading-snug">{item.name}</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {item.variants.map((variant) => (
+                      <Button
+                        key={variant.id}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={disabled}
+                        onClick={() => onPick(item, variant)}
+                        className="h-auto flex-col items-start gap-0.5 whitespace-normal py-1.5 text-left"
+                      >
+                        <span className="text-xs">{variant.name}</span>
+                        <span className="text-xs text-muted-foreground tabular">{variant.price.toFixed(2)}</span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ),
+            )}
           </div>
         )}
       </div>

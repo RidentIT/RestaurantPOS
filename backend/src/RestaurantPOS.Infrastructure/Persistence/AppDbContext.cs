@@ -25,6 +25,10 @@ public class AppDbContext : DbContext, IAppDbContext
 
     public DbSet<MenuItem> MenuItems => Set<MenuItem>();
 
+    public DbSet<MenuItemVariant> MenuItemVariants => Set<MenuItemVariant>();
+
+    public DbSet<MenuCategory> MenuCategories => Set<MenuCategory>();
+
     public DbSet<RawMaterial> RawMaterials => Set<RawMaterial>();
 
     public DbSet<Recipe> Recipes => Set<Recipe>();

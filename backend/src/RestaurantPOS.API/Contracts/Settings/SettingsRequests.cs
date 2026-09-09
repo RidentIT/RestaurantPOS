@@ -1,7 +1,13 @@
 namespace RestaurantPOS.API.Contracts.Settings;
 
 public sealed record UpdateBusinessProfileRequest(
-    string Name, string AddressLine1, string? AddressLine2, string? City, string? Phone, string? LogoPath);
+    string Name,
+    string AddressLine1,
+    string? AddressLine2,
+    string? City,
+    string? Phone,
+    string? LogoPath,
+    string? VatRegistrationNumber);
 
 public sealed record UpdateBillChargesRequest(decimal TaxRatePercent, decimal ServiceChargeRatePercent);
 

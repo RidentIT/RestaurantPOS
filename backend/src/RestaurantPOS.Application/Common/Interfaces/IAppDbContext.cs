@@ -19,6 +19,10 @@ public interface IAppDbContext
 
     DbSet<MenuItem> MenuItems { get; }
 
+    DbSet<MenuItemVariant> MenuItemVariants { get; }
+
+    DbSet<MenuCategory> MenuCategories { get; }
+
     DbSet<RawMaterial> RawMaterials { get; }
 
     DbSet<Recipe> Recipes { get; }

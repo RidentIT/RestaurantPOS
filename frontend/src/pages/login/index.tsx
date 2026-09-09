@@ -2,10 +2,12 @@ import { useState } from "react";
 import { AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useLogin } from "@/features/auth";
+import { settingsApi, useBranding } from "@/features/settings";
 import { toApiError } from "@/shared/api/problem";
 import {
   Alert,
   AlertDescription,
+  BrandMark,
   Button,
   Card,
   CardContent,
@@ -21,7 +23,9 @@ interface LoginFormValues {
 
 export default function LoginPage() {
   const login = useLogin();
+  const { data: branding } = useBranding();
   const [formError, setFormError] = useState<string | null>(null);
+  const name = branding?.name ?? "";
 
   const {
     register,
@@ -44,10 +48,12 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardContent className="pt-8">
           <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-lg bg-primary text-lg font-bold text-primary-foreground">
-              SL
-            </div>
-            <h1 className="text-xl font-semibold">Sri Lakshmi Family Restaurant</h1>
+            <BrandMark
+              src={name ? settingsApi.logoUrl() : undefined}
+              name={name}
+              className="mx-auto mb-4 size-12 text-lg"
+            />
+            <h1 className="text-xl font-semibold">{name}</h1>
             <p className="mt-1 text-sm text-muted-foreground">Sign in to the POS terminal</p>
           </div>
 

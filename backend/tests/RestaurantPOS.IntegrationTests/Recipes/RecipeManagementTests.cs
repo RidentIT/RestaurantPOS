@@ -19,7 +19,8 @@ public class RecipeManagementTests : IntegrationTestBase
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var item = await PosApiClient.ReadAsync<MenuItemResponse>(response);
-        item.HasRecipe.Should().BeFalse();
+        item.Variants.Should().ContainSingle();
+        item.Variants.Single().HasRecipe.Should().BeFalse();
         item.IsActive.Should().BeTrue();
     }
 
@@ -49,9 +50,9 @@ public class RecipeManagementTests : IntegrationTestBase
     public async Task CreatingARecipe_RequiresAtLeastOneLine()
     {
         await SignInAsAdminAsync();
-        var itemId = await CreateMenuItemAsync();
+        var (_, variantId) = await CreateMenuItemAsync();
 
-        var response = await Client.UpsertRecipeAsync(itemId);
+        var response = await Client.UpsertRecipeAsync(variantId);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -60,10 +61,10 @@ public class RecipeManagementTests : IntegrationTestBase
     public async Task CreatingARecipe_RejectsAZeroQuantity()
     {
         await SignInAsAdminAsync();
-        var itemId = await CreateMenuItemAsync();
+        var (_, variantId) = await CreateMenuItemAsync();
         var riceId = await CreateRawMaterialAsync("Rice");
 
-        var response = await Client.UpsertRecipeAsync(itemId, (riceId, 0m));
+        var response = await Client.UpsertRecipeAsync(variantId, (riceId, 0m));
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -72,10 +73,10 @@ public class RecipeManagementTests : IntegrationTestBase
     public async Task CreatingARecipe_RejectsTheSameRawMaterialTwice()
     {
         await SignInAsAdminAsync();
-        var itemId = await CreateMenuItemAsync();
+        var (_, variantId) = await CreateMenuItemAsync();
         var riceId = await CreateRawMaterialAsync("Rice");
 
-        var response = await Client.UpsertRecipeAsync(itemId, (riceId, 1m), (riceId, 2m));
+        var response = await Client.UpsertRecipeAsync(variantId, (riceId, 1m), (riceId, 2m));
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -84,9 +85,9 @@ public class RecipeManagementTests : IntegrationTestBase
     public async Task CreatingARecipe_RejectsAnUnknownRawMaterial()
     {
         await SignInAsAdminAsync();
-        var itemId = await CreateMenuItemAsync();
+        var (_, variantId) = await CreateMenuItemAsync();
 
-        var response = await Client.UpsertRecipeAsync(itemId, (Guid.NewGuid(), 1m));
+        var response = await Client.UpsertRecipeAsync(variantId, (Guid.NewGuid(), 1m));
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await PosApiClient.ReadErrorCodeAsync(response)).Should().Be("Recipe.UnknownRawMaterial");
@@ -96,11 +97,11 @@ public class RecipeManagementTests : IntegrationTestBase
     public async Task CreatingARecipe_RejectsAnInactiveRawMaterial()
     {
         await SignInAsAdminAsync();
-        var itemId = await CreateMenuItemAsync();
+        var (_, variantId) = await CreateMenuItemAsync();
         var riceId = await CreateRawMaterialAsync("Rice");
         await Client.SetRawMaterialActiveAsync(riceId, false);
 
-        var response = await Client.UpsertRecipeAsync(itemId, (riceId, 1m));
+        var response = await Client.UpsertRecipeAsync(variantId, (riceId, 1m));
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         (await PosApiClient.ReadErrorCodeAsync(response)).Should().Be("Recipe.InactiveRawMaterial");
@@ -110,13 +111,13 @@ public class RecipeManagementTests : IntegrationTestBase
     public async Task UpsertingASecondTime_ReplacesTheLinesRatherThanMergingThem()
     {
         await SignInAsAdminAsync();
-        var itemId = await CreateMenuItemAsync();
+        var (_, variantId) = await CreateMenuItemAsync();
         var riceId = await CreateRawMaterialAsync("Rice");
         var chickenId = await CreateRawMaterialAsync("Chicken");
         var oilId = await CreateRawMaterialAsync("Cooking Oil", "Liter");
 
-        await Client.UpsertRecipeAsync(itemId, (riceId, 0.25m), (chickenId, 0.15m));
-        var replaced = await Client.UpsertRecipeAsync(itemId, (riceId, 0.3m), (oilId, 0.05m));
+        await Client.UpsertRecipeAsync(variantId, (riceId, 0.25m), (chickenId, 0.15m));
+        var replaced = await Client.UpsertRecipeAsync(variantId, (riceId, 0.3m), (oilId, 0.05m));
 
         var recipe = await PosApiClient.ReadAsync<RecipeResponse>(replaced);
         recipe.Lines.Should().HaveCount(2);
@@ -125,7 +126,7 @@ public class RecipeManagementTests : IntegrationTestBase
         recipe.Lines.Should().NotContain(l => l.RawMaterialId == chickenId);
 
         // The replacement must be durable, not just reflected in the handler's in-memory response.
-        var reFetched = await PosApiClient.ReadAsync<RecipeResponse>(await Client.GetRecipeAsync(itemId));
+        var reFetched = await PosApiClient.ReadAsync<RecipeResponse>(await Client.GetRecipeAsync(variantId));
         reFetched.Lines.Should().HaveCount(2);
         reFetched.Lines.Should().NotContain(l => l.RawMaterialId == chickenId);
     }
@@ -134,25 +135,25 @@ public class RecipeManagementTests : IntegrationTestBase
     public async Task ANewMenuItem_ReportsHasRecipeOnceOneExists()
     {
         await SignInAsAdminAsync();
-        var itemId = await CreateMenuItemAsync();
+        var (itemId, variantId) = await CreateMenuItemAsync();
         var riceId = await CreateRawMaterialAsync("Rice");
 
-        await Client.UpsertRecipeAsync(itemId, (riceId, 0.25m));
+        await Client.UpsertRecipeAsync(variantId, (riceId, 0.25m));
 
         var item = await PosApiClient.ReadAsync<MenuItemResponse>(await Client.GetMenuItemAsync(itemId));
-        item.HasRecipe.Should().BeTrue();
+        item.Variants.Single().HasRecipe.Should().BeTrue();
     }
 
     [Fact]
     public async Task DisablingARecipe_KeepsItsLinesVisible()
     {
         await SignInAsAdminAsync();
-        var itemId = await CreateMenuItemAsync();
+        var (_, variantId) = await CreateMenuItemAsync();
         var riceId = await CreateRawMaterialAsync("Rice");
-        await Client.UpsertRecipeAsync(itemId, (riceId, 0.25m));
+        await Client.UpsertRecipeAsync(variantId, (riceId, 0.25m));
 
         var disabled = await PosApiClient.ReadAsync<RecipeResponse>(
-            await Client.SetRecipeEnabledAsync(itemId, false));
+            await Client.SetRecipeEnabledAsync(variantId, false));
 
         disabled.IsEnabled.Should().BeFalse();
         disabled.Lines.Should().ContainSingle();
@@ -162,17 +163,17 @@ public class RecipeManagementTests : IntegrationTestBase
     public async Task DeletingARecipe_AllowsANewOneToBeCreatedAfterwards()
     {
         await SignInAsAdminAsync();
-        var itemId = await CreateMenuItemAsync();
+        var (_, variantId) = await CreateMenuItemAsync();
         var riceId = await CreateRawMaterialAsync("Rice");
-        await Client.UpsertRecipeAsync(itemId, (riceId, 0.25m));
+        await Client.UpsertRecipeAsync(variantId, (riceId, 0.25m));
 
-        (await Client.DeleteRecipeAsync(itemId)).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await Client.DeleteRecipeAsync(variantId)).StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        var afterDelete = await Client.GetRecipeAsync(itemId);
+        var afterDelete = await Client.GetRecipeAsync(variantId);
         afterDelete.StatusCode.Should().Be(HttpStatusCode.OK);
-        (await afterDelete.Content.ReadAsStringAsync()).Should().BeEmpty("no recipe exists for this menu item any more");
+        (await afterDelete.Content.ReadAsStringAsync()).Should().BeEmpty("no recipe exists for this menu item size any more");
 
-        var recreated = await Client.UpsertRecipeAsync(itemId, (riceId, 0.5m));
+        var recreated = await Client.UpsertRecipeAsync(variantId, (riceId, 0.5m));
         recreated.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
@@ -195,8 +196,13 @@ public class RecipeManagementTests : IntegrationTestBase
             .StatusCode.Should().Be(HttpStatusCode.Created);
     }
 
-    private async Task<Guid> CreateMenuItemAsync(string name = "Chicken Fried Rice") =>
-        (await PosApiClient.ReadAsync<MenuItemResponse>(await Client.CreateMenuItemAsync(name, "Rice & Curry", 850m))).Id;
+    private async Task<(Guid ItemId, Guid VariantId)> CreateMenuItemAsync(string name = "Chicken Fried Rice")
+    {
+        var item = await PosApiClient.ReadAsync<MenuItemResponse>(
+            await Client.CreateMenuItemAsync(name, "Rice & Curry", 850m));
+
+        return (item.Id, item.Variants.Single().Id);
+    }
 
     private async Task<Guid> CreateRawMaterialAsync(string name, string unit = "Kilogram") =>
         (await PosApiClient.ReadAsync<RawMaterialResponse>(await Client.CreateRawMaterialAsync(name, unit))).Id;

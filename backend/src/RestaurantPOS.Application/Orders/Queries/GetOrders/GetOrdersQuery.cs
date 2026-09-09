@@ -14,9 +14,13 @@ namespace RestaurantPOS.Application.Orders.Queries.GetOrders;
 /// <summary>
 /// Lists orders for the dashboard and for searching (POS-034, POS-036).
 /// </summary>
-/// <param name="OpenOnly">Restricts to orders still holding a table — the dashboard's default.</param>
+/// <param name="OpenOnly">Restricts to orders still live — the dashboard's default.</param>
 /// <param name="Search">Matches a table number or an order number, however the cashier remembers it.</param>
-public sealed record GetOrdersQuery(bool OpenOnly, OrderStatus? Status, string? Search)
+/// <param name="IsTakeaway">
+/// Restricts to takeaway orders (true) or dine-in ones (false) when supplied. Null lists both —
+/// the dashboard's own "open takeaway orders" panel is the only caller that sets this.
+/// </param>
+public sealed record GetOrdersQuery(bool OpenOnly, OrderStatus? Status, string? Search, bool? IsTakeaway = null)
     : IRequest<Result<IReadOnlyCollection<OrderSummaryDto>>>;
 
 internal sealed class GetOrdersQueryHandler(IAppDbContext db)
@@ -40,6 +44,13 @@ internal sealed class GetOrdersQueryHandler(IAppDbContext db)
             query = query.Where(o => o.Status == request.Status.Value);
         }
 
+        if (request.IsTakeaway.HasValue)
+        {
+            query = request.IsTakeaway.Value
+                ? query.Where(o => o.TableId == null)
+                : query.Where(o => o.TableId != null);
+        }
+
         var orders = await query.ToListAsync(cancellationToken);
 
         var tableNumbers = await db.RestaurantTables.AsNoTracking()
@@ -50,7 +61,7 @@ internal sealed class GetOrdersQueryHandler(IAppDbContext db)
 
         var summaries = orders
             .Select(o => o.ToSummaryDto(
-                tableNumbers.GetValueOrDefault(o.TableId, string.Empty),
+                o.TableId is { } tableId ? tableNumbers.GetValueOrDefault(tableId) : null,
                 cashierNames.GetValueOrDefault(o.CashierUserId, string.Empty)))
             .ToList();
 
@@ -59,7 +70,7 @@ internal sealed class GetOrdersQueryHandler(IAppDbContext db)
             var term = request.Search.Trim();
 
             summaries = [.. summaries.Where(s =>
-                s.TableNumber.Contains(term, StringComparison.OrdinalIgnoreCase)
+                (s.TableNumber?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false)
                 || (s.OrderNumber?.ToString().Contains(term, StringComparison.Ordinal) ?? false))];
         }
 

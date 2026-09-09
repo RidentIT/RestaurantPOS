@@ -41,3 +41,4 @@ export {
   DropdownMenuGroup,
 } from "./dropdown-menu";
 export { SegmentedTabs, type SegmentedTabsProps } from "./segmented-tabs";
+export { BrandMark, initialsOf, type BrandMarkProps } from "./brand-mark";

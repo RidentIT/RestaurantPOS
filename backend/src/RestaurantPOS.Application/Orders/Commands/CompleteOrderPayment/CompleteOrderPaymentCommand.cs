@@ -88,7 +88,7 @@ internal sealed class CompleteOrderPaymentCommandHandler(
 
         var consumption = await SaleStockConsumption.ApplyAsync(
             db,
-            [.. order.ActiveItems.Select(i => new SoldItem(i.MenuItemId, i.Quantity))],
+            [.. order.ActiveItems.Select(i => new SoldItem(i.MenuItemVariantId, i.Quantity))],
             currentUser.UserId!.Value,
             now,
             cancellationToken);

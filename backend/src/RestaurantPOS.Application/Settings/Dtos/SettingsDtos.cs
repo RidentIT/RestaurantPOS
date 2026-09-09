@@ -8,6 +8,7 @@ public sealed record RestaurantSettingsDto(
     string? City,
     string? Phone,
     string? LogoPath,
+    string? VatRegistrationNumber,
     decimal TaxRatePercent,
     decimal ServiceChargeRatePercent,
     string ReceiptFooterMessage,

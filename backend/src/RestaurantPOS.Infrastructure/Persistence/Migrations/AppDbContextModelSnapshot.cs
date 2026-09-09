@@ -396,6 +396,30 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
                     b.ToTable("KitchenTicketLines", (string)null);
                 });
 
+            modelBuilder.Entity("RestaurantPOS.Domain.Entities.MenuCategory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("MenuCategories", (string)null);
+                });
+
             modelBuilder.Entity("RestaurantPOS.Domain.Entities.MenuItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -417,9 +441,6 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal>("Price")
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("TEXT");
 
@@ -429,6 +450,37 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("MenuItems", (string)null);
+                });
+
+            modelBuilder.Entity("RestaurantPOS.Domain.Entities.MenuItemVariant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("MenuItemId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MenuItemId");
+
+                    b.ToTable("MenuItemVariants", (string)null);
                 });
 
             modelBuilder.Entity("RestaurantPOS.Domain.Entities.Notification", b =>
@@ -581,7 +633,7 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
-                    b.Property<Guid>("TableId")
+                    b.Property<Guid?>("TableId")
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("TaxRatePercent")
@@ -613,12 +665,12 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsCancelled")
                         .HasColumnType("INTEGER");
 
-                    b.Property<Guid>("MenuItemId")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("MenuItemName")
                         .IsRequired()
-                        .HasMaxLength(150)
+                        .HasMaxLength(194)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("MenuItemVariantId")
                         .HasColumnType("TEXT");
 
                     b.Property<Guid>("OrderId")
@@ -639,7 +691,7 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MenuItemId");
+                    b.HasIndex("MenuItemVariantId");
 
                     b.HasIndex("OrderId");
 
@@ -822,7 +874,7 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("INTEGER");
 
-                    b.Property<Guid>("MenuItemId")
+                    b.Property<Guid>("MenuItemVariantId")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("UpdatedAtUtc")
@@ -830,7 +882,7 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MenuItemId")
+                    b.HasIndex("MenuItemVariantId")
                         .IsUnique();
 
                     b.ToTable("Recipes", (string)null);
@@ -990,6 +1042,10 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("VatRegistrationNumber")
+                        .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -1403,6 +1459,15 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RestaurantPOS.Domain.Entities.MenuItemVariant", b =>
+                {
+                    b.HasOne("RestaurantPOS.Domain.Entities.MenuItem", null)
+                        .WithMany("Variants")
+                        .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RestaurantPOS.Domain.Entities.Notification", b =>
                 {
                     b.HasOne("RestaurantPOS.Domain.Entities.User", null)
@@ -1426,15 +1491,14 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
                     b.HasOne("RestaurantPOS.Domain.Entities.RestaurantTable", null)
                         .WithMany()
                         .HasForeignKey("TableId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("RestaurantPOS.Domain.Entities.OrderItem", b =>
                 {
-                    b.HasOne("RestaurantPOS.Domain.Entities.MenuItem", null)
+                    b.HasOne("RestaurantPOS.Domain.Entities.MenuItemVariant", null)
                         .WithMany()
-                        .HasForeignKey("MenuItemId")
+                        .HasForeignKey("MenuItemVariantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1518,6 +1582,11 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("RestaurantPOS.Domain.Entities.KitchenTicket", b =>
                 {
                     b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("RestaurantPOS.Domain.Entities.MenuItem", b =>
+                {
+                    b.Navigation("Variants");
                 });
 
             modelBuilder.Entity("RestaurantPOS.Domain.Entities.Order", b =>

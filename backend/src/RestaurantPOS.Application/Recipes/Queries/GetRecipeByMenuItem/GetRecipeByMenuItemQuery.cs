@@ -14,22 +14,22 @@ namespace RestaurantPOS.Application.Recipes.Queries.GetRecipeByMenuItem;
 /// Displays every ingredient associated with a menu item (REC-011). Not every menu item has a
 /// recipe, so a missing one is reported clearly rather than treated as an error.
 /// </summary>
-public sealed record GetRecipeByMenuItemQuery(Guid MenuItemId) : IRequest<Result<RecipeDto?>>;
+public sealed record GetRecipeByMenuItemQuery(Guid MenuItemVariantId) : IRequest<Result<RecipeDto?>>;
 
 internal sealed class GetRecipeByMenuItemQueryHandler(IAppDbContext db)
     : IRequestHandler<GetRecipeByMenuItemQuery, Result<RecipeDto?>>
 {
     public async Task<Result<RecipeDto?>> Handle(GetRecipeByMenuItemQuery request, CancellationToken cancellationToken)
     {
-        var menuItemExists = await db.MenuItems.AnyAsync(m => m.Id == request.MenuItemId, cancellationToken);
-        if (!menuItemExists)
+        var variantExists = await db.MenuItemVariants.AnyAsync(v => v.Id == request.MenuItemVariantId, cancellationToken);
+        if (!variantExists)
         {
-            return Result.Failure<RecipeDto?>(RecipeErrors.MenuItemNotFound(request.MenuItemId));
+            return Result.Failure<RecipeDto?>(RecipeErrors.VariantNotFound(request.MenuItemVariantId));
         }
 
         var recipe = await db.Recipes.AsNoTracking()
             .Include(r => r.Lines)
-            .FirstOrDefaultAsync(r => r.MenuItemId == request.MenuItemId, cancellationToken);
+            .FirstOrDefaultAsync(r => r.MenuItemVariantId == request.MenuItemVariantId, cancellationToken);
 
         return Result.Success(recipe is null ? null : await recipe.ToDtoAsync(db, cancellationToken));
     }

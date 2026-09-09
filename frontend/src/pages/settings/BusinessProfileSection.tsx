@@ -1,19 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { toast } from "sonner";
 import type { RestaurantSettings } from "@/entities/settings";
-import { useSettingsMutations } from "@/features/settings";
+import { settingsApi, useSettingsMutations } from "@/features/settings";
 import { toApiError } from "@/shared/api/problem";
-import { Button, Card, CardContent, CardHeader, CardTitle, FormField, Input } from "@/shared/ui";
+import { BrandMark, Button, Card, CardContent, CardHeader, CardTitle, FormField, Input } from "@/shared/ui";
 
 /** Business details printed on every receipt and KOT (POS-027), plus what the bill adds on top. */
 export function BusinessProfileSection({ settings }: { settings: RestaurantSettings }) {
-  const { updateProfile, updateBillCharges } = useSettingsMutations();
+  const { updateProfile, updateBillCharges, uploadLogo, removeLogo } = useSettingsMutations();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState(settings.name);
   const [addressLine1, setAddressLine1] = useState(settings.addressLine1);
   const [addressLine2, setAddressLine2] = useState(settings.addressLine2 ?? "");
   const [city, setCity] = useState(settings.city ?? "");
   const [phone, setPhone] = useState(settings.phone ?? "");
+  const [vatRegistrationNumber, setVatRegistrationNumber] = useState(settings.vatRegistrationNumber ?? "");
 
   const [taxRatePercent, setTaxRatePercent] = useState(String(settings.taxRatePercent));
   const [serviceChargeRatePercent, setServiceChargeRatePercent] = useState(
@@ -26,6 +28,7 @@ export function BusinessProfileSection({ settings }: { settings: RestaurantSetti
     setAddressLine2(settings.addressLine2 ?? "");
     setCity(settings.city ?? "");
     setPhone(settings.phone ?? "");
+    setVatRegistrationNumber(settings.vatRegistrationNumber ?? "");
     setTaxRatePercent(String(settings.taxRatePercent));
     setServiceChargeRatePercent(String(settings.serviceChargeRatePercent));
   }, [settings]);
@@ -44,8 +47,33 @@ export function BusinessProfileSection({ settings }: { settings: RestaurantSetti
         city: city.trim() || null,
         phone: phone.trim() || null,
         logoPath: settings.logoPath,
+        vatRegistrationNumber: vatRegistrationNumber.trim() || null,
       });
       toast.success("Business profile updated.");
+    } catch (error) {
+      toast.error(toApiError(error).message);
+    }
+  };
+
+  const pickLogo = () => fileInputRef.current?.click();
+
+  const onLogoChosen = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = ""; // lets the same file be picked again after an error
+    if (!file) return;
+
+    try {
+      await uploadLogo.mutateAsync(file);
+      toast.success("Logo updated.");
+    } catch (error) {
+      toast.error(toApiError(error).message);
+    }
+  };
+
+  const clearLogo = async () => {
+    try {
+      await removeLogo.mutateAsync();
+      toast.success("Logo removed.");
     } catch (error) {
       toast.error(toApiError(error).message);
     }
@@ -75,6 +103,34 @@ export function BusinessProfileSection({ settings }: { settings: RestaurantSetti
           <CardTitle>Business details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <FormField htmlFor="settings-logo" label="Logo" hint="JPEG, PNG or WebP, up to 2 MB. Shown on the sidebar, sign-in screen and every receipt.">
+            <div className="flex items-center gap-4">
+              <BrandMark
+                src={settings.logoPath ? `${settingsApi.logoUrl()}?v=${encodeURIComponent(settings.logoPath)}` : undefined}
+                name={settings.name}
+                className="size-14 shrink-0 text-lg"
+              />
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={pickLogo} loading={uploadLogo.isPending}>
+                  {settings.logoPath ? "Change logo" : "Upload logo"}
+                </Button>
+                {settings.logoPath && (
+                  <Button type="button" variant="ghost" onClick={clearLogo} loading={removeLogo.isPending}>
+                    Remove
+                  </Button>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                aria-label="Choose a logo image"
+                onChange={onLogoChosen}
+              />
+            </div>
+          </FormField>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField htmlFor="settings-name" label="Restaurant name" required>
               <Input id="settings-name" value={name} onChange={(e) => setName(e.target.value)} />
@@ -90,6 +146,17 @@ export function BusinessProfileSection({ settings }: { settings: RestaurantSetti
             </FormField>
             <FormField htmlFor="settings-city" label="City">
               <Input id="settings-city" value={city} onChange={(e) => setCity(e.target.value)} />
+            </FormField>
+            <FormField
+              htmlFor="settings-vat-number"
+              label="VAT registration number"
+              hint="Optional — printed on the receipt under the address when set."
+            >
+              <Input
+                id="settings-vat-number"
+                value={vatRegistrationNumber}
+                onChange={(e) => setVatRegistrationNumber(e.target.value)}
+              />
             </FormField>
           </div>
           <Button onClick={saveProfile} loading={updateProfile.isPending}>

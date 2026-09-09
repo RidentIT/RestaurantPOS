@@ -45,7 +45,7 @@ public class ExpenseReportTests : IntegrationTestBase
             await Client.CreateMenuItemAsync($"Dish {tableNumber}", "Mains", price));
 
         var order = await PosApiClient.ReadAsync<OrderResponse>(await Client.CreateOrderAsync(table.Id));
-        await Client.AddOrderItemsAsync(order.Id, (menuItem.Id, 1, null));
+        await Client.AddOrderItemsAsync(order.Id, (menuItem.Variants.Single().Id, 1, null));
         (await Client.ConfirmOrderAsync(order.Id)).EnsureSuccessStatusCode();
         (await Client.StartCheckoutAsync(order.Id)).EnsureSuccessStatusCode();
         (await Client.PayOrderAsync(order.Id, ("Cash", price, price))).EnsureSuccessStatusCode();

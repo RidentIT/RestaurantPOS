@@ -11,13 +11,13 @@ namespace RestaurantPOS.IntegrationTests.Orders;
 /// <summary>The kitchen display: the ticket queue, its statuses, and how those reach the till.</summary>
 public class KitchenOperationsTests : IntegrationTestBase
 {
-    private async Task<(Guid TableId, Guid MenuItemId)> SeedAsync(string tableNumber = "2")
+    private async Task<(Guid TableId, Guid MenuItemVariantId)> SeedAsync(string tableNumber = "2")
     {
         var table = await PosApiClient.ReadAsync<TableResponse>(await Client.CreateTableAsync(tableNumber));
         var menuItem = await PosApiClient.ReadAsync<MenuItemResponse>(
             await Client.CreateMenuItemAsync("Fried Rice", "Mains", 250m));
 
-        return (table.Id, menuItem.Id);
+        return (table.Id, menuItem.Variants.Single().Id);
     }
 
     private async Task<OrderResponse> OpenOrderAsync(Guid tableId, Guid menuItemId, int quantity = 1)
@@ -66,6 +66,12 @@ public class KitchenOperationsTests : IntegrationTestBase
             await Client.GetKitchenTicketsAsync());
 
         queue.Should().BeEmpty("a served ticket drops off the work queue");
+
+        // It hasn't disappeared — "Show served" brings back today's, unlike the default queue.
+        var withServed = await PosApiClient.ReadAsync<List<KitchenTicketResponse>>(
+            await Client.GetKitchenTicketsAsync(includeServed: true));
+
+        withServed.Should().ContainSingle().Which.Status.Should().Be("Served");
     }
 
     [Fact]

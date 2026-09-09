@@ -35,6 +35,7 @@ public static class RecipeMappings
             .OrderBy(l => l.RawMaterialName)
             .ToList();
 
-        return new RecipeDto(recipe.Id, recipe.MenuItemId, recipe.IsEnabled, lines, recipe.CreatedAtUtc, recipe.UpdatedAtUtc);
+        return new RecipeDto(
+            recipe.Id, recipe.MenuItemVariantId, recipe.IsEnabled, lines, recipe.CreatedAtUtc, recipe.UpdatedAtUtc);
     }
 }

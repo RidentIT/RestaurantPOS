@@ -187,14 +187,15 @@ public static class InventoryEndpoints
         // Ahead of Point of Sale existing: the "complete order" flow will call this to deduct
         // Kitchen stock per the sold item's recipe. Kept under Kitchen Stock Tracking rather than
         // exposed to every module, since only the checkout flow is meant to call it.
-        group.MapPost("/consumption/{menuItemId:guid}", async (
-                Guid menuItemId, ConsumeStockRequest request, ISender sender, CancellationToken ct) =>
+        group.MapPost("/consumption/{menuItemVariantId:guid}", async (
+                Guid menuItemVariantId, ConsumeStockRequest request, ISender sender, CancellationToken ct) =>
             {
-                var result = await sender.Send(new ConsumeStockForSaleCommand(menuItemId, request.QuantitySold), ct);
+                var result = await sender.Send(
+                    new ConsumeStockForSaleCommand(menuItemVariantId, request.QuantitySold), ct);
                 return result.ToHttpResult();
             })
             .WithName("ConsumeStockForSale")
-            .WithSummary("Deducts Kitchen stock per the menu item's recipe for a completed sale.");
+            .WithSummary("Deducts Kitchen stock per the menu item size's recipe for a completed sale.");
     }
 
     private static void MapReleaseEndpoints(IEndpointRouteBuilder routes)
