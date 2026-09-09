@@ -81,7 +81,7 @@ function printViaIframe(html: string, title: string): Promise<PrintOutcome> {
 
 /** Prints a kitchen slip (POS-010, POS-014, POS-020). */
 export async function printKot(kot: KotDocument): Promise<PrintOutcome> {
-  return printHtml(renderKotHtml(kot), `KOT ${kot.tableNumber}-${kot.ticketNumber}`);
+  return printHtml(renderKotHtml(kot), `KOT ${kot.tableNumber ?? "Takeaway"}-${kot.ticketNumber}`);
 }
 
 /** Prints a customer receipt (POS-026). */

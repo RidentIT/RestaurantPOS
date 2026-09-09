@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RestaurantPOS.Application.Common.Interfaces;
 using RestaurantPOS.Application.Common.Mappings;
 using RestaurantPOS.Application.Orders.Dtos;
+using RestaurantPOS.Application.Settings.Common;
 using RestaurantPOS.Domain.Entities;
 
 namespace RestaurantPOS.Application.Orders.Common;
@@ -17,24 +18,25 @@ public static class OrderResultFactory
         IAppDbContext db,
         Order order,
         KitchenTicket? ticket,
-        IRestaurantProfile restaurant,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(db);
         ArgumentNullException.ThrowIfNull(order);
-        ArgumentNullException.ThrowIfNull(restaurant);
 
-        var tableNumber = await db.RestaurantTables
-            .Where(t => t.Id == order.TableId)
-            .Select(t => t.Number)
-            .FirstAsync(cancellationToken);
+        var tableNumber = await TableNumberResolver.ResolveAsync(db, order.TableId, cancellationToken);
 
         var cashierName = await db.Users
             .Where(u => u.Id == order.CashierUserId)
             .Select(u => u.FullName)
             .FirstAsync(cancellationToken);
 
-        var kot = ticket?.ToKotDocument(order, restaurant.Name, tableNumber, cashierName);
+        KotDocumentDto? kot = null;
+
+        if (ticket is not null)
+        {
+            var settings = await RestaurantSettingsAccessor.GetAsync(db, cancellationToken);
+            kot = ticket.ToKotDocument(order, settings.Name, tableNumber, cashierName);
+        }
 
         return new OrderMutationDto(order.ToDto(tableNumber, cashierName), kot);
     }

@@ -15,18 +15,13 @@ namespace RestaurantPOS.Infrastructure.Identity;
 /// </remarks>
 internal sealed class ApprovalPinThrottle(IDateTimeProvider clock) : IApprovalPinThrottle
 {
-    /// <summary>Tries allowed before entry pauses, matching the 3 attempts the POS spec calls for.</summary>
-    private const int MaxAttempts = 3;
-
-    private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(5);
-
     private readonly ConcurrentDictionary<string, Attempts> _attempts = new(StringComparer.Ordinal);
 
-    public ApprovalPinAttemptState Check(string terminalKey)
+    public ApprovalPinAttemptState Check(string terminalKey, int maxAttempts)
     {
         if (!_attempts.TryGetValue(terminalKey, out var record))
         {
-            return new ApprovalPinAttemptState(IsLocked: false, TimeSpan.Zero, MaxAttempts);
+            return new ApprovalPinAttemptState(IsLocked: false, TimeSpan.Zero, maxAttempts);
         }
 
         var remainingLock = record.LockedUntilUtc - clock.UtcNow;
@@ -41,28 +36,28 @@ internal sealed class ApprovalPinThrottle(IDateTimeProvider clock) : IApprovalPi
         if (record.LockedUntilUtc != default)
         {
             _attempts.TryRemove(terminalKey, out _);
-            return new ApprovalPinAttemptState(IsLocked: false, TimeSpan.Zero, MaxAttempts);
+            return new ApprovalPinAttemptState(IsLocked: false, TimeSpan.Zero, maxAttempts);
         }
 
-        return new ApprovalPinAttemptState(IsLocked: false, TimeSpan.Zero, MaxAttempts - record.Failures);
+        return new ApprovalPinAttemptState(IsLocked: false, TimeSpan.Zero, Math.Max(0, maxAttempts - record.Failures));
     }
 
-    public ApprovalPinAttemptState RecordFailure(string terminalKey)
+    public ApprovalPinAttemptState RecordFailure(string terminalKey, int maxAttempts, TimeSpan lockoutDuration)
     {
         var updated = _attempts.AddOrUpdate(
             terminalKey,
             _ => new Attempts(1, default),
             (_, existing) => existing with { Failures = existing.Failures + 1 });
 
-        if (updated.Failures < MaxAttempts)
+        if (updated.Failures < maxAttempts)
         {
-            return new ApprovalPinAttemptState(IsLocked: false, TimeSpan.Zero, MaxAttempts - updated.Failures);
+            return new ApprovalPinAttemptState(IsLocked: false, TimeSpan.Zero, maxAttempts - updated.Failures);
         }
 
-        var lockedUntil = clock.UtcNow + LockoutDuration;
+        var lockedUntil = clock.UtcNow + lockoutDuration;
         _attempts[terminalKey] = new Attempts(updated.Failures, lockedUntil);
 
-        return new ApprovalPinAttemptState(IsLocked: true, LockoutDuration, AttemptsRemaining: 0);
+        return new ApprovalPinAttemptState(IsLocked: true, lockoutDuration, AttemptsRemaining: 0);
     }
 
     public void Reset(string terminalKey) => _attempts.TryRemove(terminalKey, out _);

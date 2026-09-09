@@ -3,9 +3,11 @@ using RestaurantPOS.Domain.Common;
 namespace RestaurantPOS.Domain.Entities;
 
 /// <summary>
-/// The bill of materials for one menu item: which raw materials a single sale of it consumes,
-/// and how much of each. At most one recipe exists per menu item (enforced by a unique index on
-/// <see cref="MenuItemId"/> — see BR-REC-001), and not every menu item has one at all.
+/// The bill of materials for one menu item size: which raw materials a single sale of it
+/// consumes, and how much of each. At most one recipe exists per size (enforced by a unique
+/// index on <see cref="MenuItemVariantId"/> — see BR-REC-001), and not every size has one at all.
+/// A size sold in a bigger portion gets its own recipe rather than the same one scaled up — a
+/// Full doesn't always use exactly proportionally more of everything.
 /// </summary>
 public sealed class Recipe : BaseEntity
 {
@@ -16,14 +18,14 @@ public sealed class Recipe : BaseEntity
     {
     }
 
-    private Recipe(Guid menuItemId, IEnumerable<(Guid RawMaterialId, decimal Quantity)> lines)
+    private Recipe(Guid menuItemVariantId, IEnumerable<(Guid RawMaterialId, decimal Quantity)> lines)
     {
-        MenuItemId = menuItemId;
+        MenuItemVariantId = menuItemVariantId;
         IsEnabled = true;
         SetLines(lines);
     }
 
-    public Guid MenuItemId { get; private set; }
+    public Guid MenuItemVariantId { get; private set; }
 
     /// <summary>Disabled recipes cannot be used for new sales (BR-REC-006) but stay editable.</summary>
     public bool IsEnabled { get; private set; }
@@ -31,8 +33,8 @@ public sealed class Recipe : BaseEntity
     public IReadOnlyCollection<RecipeLine> Lines => _lines.AsReadOnly();
 
     /// <summary>Creates a recipe. Requires at least one line (BR-REC-002).</summary>
-    public static Recipe Create(Guid menuItemId, IEnumerable<(Guid RawMaterialId, decimal Quantity)> lines) =>
-        new(menuItemId, lines);
+    public static Recipe Create(Guid menuItemVariantId, IEnumerable<(Guid RawMaterialId, decimal Quantity)> lines) =>
+        new(menuItemVariantId, lines);
 
     /// <summary>Replaces every ingredient line wholesale (REC-006: recipes are editable at any time).</summary>
     public void ReplaceLines(IEnumerable<(Guid RawMaterialId, decimal Quantity)> lines) => SetLines(lines);

@@ -58,6 +58,8 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         // changes without it.
         builder.Ignore(o => o.Subtotal);
         builder.Ignore(o => o.DiscountAmount);
+        builder.Ignore(o => o.ServiceChargeAmount);
+        builder.Ignore(o => o.TaxAmount);
         builder.Ignore(o => o.Total);
         builder.Ignore(o => o.AmountPaid);
         builder.Ignore(o => o.ChangeDue);
@@ -77,7 +79,12 @@ internal sealed class OrderItemConfiguration : IEntityTypeConfiguration<OrderIte
         builder.HasKey(i => i.Id);
         builder.Property(i => i.Id).ValueGeneratedNever();
 
-        builder.Property(i => i.MenuItemName).IsRequired().HasMaxLength(MenuItem.NameMaxLength);
+        // Long enough for the item's own name plus " (" + a size name + ")", e.g.
+        // "Chicken Fried Rice (Full)" — the snapshot combines both once a dish has sizes.
+        builder.Property(i => i.MenuItemName)
+            .IsRequired()
+            .HasMaxLength(MenuItem.NameMaxLength + MenuItemVariant.NameMaxLength + 4);
+
         builder.Property(i => i.UnitPrice).IsRequired();
         builder.Property(i => i.Quantity).IsRequired();
 
@@ -86,9 +93,9 @@ internal sealed class OrderItemConfiguration : IEntityTypeConfiguration<OrderIte
 
         builder.HasIndex(i => i.OrderId);
 
-        builder.HasOne<MenuItem>()
+        builder.HasOne<MenuItemVariant>()
             .WithMany()
-            .HasForeignKey(i => i.MenuItemId)
+            .HasForeignKey(i => i.MenuItemVariantId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Ignore(i => i.LineTotal);

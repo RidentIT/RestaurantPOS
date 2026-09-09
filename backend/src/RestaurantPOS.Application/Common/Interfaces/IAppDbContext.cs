@@ -19,6 +19,10 @@ public interface IAppDbContext
 
     DbSet<MenuItem> MenuItems { get; }
 
+    DbSet<MenuItemVariant> MenuItemVariants { get; }
+
+    DbSet<MenuCategory> MenuCategories { get; }
+
     DbSet<RawMaterial> RawMaterials { get; }
 
     DbSet<Recipe> Recipes { get; }
@@ -64,6 +68,14 @@ public interface IAppDbContext
     DbSet<ExpenseApprovalEntry> ExpenseApprovalEntries { get; }
 
     DbSet<RecurringExpense> RecurringExpenses { get; }
+
+    DbSet<Notification> Notifications { get; }
+
+    DbSet<NotificationPreference> NotificationPreferences { get; }
+
+    DbSet<NotificationSetting> NotificationSettings { get; }
+
+    DbSet<RestaurantSettings> RestaurantSettings { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

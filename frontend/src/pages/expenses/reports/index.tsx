@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, FileSpreadsheet, FileText, TrendingDown, TrendingUp, TriangleAlert } from "lucide-react";
-import type { PeriodComparison, ProfitSummary } from "@/entities/expense";
+import { ArrowLeft, FileSpreadsheet, FileText, TriangleAlert } from "lucide-react";
 import {
+  PeriodComparisonCard,
+  ProfitSummaryCards,
   exportDailyReportExcel,
   exportDailyReportPdf,
   exportMonthlyReportExcel,
@@ -10,6 +11,7 @@ import {
   useDailyExpenseReport,
   useMonthlyExpenseReport,
 } from "@/features/expenses";
+import { ShareDonut, TrendChart, TrendLegend } from "@/shared/charts/Charts";
 import {
   Alert,
   AlertDescription,
@@ -29,7 +31,6 @@ import {
   TableRow,
 } from "@/shared/ui";
 import { cn } from "@/shared/lib/utils";
-import { CategoryDonut, DailyTrendChart, TrendLegend } from "../Charts";
 
 type Tab = "daily" | "monthly";
 
@@ -37,74 +38,6 @@ const money = (value: number) =>
   value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const today = () => new Date().toISOString().slice(0, 10);
-
-/** The four headline figures every report leads with (EXP-026, EXP-027). */
-function SummaryCards({ summary }: { summary: ProfitSummary }) {
-  const cards = [
-    { label: "Revenue", value: money(summary.revenue), hint: "Settled bills at the till" },
-    { label: "Expenses", value: money(summary.expenses), hint: "Approved expenses only" },
-    {
-      label: "Profit",
-      value: money(summary.profit),
-      hint: summary.profit >= 0 ? "Revenue less expenses" : "Spent more than was taken",
-      negative: summary.profit < 0,
-    },
-    {
-      label: "Profit margin",
-      value: summary.profitMargin === null ? "—" : `${summary.profitMargin.toFixed(1)}%`,
-      hint: summary.profitMargin === null ? "No takings to compare against" : "Share of revenue kept",
-    },
-  ];
-
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {cards.map((card) => (
-        <Card key={card.label} className="p-4">
-          <p className="text-sm text-muted-foreground">{card.label}</p>
-          <p className={cn("mt-1 text-2xl font-semibold tabular", card.negative && "text-destructive")}>
-            {card.value}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">{card.hint}</p>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-/** How the period compares with the one before it (EXP-025). */
-function ComparisonCard({ comparison }: { comparison: PeriodComparison }) {
-  const up = comparison.change > 0;
-  const flat = comparison.change === 0;
-
-  return (
-    <Card className="space-y-2 p-4">
-      <p className="text-sm font-medium">Compared with {comparison.previousLabel}</p>
-
-      <div className="flex flex-wrap items-baseline gap-2">
-        <span className="tabular text-muted-foreground">{money(comparison.previousTotal)}</span>
-        <span className="text-muted-foreground">→</span>
-        <span className="text-xl font-semibold tabular">{money(comparison.currentTotal)}</span>
-
-        {!flat && (
-          <Badge variant={up ? "destructive" : "success"} className="gap-1">
-            {up ? <TrendingUp className="size-3.5" /> : <TrendingDown className="size-3.5" />}
-            {up ? "+" : ""}
-            {money(comparison.change)}
-            {comparison.changePercentage !== null &&
-              ` (${up ? "+" : ""}${comparison.changePercentage.toFixed(1)}%)`}
-          </Badge>
-        )}
-      </div>
-
-      {comparison.largestIncreaseCategory && (
-        <p className="text-sm text-muted-foreground">
-          Largest increase: <span className="font-medium">{comparison.largestIncreaseCategory}</span>{" "}
-          (+{money(comparison.largestIncreaseAmount ?? 0)})
-        </p>
-      )}
-    </Card>
-  );
-}
 
 /**
  * Expense reporting: a day at a time or a month at a time, each exportable as a real PDF or
@@ -201,16 +134,24 @@ export default function ExpenseReportsPage() {
           <LoadingState label="Loading the day…" />
         ) : (
           <div className="space-y-4">
-            <SummaryCards summary={daily.data.summary} />
+            <ProfitSummaryCards summary={daily.data.summary} />
 
             <div className="grid gap-4 lg:grid-cols-2">
               <Card className="p-5">
                 <h2 className="mb-4 font-semibold">Where the money went</h2>
-                <CategoryDonut categories={daily.data.categories} />
+                <ShareDonut
+                  emptyLabel="No approved expenses in this period yet."
+                  slices={daily.data.categories.map((c) => ({
+                    id: c.categoryId,
+                    label: c.categoryName,
+                    value: c.total,
+                    percentageOfTotal: c.percentageOfTotal,
+                  }))}
+                />
               </Card>
 
               <div className="space-y-4">
-                <ComparisonCard comparison={daily.data.comparison} />
+                <PeriodComparisonCard comparison={daily.data.comparison} />
 
                 {daily.data.highestCategory && (
                   <Card className="space-y-1 p-4 text-sm">
@@ -271,7 +212,7 @@ export default function ExpenseReportsPage() {
           <LoadingState label="Loading the month…" />
         ) : (
           <div className="space-y-4">
-            <SummaryCards summary={monthly.data.summary} />
+            <ProfitSummaryCards summary={monthly.data.summary} />
 
             {monthly.data.budgetAlerts.length > 0 && (
               <div className="space-y-2">
@@ -297,19 +238,33 @@ export default function ExpenseReportsPage() {
             <Card className="p-5">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="font-semibold">Daily trend — {monthly.data.monthLabel}</h2>
-                <TrendLegend />
+                <TrendLegend primaryLabel="Revenue" secondaryLabel="Expenses" />
               </div>
-              <DailyTrendChart figures={monthly.data.dailyFigures} />
+              <TrendChart
+                points={monthly.data.dailyFigures.map((f) => ({
+                  label: f.date.slice(8),
+                  primary: f.revenue,
+                  secondary: f.expenses,
+                }))}
+              />
             </Card>
 
             <div className="grid gap-4 lg:grid-cols-2">
               <Card className="p-5">
                 <h2 className="mb-4 font-semibold">Category breakdown</h2>
-                <CategoryDonut categories={monthly.data.categories} />
+                <ShareDonut
+                  emptyLabel="No approved expenses in this period yet."
+                  slices={monthly.data.categories.map((c) => ({
+                    id: c.categoryId,
+                    label: c.categoryName,
+                    value: c.total,
+                    percentageOfTotal: c.percentageOfTotal,
+                  }))}
+                />
               </Card>
 
               <div className="space-y-4">
-                <ComparisonCard comparison={monthly.data.comparison} />
+                <PeriodComparisonCard comparison={monthly.data.comparison} />
 
                 <Card>
                   <div className="p-4 pb-0">

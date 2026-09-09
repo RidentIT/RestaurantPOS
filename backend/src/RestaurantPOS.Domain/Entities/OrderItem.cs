@@ -3,9 +3,10 @@ using RestaurantPOS.Domain.Common;
 namespace RestaurantPOS.Domain.Entities;
 
 /// <summary>
-/// One line on a bill. Name and price are copied from the <see cref="MenuItem"/> at the moment it
-/// was ordered rather than read through a relation, so re-pricing the menu tonight never rewrites
-/// what a customer was charged last week — a printed receipt has to stay reproducible (POS-029).
+/// One line on a bill. Name and price are copied from the <see cref="MenuItemVariant"/> at the
+/// moment it was ordered rather than read through a relation, so re-pricing the menu tonight
+/// never rewrites what a customer was charged last week — a printed receipt has to stay
+/// reproducible (POS-029).
 /// </summary>
 public sealed class OrderItem : BaseEntity
 {
@@ -18,14 +19,14 @@ public sealed class OrderItem : BaseEntity
 
     internal OrderItem(
         Guid orderId,
-        Guid menuItemId,
+        Guid menuItemVariantId,
         string menuItemName,
         decimal unitPrice,
         int quantity,
         string? specialInstructions)
     {
         OrderId = orderId;
-        MenuItemId = menuItemId;
+        MenuItemVariantId = menuItemVariantId;
         MenuItemName = menuItemName;
         UnitPrice = unitPrice >= 0
             ? unitPrice
@@ -36,9 +37,9 @@ public sealed class OrderItem : BaseEntity
 
     public Guid OrderId { get; private set; }
 
-    public Guid MenuItemId { get; private set; }
+    public Guid MenuItemVariantId { get; private set; }
 
-    /// <summary>The dish name as it was when ordered.</summary>
+    /// <summary>The dish name as it was when ordered — already including its size, e.g. "Chicken Fried Rice (Full)".</summary>
     public string MenuItemName { get; private set; } = string.Empty;
 
     /// <summary>The price charged per unit, fixed at the time of ordering.</summary>

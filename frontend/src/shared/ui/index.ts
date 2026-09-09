@@ -1,5 +1,6 @@
 export { Button, buttonVariants, type ButtonProps } from "./button";
 export { Input, type InputProps } from "./input";
+export { PasswordInput, type PasswordInputProps } from "./password-input";
 export { Label } from "./label";
 export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "./card";
 export { Badge, badgeVariants, type BadgeProps } from "./badge";
@@ -40,3 +41,4 @@ export {
   DropdownMenuGroup,
 } from "./dropdown-menu";
 export { SegmentedTabs, type SegmentedTabsProps } from "./segmented-tabs";
+export { BrandMark, initialsOf, type BrandMarkProps } from "./brand-mark";

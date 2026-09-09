@@ -8,6 +8,7 @@ using RestaurantPOS.Application.Common.Interfaces;
 using RestaurantPOS.Application.Common.Mappings;
 using RestaurantPOS.Application.Orders.Common;
 using RestaurantPOS.Application.Orders.Dtos;
+using RestaurantPOS.Application.Settings.Common;
 using RestaurantPOS.Domain.Common;
 using RestaurantPOS.Domain.Errors;
 
@@ -25,7 +26,7 @@ public sealed class ReprintKitchenTicketCommandValidator : AbstractValidator<Rep
     public ReprintKitchenTicketCommandValidator() => RuleFor(x => x.TicketId).NotEmpty();
 }
 
-internal sealed class ReprintKitchenTicketCommandHandler(IAppDbContext db, IRestaurantProfile restaurant)
+internal sealed class ReprintKitchenTicketCommandHandler(IAppDbContext db)
     : IRequestHandler<ReprintKitchenTicketCommand, Result<KotDocumentDto>>
 {
     public async Task<Result<KotDocumentDto>> Handle(
@@ -50,16 +51,15 @@ internal sealed class ReprintKitchenTicketCommandHandler(IAppDbContext db, IRest
         ticket.RecordReprint();
         await db.SaveChangesAsync(cancellationToken);
 
-        var tableNumber = await db.RestaurantTables
-            .Where(t => t.Id == order.TableId)
-            .Select(t => t.Number)
-            .FirstAsync(cancellationToken);
+        var tableNumber = await TableNumberResolver.ResolveAsync(db, order.TableId, cancellationToken);
 
         var cashierName = await db.Users
             .Where(u => u.Id == order.CashierUserId)
             .Select(u => u.FullName)
             .FirstAsync(cancellationToken);
 
-        return Result.Success(ticket.ToKotDocument(order, restaurant.Name, tableNumber, cashierName));
+        var settings = await RestaurantSettingsAccessor.GetAsync(db, cancellationToken);
+
+        return Result.Success(ticket.ToKotDocument(order, settings.Name, tableNumber, cashierName));
     }
 }

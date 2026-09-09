@@ -62,7 +62,12 @@ export default function ReleasesPage() {
                   <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                     {new Date(release.requestedAtUtc).toLocaleString()}
                   </TableCell>
-                  <TableCell className="tabular">{release.lineCount}</TableCell>
+                  <TableCell
+                    className="max-w-56 truncate text-sm"
+                    title={(release.rawMaterialNames ?? []).join(", ")}
+                  >
+                    {release.rawMaterialNames?.length ? release.rawMaterialNames.join(", ") : release.lineCount}
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{release.requestedByName}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{release.approvedByName}</TableCell>
                   <TableCell className="max-w-56 truncate text-sm text-muted-foreground">

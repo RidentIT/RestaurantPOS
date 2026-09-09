@@ -129,6 +129,12 @@ public sealed partial class User : BaseEntity
         Email = NormaliseEmail(email);
     }
 
+    /// <summary>
+    /// Changes the login username. Callers must check uniqueness themselves — the aggregate has
+    /// no visibility into other users, so it can only validate the new value's shape.
+    /// </summary>
+    public void ChangeUsername(string username) => Username = NormaliseUsername(username);
+
     /// <summary>Replaces the user's module grants wholesale. No-op for administrators.</summary>
     public void ReplaceModuleGrants(IEnumerable<AppModule> modules)
     {

@@ -12,8 +12,9 @@ public sealed record CreateUserRequest(
     UserRole Role,
     IReadOnlyCollection<AppModule>? Modules);
 
-/// <summary>Updates a staff account's profile, role and module grants.</summary>
+/// <summary>Updates a staff account's profile, username, role and module grants.</summary>
 public sealed record UpdateUserRequest(
+    string Username,
     string FullName,
     string? Email,
     UserRole Role,

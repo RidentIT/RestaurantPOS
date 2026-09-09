@@ -72,6 +72,7 @@ public static class UserEndpoints
             {
                 var command = new UpdateUserCommand(
                     id,
+                    request.Username,
                     request.FullName,
                     request.Email,
                     request.Role,

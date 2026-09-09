@@ -11,14 +11,18 @@ public sealed record TableOrderSummaryResponse(
 public sealed record OrderResponse(
     Guid Id,
     int? OrderNumber,
-    Guid TableId,
-    string TableNumber,
+    Guid? TableId,
+    string? TableNumber,
     string Status,
     string CashierName,
     string DiscountType,
     decimal DiscountValue,
     decimal Subtotal,
     decimal DiscountAmount,
+    decimal ServiceChargeRatePercent,
+    decimal ServiceChargeAmount,
+    decimal TaxRatePercent,
+    decimal TaxAmount,
     decimal Total,
     decimal AmountPaid,
     decimal ChangeDue,
@@ -28,14 +32,14 @@ public sealed record OrderResponse(
     IReadOnlyCollection<OrderPaymentResponse> Payments);
 
 public sealed record OrderItemResponse(
-    Guid Id, Guid MenuItemId, string MenuItemName, decimal UnitPrice, int Quantity,
+    Guid Id, Guid MenuItemVariantId, string MenuItemName, decimal UnitPrice, int Quantity,
     string? SpecialInstructions, bool IsCancelled, decimal LineTotal);
 
 public sealed record OrderPaymentResponse(
     Guid Id, string Method, decimal Amount, decimal? TenderedAmount, decimal ChangeGiven, string? Reference);
 
 public sealed record KotDocumentResponse(
-    Guid TicketId, string RestaurantName, int? OrderNumber, string TableNumber, int TicketNumber,
+    Guid TicketId, string RestaurantName, int? OrderNumber, string? TableNumber, int TicketNumber,
     string Kind, string CashierName, int PrintCount, IReadOnlyCollection<KotLineResponse> Lines);
 
 public sealed record KotLineResponse(string MenuItemName, int Quantity, string? SpecialInstructions, string? Note);
@@ -48,26 +52,29 @@ public sealed record ReceiptDocumentResponse(
     string AddressLine1,
     string? City,
     string? Phone,
+    string? VatRegistrationNumber,
     int? OrderNumber,
-    string TableNumber,
+    string? TableNumber,
     string CashierName,
     int PrintCount,
     IReadOnlyCollection<ReceiptLineResponse> Lines,
     decimal Subtotal,
     decimal DiscountAmount,
+    decimal ServiceChargeAmount,
     decimal TaxAmount,
     decimal Total,
     decimal ChangeGiven,
     IReadOnlyCollection<OrderPaymentResponse> Payments,
-    string QrPayload);
+    string QrPayload,
+    string FooterMessage);
 
 public sealed record ReceiptLineResponse(string MenuItemName, int Quantity, decimal UnitPrice, decimal LineTotal);
 
 public sealed record OrderSummaryResponse(
-    Guid Id, int? OrderNumber, string TableNumber, string Status, int ItemCount, decimal Total);
+    Guid Id, int? OrderNumber, string? TableNumber, string Status, int ItemCount, decimal Total);
 
 public sealed record KitchenTicketResponse(
-    Guid Id, Guid OrderId, int? OrderNumber, string TableNumber, int TicketNumber,
+    Guid Id, Guid OrderId, int? OrderNumber, string? TableNumber, int TicketNumber,
     string Kind, string Status, int PrintCount, int WaitingMinutes,
     IReadOnlyCollection<KotLineResponse> Lines);
 
@@ -85,7 +92,8 @@ public sealed partial class PosApiClient
     public Task<HttpResponseMessage> SetTableActiveAsync(Guid id, bool isActive) =>
         Http.PutAsJsonAsync($"{BaseUrl}/tables/{id}/status", new { isActive }, Json);
 
-    public Task<HttpResponseMessage> CreateOrderAsync(Guid tableId) =>
+    /// <summary>Null opens a takeaway order instead of one on a table.</summary>
+    public Task<HttpResponseMessage> CreateOrderAsync(Guid? tableId) =>
         Http.PostAsJsonAsync($"{BaseUrl}/orders", new { tableId }, Json);
 
     public Task<HttpResponseMessage> GetOrdersAsync(string? query = null) =>
@@ -94,10 +102,16 @@ public sealed partial class PosApiClient
     public Task<HttpResponseMessage> GetOrderAsync(Guid id) => Http.GetAsync($"{BaseUrl}/orders/{id}");
 
     public Task<HttpResponseMessage> AddOrderItemsAsync(
-        Guid orderId, params (Guid MenuItemId, int Quantity, string? Instructions)[] items) =>
+        Guid orderId, params (Guid MenuItemVariantId, int Quantity, string? Instructions)[] items) =>
         Http.PostAsJsonAsync(
             $"{BaseUrl}/orders/{orderId}/items",
-            new { items = items.Select(i => new { menuItemId = i.MenuItemId, quantity = i.Quantity, specialInstructions = i.Instructions }) },
+            new
+            {
+                items = items.Select(i => new
+                {
+                    menuItemVariantId = i.MenuItemVariantId, quantity = i.Quantity, specialInstructions = i.Instructions,
+                }),
+            },
             Json);
 
     public Task<HttpResponseMessage> ConfirmOrderAsync(Guid orderId) =>

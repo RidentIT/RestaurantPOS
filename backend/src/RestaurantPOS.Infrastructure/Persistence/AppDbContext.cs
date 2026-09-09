@@ -25,6 +25,10 @@ public class AppDbContext : DbContext, IAppDbContext
 
     public DbSet<MenuItem> MenuItems => Set<MenuItem>();
 
+    public DbSet<MenuItemVariant> MenuItemVariants => Set<MenuItemVariant>();
+
+    public DbSet<MenuCategory> MenuCategories => Set<MenuCategory>();
+
     public DbSet<RawMaterial> RawMaterials => Set<RawMaterial>();
 
     public DbSet<Recipe> Recipes => Set<Recipe>();
@@ -70,6 +74,14 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<ExpenseApprovalEntry> ExpenseApprovalEntries => Set<ExpenseApprovalEntry>();
 
     public DbSet<RecurringExpense> RecurringExpenses => Set<RecurringExpense>();
+
+    public DbSet<Notification> Notifications => Set<Notification>();
+
+    public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
+
+    public DbSet<NotificationSetting> NotificationSettings => Set<NotificationSetting>();
+
+    public DbSet<RestaurantSettings> RestaurantSettings => Set<RestaurantSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

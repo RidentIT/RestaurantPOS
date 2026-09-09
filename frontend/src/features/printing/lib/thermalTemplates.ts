@@ -95,7 +95,7 @@ export function renderKotHtml(kot: KotDocument): string {
   const body = `
     <div class="center bold lg">${escapeHtml(KOT_KIND_HEADINGS[kot.kind])}</div>
     <div class="solid"></div>
-    <div class="center bold xl">TABLE ${escapeHtml(kot.tableNumber)}</div>
+    <div class="center bold xl">${kot.tableNumber ? `TABLE ${escapeHtml(kot.tableNumber)}` : "TAKEAWAY"}</div>
     <div class="center">Order #${String(kot.orderNumber ?? 0).padStart(3, "0")} &middot; KOT-${kot.ticketNumber}</div>
     <div class="rule"></div>
     <table>${lines}</table>
@@ -105,7 +105,7 @@ export function renderKotHtml(kot: KotDocument): string {
     ${kot.printCount > 1 ? `<div class="center bold">-- REPRINT #${kot.printCount} --</div>` : ""}
   `;
 
-  return page(`KOT ${kot.tableNumber}-${kot.ticketNumber}`, body);
+  return page(`KOT ${kot.tableNumber ?? "Takeaway"}-${kot.ticketNumber}`, body);
 }
 
 /** A customer receipt, carrying the restaurant's details, the itemised bill and the tenders. */
@@ -123,10 +123,19 @@ export function renderReceiptHtml(receipt: ReceiptDocument, qrDataUri: string | 
     .join("");
 
   const payments = receipt.payments
-    .map(
-      (payment) => `
-        <div class="row"><span>${escapeHtml(payment.method)}</span><span>${money(payment.amount)}</span></div>`,
-    )
+    .map((payment) => {
+      // Only cash can be over-tendered (POS-024) — "Received" says what was physically handed
+      // over, so the bill, what the customer gave, and the change all read as one clear sequence
+      // instead of leaving the customer to work the last one out for themselves.
+      const received =
+        payment.tenderedAmount !== null
+          ? `<div class="row"><span>Received</span><span>${money(payment.tenderedAmount)}</span></div>`
+          : "";
+
+      return `
+        <div class="row"><span>${escapeHtml(payment.method)}</span><span>${money(payment.amount)}</span></div>
+        ${received}`;
+    })
     .join("");
 
   const address = [receipt.addressLine1, receipt.addressLine2, receipt.city]
@@ -138,11 +147,12 @@ export function renderReceiptHtml(receipt: ReceiptDocument, qrDataUri: string | 
     <div class="center bold lg">${escapeHtml(receipt.restaurantName)}</div>
     <div class="center">${address}</div>
     ${receipt.phone ? `<div class="center">${escapeHtml(receipt.phone)}</div>` : ""}
+    ${receipt.vatRegistrationNumber ? `<div class="center">VAT Reg. No: ${escapeHtml(receipt.vatRegistrationNumber)}</div>` : ""}
     <div class="solid"></div>
     <div class="row"><span>Receipt #</span><span class="bold">${escapeHtml(receipt.receiptNumber)}</span></div>
     <div class="row"><span>Date</span><span>${escapeHtml(formatDateTime(receipt.issuedAtUtc))}</span></div>
     <div class="row"><span>Order #</span><span>${String(receipt.orderNumber ?? 0).padStart(3, "0")}</span></div>
-    <div class="row"><span>Table</span><span>${escapeHtml(receipt.tableNumber)}</span></div>
+    <div class="row"><span>${receipt.tableNumber ? "Table" : "Order type"}</span><span>${receipt.tableNumber ? escapeHtml(receipt.tableNumber) : "Takeaway"}</span></div>
     <div class="row"><span>Cashier</span><span>${escapeHtml(receipt.cashierName)}</span></div>
     <div class="rule"></div>
     <table>
@@ -154,7 +164,8 @@ export function renderReceiptHtml(receipt: ReceiptDocument, qrDataUri: string | 
     <div class="rule"></div>
     <div class="row"><span>Subtotal</span><span>${money(receipt.subtotal)}</span></div>
     <div class="row"><span>Discount</span><span>${money(receipt.discountAmount)}</span></div>
-    <div class="row"><span>Tax / GST</span><span>${money(receipt.taxAmount)}</span></div>
+    ${receipt.serviceChargeAmount > 0 ? `<div class="row"><span>Service Charge</span><span>${money(receipt.serviceChargeAmount)}</span></div>` : ""}
+    ${receipt.taxAmount > 0 ? `<div class="row"><span>Tax / VAT</span><span>${money(receipt.taxAmount)}</span></div>` : ""}
     <div class="solid"></div>
     <div class="row bold lg"><span>TOTAL</span><span>${money(receipt.total)}</span></div>
     <div class="rule"></div>
@@ -163,7 +174,7 @@ export function renderReceiptHtml(receipt: ReceiptDocument, qrDataUri: string | 
     ${receipt.changeGiven > 0 ? `<div class="row bold"><span>Change</span><span>${money(receipt.changeGiven)}</span></div>` : ""}
     <div class="rule"></div>
     ${qrDataUri ? `<div class="center"><img src="${qrDataUri}" alt="" style="width: 28mm; height: 28mm;"></div>` : ""}
-    <div class="center bold">Thank You! Come Again!</div>
+    <div class="center bold">${escapeHtml(receipt.footerMessage)}</div>
     ${receipt.printCount > 1 ? `<div class="center muted">-- REPRINT #${receipt.printCount} --</div>` : ""}
   `;
 

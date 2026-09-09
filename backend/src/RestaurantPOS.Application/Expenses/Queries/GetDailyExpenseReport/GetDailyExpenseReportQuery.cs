@@ -33,7 +33,8 @@ internal sealed class GetDailyExpenseReportQueryHandler(IAppDbContext db)
             db, previousDate, previousDate, cancellationToken);
 
         var revenue = await ExpenseAnalytics.RevenueBetweenAsync(db, date, date, cancellationToken);
-        var summary = ExpenseAnalytics.BuildProfitSummary(revenue, todaysExpenses.Sum(e => e.Amount));
+        var orderCount = await ExpenseAnalytics.OrderCountBetweenAsync(db, date, date, cancellationToken);
+        var summary = ExpenseAnalytics.BuildProfitSummary(revenue, todaysExpenses.Sum(e => e.Amount), orderCount);
 
         var breakdown = ExpenseAnalytics.BuildCategoryBreakdown(todaysExpenses, categories);
         var comparison = ExpenseAnalytics.BuildComparison(

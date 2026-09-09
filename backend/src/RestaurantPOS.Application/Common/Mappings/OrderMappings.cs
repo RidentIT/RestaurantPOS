@@ -23,7 +23,7 @@ public static class OrderMappings
         return workable.Count == 0 ? null : workable.Min(t => t.Status);
     }
 
-    public static OrderDto ToDto(this Order order, string tableNumber, string cashierName)
+    public static OrderDto ToDto(this Order order, string? tableNumber, string cashierName)
     {
         ArgumentNullException.ThrowIfNull(order);
 
@@ -43,6 +43,10 @@ public static class OrderMappings
             order.DiscountValue,
             order.Subtotal,
             order.DiscountAmount,
+            order.ServiceChargeRatePercent,
+            order.ServiceChargeAmount,
+            order.TaxRatePercent,
+            order.TaxAmount,
             order.Total,
             order.AmountPaid,
             order.ChangeDue,
@@ -51,7 +55,7 @@ public static class OrderMappings
             [.. order.Items
                 .OrderBy(i => i.CreatedAtUtc)
                 .Select(i => new OrderItemDto(
-                    i.Id, i.MenuItemId, i.MenuItemName, i.UnitPrice, i.Quantity,
+                    i.Id, i.MenuItemVariantId, i.MenuItemName, i.UnitPrice, i.Quantity,
                     i.SpecialInstructions, i.IsCancelled, i.LineTotal))],
             [.. order.Payments
                 .OrderBy(p => p.CreatedAtUtc)
@@ -67,7 +71,7 @@ public static class OrderMappings
             payment.ChangeGiven, payment.Reference, payment.CreatedAtUtc);
     }
 
-    public static OrderSummaryDto ToSummaryDto(this Order order, string tableNumber, string cashierName)
+    public static OrderSummaryDto ToSummaryDto(this Order order, string? tableNumber, string cashierName)
     {
         ArgumentNullException.ThrowIfNull(order);
 
@@ -87,7 +91,7 @@ public static class OrderMappings
 
     /// <summary>Builds the printable slip for a ticket the kitchen has just been sent.</summary>
     public static KotDocumentDto ToKotDocument(
-        this KitchenTicket ticket, Order order, string restaurantName, string tableNumber, string cashierName)
+        this KitchenTicket ticket, Order order, string restaurantName, string? tableNumber, string cashierName)
     {
         ArgumentNullException.ThrowIfNull(ticket);
         ArgumentNullException.ThrowIfNull(order);
@@ -107,7 +111,7 @@ public static class OrderMappings
     }
 
     public static KitchenTicketDto ToDto(
-        this KitchenTicket ticket, int? orderNumber, string tableNumber, DateTime nowUtc)
+        this KitchenTicket ticket, int? orderNumber, string? tableNumber, DateTime nowUtc)
     {
         ArgumentNullException.ThrowIfNull(ticket);
 

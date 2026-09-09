@@ -31,7 +31,9 @@ describe("LoginPage", () => {
     renderWithProviders(<LoginPage />);
 
     await user.type(screen.getByLabelText(/username/i), "admin");
-    await user.type(screen.getByLabelText(/password/i), "wrong-password");
+    // Anchored to the start: the show/hide toggle button also has an aria-label containing
+    // "password" ("Show password"/"Hide password"), which a loose /password/i would also match.
+    await user.type(screen.getByLabelText(/^password/i), "wrong-password");
     await user.click(screen.getByRole("button", { name: /sign in/i }));
 
     expect(await screen.findByText("The username or password is incorrect.")).toBeInTheDocument();
@@ -42,7 +44,7 @@ describe("LoginPage", () => {
     const { store } = renderWithProviders(<LoginPage />);
 
     await user.type(screen.getByLabelText(/username/i), "admin");
-    await user.type(screen.getByLabelText(/password/i), "ChangeMe!123");
+    await user.type(screen.getByLabelText(/^password/i), "ChangeMe!123");
     await user.click(screen.getByRole("button", { name: /sign in/i }));
 
     await waitFor(() => expect(store.getState().auth.status).toBe("authenticated"));

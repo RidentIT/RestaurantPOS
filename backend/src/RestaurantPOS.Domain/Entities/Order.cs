@@ -5,7 +5,7 @@ namespace RestaurantPOS.Domain.Entities;
 
 /// <summary>A dish being added to a bill, priced from the menu at the moment it is ordered.</summary>
 public sealed record NewOrderItem(
-    Guid MenuItemId, string MenuItemName, decimal UnitPrice, int Quantity, string? SpecialInstructions);
+    Guid MenuItemVariantId, string MenuItemName, decimal UnitPrice, int Quantity, string? SpecialInstructions);
 
 /// <summary>
 /// A table's bill, from the first dish keyed in to the receipt handed over.
@@ -29,12 +29,14 @@ public sealed class Order : BaseEntity
     {
     }
 
-    private Order(Guid tableId, Guid cashierUserId)
+    private Order(Guid? tableId, Guid cashierUserId, decimal taxRatePercent, decimal serviceChargeRatePercent)
     {
         TableId = tableId;
         CashierUserId = cashierUserId;
         Status = OrderStatus.Draft;
         DiscountType = DiscountType.None;
+        TaxRatePercent = taxRatePercent;
+        ServiceChargeRatePercent = serviceChargeRatePercent;
     }
 
     /// <summary>Sequence within <see cref="OrderDate"/>, assigned on confirmation (POS-009).</summary>
@@ -43,7 +45,8 @@ public sealed class Order : BaseEntity
     /// <summary>Business day the number belongs to; the sequence restarts each day.</summary>
     public DateOnly? OrderDate { get; private set; }
 
-    public Guid TableId { get; private set; }
+    /// <summary>Null for a takeaway order, which never holds a table (BR-POS-031 does not apply to it).</summary>
+    public Guid? TableId { get; private set; }
 
     /// <summary>Who keyed the order in (POS-012).</summary>
     public Guid CashierUserId { get; private set; }
@@ -54,6 +57,17 @@ public sealed class Order : BaseEntity
 
     /// <summary>A percentage when <see cref="DiscountType"/> is Percentage, otherwise an amount.</summary>
     public decimal DiscountValue { get; private set; }
+
+    /// <summary>
+    /// The restaurant's tax rate at the moment this order was created, 0-100. Captured once rather
+    /// than read live, so an administrator changing the rate mid-service does not retroactively
+    /// change the total of a bill a customer is already looking at — the same reasoning that fixes
+    /// a menu item's price onto <see cref="OrderItem"/> when it is added.
+    /// </summary>
+    public decimal TaxRatePercent { get; private set; }
+
+    /// <summary>The restaurant's service charge rate at the moment this order was created, 0-100.</summary>
+    public decimal ServiceChargeRatePercent { get; private set; }
 
     public DateTime? ConfirmedAtUtc { get; private set; }
 
@@ -89,8 +103,27 @@ public sealed class Order : BaseEntity
         _ => 0m,
     };
 
-    /// <summary>What the customer owes. No tax or service charge is applied (BR-POS-011, BR-POS-012).</summary>
-    public decimal Total => Subtotal - DiscountAmount;
+    /// <summary>
+    /// Service charge on top of the discounted subtotal (BR-POS-012). Zero unless the restaurant
+    /// has set a rate — by default nothing is added, matching the original fixed rule this
+    /// replaced.
+    /// </summary>
+    public decimal ServiceChargeAmount =>
+        Math.Round((Subtotal - DiscountAmount) * ServiceChargeRatePercent / 100m, 2, MidpointRounding.AwayFromZero);
+
+    /// <summary>
+    /// Tax on top of the discounted subtotal and the service charge (BR-POS-011) — VAT is charged
+    /// on the service charge too, which is the usual local convention. Zero unless the restaurant
+    /// has set a rate.
+    /// </summary>
+    public decimal TaxAmount =>
+        Math.Round(
+            (Subtotal - DiscountAmount + ServiceChargeAmount) * TaxRatePercent / 100m,
+            2,
+            MidpointRounding.AwayFromZero);
+
+    /// <summary>What the customer owes.</summary>
+    public decimal Total => Subtotal - DiscountAmount + ServiceChargeAmount + TaxAmount;
 
     public decimal AmountPaid => _payments.Sum(p => p.Amount);
 
@@ -100,7 +133,10 @@ public sealed class Order : BaseEntity
     /// <summary>True while the order still holds its table (BR-POS-017).</summary>
     public bool IsLive => Status is OrderStatus.Draft or OrderStatus.Open or OrderStatus.Checkout;
 
-    public static Order Create(Guid tableId, Guid cashierUserId) => new(tableId, cashierUserId);
+    /// <param name="tableId">Null opens a takeaway order instead of a dine-in one.</param>
+    public static Order Create(
+        Guid? tableId, Guid cashierUserId, decimal taxRatePercent = 0m, decimal serviceChargeRatePercent = 0m) =>
+        new(tableId, cashierUserId, taxRatePercent, serviceChargeRatePercent);
 
     /// <summary>
     /// Adds dishes to the bill. Free at any time on an open order and never needs approval
@@ -113,7 +149,7 @@ public sealed class Order : BaseEntity
         EnsureEditable();
 
         var added = items
-            .Select(i => new OrderItem(Id, i.MenuItemId, i.MenuItemName, i.UnitPrice, i.Quantity, i.SpecialInstructions))
+            .Select(i => new OrderItem(Id, i.MenuItemVariantId, i.MenuItemName, i.UnitPrice, i.Quantity, i.SpecialInstructions))
             .ToList();
 
         if (added.Count == 0)

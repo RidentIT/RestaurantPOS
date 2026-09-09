@@ -51,6 +51,7 @@ internal sealed class GetMonthlyExpenseReportQueryHandler(IAppDbContext db)
 
         var revenueByDay = await ExpenseAnalytics.RevenueByDayAsync(db, from, to, cancellationToken);
         var revenue = revenueByDay.Values.Sum();
+        var orderCount = await ExpenseAnalytics.OrderCountBetweenAsync(db, from, to, cancellationToken);
 
         var expensesByDay = expenses
             .GroupBy(e => e.ExpenseDate)
@@ -74,7 +75,7 @@ internal sealed class GetMonthlyExpenseReportQueryHandler(IAppDbContext db)
             request.Year,
             request.Month,
             from.ToString("MMMM yyyy", CultureInfo.InvariantCulture),
-            ExpenseAnalytics.BuildProfitSummary(revenue, expenses.Sum(e => e.Amount)),
+            ExpenseAnalytics.BuildProfitSummary(revenue, expenses.Sum(e => e.Amount), orderCount),
             ExpenseAnalytics.BuildCategoryBreakdown(expenses, categories),
             dailyFigures,
             BuildWeeks(dailyFigures),

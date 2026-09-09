@@ -28,6 +28,7 @@ public sealed partial class DatabaseSeeder(
     {
         await db.Database.MigrateAsync(cancellationToken);
         await SeedExpenseCategoriesAsync(cancellationToken);
+        await SeedRestaurantSettingsAsync(cancellationToken);
 
         var anyAdmin = await db.Users.AnyAsync(u => u.Role == UserRole.Admin, cancellationToken);
         if (anyAdmin)
@@ -95,6 +96,34 @@ public sealed partial class DatabaseSeeder(
 
         SeededExpenseCategories(logger, missing.Count);
     }
+
+    /// <summary>
+    /// Creates the restaurant's one settings row if it does not exist yet, carrying forward the
+    /// values that used to be hardcoded in configuration — so an install already in service keeps
+    /// printing the same receipt letterhead it always has until an administrator changes it.
+    /// </summary>
+    private async Task SeedRestaurantSettingsAsync(CancellationToken cancellationToken)
+    {
+        var exists = await db.RestaurantSettings.AnyAsync(cancellationToken);
+        if (exists)
+        {
+            return;
+        }
+
+        var settings = RestaurantSettings.Create(
+            "Sri Lakshmi Family Restaurant", "Jaffna Road, Sandamalgama", "Anuradhapura", "077 7273794");
+
+        db.RestaurantSettings.Add(settings);
+        await db.SaveChangesAsync(cancellationToken);
+
+        SeededRestaurantSettings(logger);
+    }
+
+    [LoggerMessage(
+        EventId = 2003,
+        Level = LogLevel.Information,
+        Message = "Seeded the restaurant's settings row with its default business profile.")]
+    private static partial void SeededRestaurantSettings(ILogger logger);
 
     [LoggerMessage(
         EventId = 2002,

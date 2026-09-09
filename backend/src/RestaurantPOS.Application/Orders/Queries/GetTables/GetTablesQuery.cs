@@ -45,7 +45,9 @@ internal sealed class GetTablesQueryHandler(IAppDbContext db)
             .Where(u => liveOrders.Select(o => o.CashierUserId).Contains(u.Id))
             .ToDictionaryAsync(u => u.Id, u => u.FullName, cancellationToken);
 
-        var ordersByTable = liveOrders.ToDictionary(o => o.TableId);
+        // A takeaway order (TableId null) never sits on the floor plan, so it's excluded here
+        // rather than collapsing every one of them onto a single null dictionary key.
+        var ordersByTable = liveOrders.Where(o => o.TableId.HasValue).ToDictionary(o => o.TableId!.Value);
 
         var dtos = tables
             .Select(table =>

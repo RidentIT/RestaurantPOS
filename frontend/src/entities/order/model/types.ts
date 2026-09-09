@@ -24,7 +24,7 @@ export type DiscountType = "None" | "Percentage" | "Fixed";
 
 export interface OrderItem {
   id: string;
-  menuItemId: string;
+  menuItemVariantId: string;
   menuItemName: string;
   unitPrice: number;
   quantity: number;
@@ -48,8 +48,9 @@ export interface Order {
   id: string;
   orderNumber: number | null;
   orderDate: string | null;
-  tableId: string;
-  tableNumber: string;
+  /** Null for a takeaway order, which never holds a table. */
+  tableId: string | null;
+  tableNumber: string | null;
   status: OrderStatus;
   cashierUserId: string;
   cashierName: string;
@@ -60,6 +61,12 @@ export interface Order {
   discountValue: number;
   subtotal: number;
   discountAmount: number;
+  /** Zero unless the restaurant has configured a service charge rate (BR-POS-012). */
+  serviceChargeRatePercent: number;
+  serviceChargeAmount: number;
+  /** Zero unless the restaurant has configured a tax rate (BR-POS-011). */
+  taxRatePercent: number;
+  taxAmount: number;
   total: number;
   amountPaid: number;
   changeDue: number;
@@ -69,11 +76,31 @@ export interface Order {
   payments: OrderPayment[];
 }
 
+/** What an order tile shows at a glance, derived from its status and the kitchen's progress. */
+export type OrderDisplayStatus = "Draft" | "Ordered" | "Preparing" | "Ready" | "Served" | "Checkout";
+
+export function orderDisplayStatus(order: Pick<OrderSummary, "status" | "kitchenStatus">): OrderDisplayStatus {
+  if (order.status === "Draft") return "Draft";
+  if (order.status === "Checkout") return "Checkout";
+
+  switch (order.kitchenStatus) {
+    case "Preparing":
+      return "Preparing";
+    case "Ready":
+      return "Ready";
+    case "Served":
+      return "Served";
+    default:
+      return "Ordered";
+  }
+}
+
 export interface OrderSummary {
   id: string;
   orderNumber: number | null;
-  tableId: string;
-  tableNumber: string;
+  /** Null for a takeaway order, which never holds a table. */
+  tableId: string | null;
+  tableNumber: string | null;
   status: OrderStatus;
   cashierName: string;
   createdAtUtc: string;
@@ -84,7 +111,7 @@ export interface OrderSummary {
 }
 
 export interface AddOrderItemInput {
-  menuItemId: string;
+  menuItemVariantId: string;
   quantity: number;
   specialInstructions: string | null;
 }
@@ -102,7 +129,8 @@ export interface KotDocument {
   ticketId: string;
   restaurantName: string;
   orderNumber: number | null;
-  tableNumber: string;
+  /** Null for a takeaway order, which never holds a table. */
+  tableNumber: string | null;
   ticketNumber: number;
   kind: KitchenTicketKind;
   cashierName: string;
@@ -135,21 +163,27 @@ export interface ReceiptDocument {
   addressLine2: string | null;
   city: string | null;
   phone: string | null;
+  /** Null when the restaurant hasn't set one — not every restaurant is VAT-registered. */
+  vatRegistrationNumber: string | null;
   orderNumber: number | null;
-  tableNumber: string;
+  /** Null for a takeaway order, which never holds a table. */
+  tableNumber: string | null;
   cashierName: string;
   issuedAtUtc: string;
   printCount: number;
   lines: ReceiptLine[];
   subtotal: number;
   discountAmount: number;
-  /** Always zero — no VAT or GST is applied (BR-POS-011). */
+  /** Zero unless the restaurant has configured a service charge rate (BR-POS-012). */
+  serviceChargeAmount: number;
+  /** Zero unless the restaurant has configured a tax rate (BR-POS-011). */
   taxAmount: number;
   total: number;
   changeGiven: number;
   payments: OrderPayment[];
   /** Encoded on the slip as a QR code (POS-028). */
   qrPayload: string;
+  footerMessage: string;
 }
 
 export interface ReceiptLine {

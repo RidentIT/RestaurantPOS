@@ -37,6 +37,14 @@ public class OrderTests
     }
 
     [Fact]
+    public void Create_WithNoTable_OpensATakeawayOrder()
+    {
+        var order = Order.Create(tableId: null, Guid.NewGuid());
+
+        order.TableId.Should().BeNull();
+    }
+
+    [Fact]
     public void AddItems_OnADraft_RaisesNoKitchenTicket()
     {
         var order = NewOrder();
@@ -201,6 +209,40 @@ public class OrderTests
         var act = () => order.SetDiscount(DiscountType.Percentage, 101m);
 
         act.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    [Fact]
+    public void Create_WithNoRatesConfigured_ChargesNeitherTaxNorServiceCharge()
+    {
+        var order = OpenOrderWith(Dish("Fried Rice", 250m));
+
+        order.ServiceChargeAmount.Should().Be(0m);
+        order.TaxAmount.Should().Be(0m);
+        order.Total.Should().Be(250m, "BR-POS-011/BR-POS-012 default to nothing added");
+    }
+
+    [Fact]
+    public void Total_StacksServiceChargeThenTaxOnTopOfTheDiscountedSubtotal()
+    {
+        var order = Order.Create(Guid.NewGuid(), Guid.NewGuid(), taxRatePercent: 10m, serviceChargeRatePercent: 5m);
+        order.AddItems([Dish("Fried Rice", 1000m)], Now);
+        order.Confirm(1, Today, Now);
+        order.SetDiscount(DiscountType.Percentage, 10m);
+
+        // Subtotal 1000, discount 100 -> 900. Service charge 5% of 900 = 45. Tax 10% of (900+45) = 94.5.
+        order.ServiceChargeAmount.Should().Be(45m);
+        order.TaxAmount.Should().Be(94.5m, "VAT is charged on the service charge too (local convention)");
+        order.Total.Should().Be(1039.5m);
+    }
+
+    [Fact]
+    public void Create_SnapshotsTheRatesAtCreationTime_SoLaterOrdersAreUnaffectedByEachOther()
+    {
+        var withRates = Order.Create(Guid.NewGuid(), Guid.NewGuid(), taxRatePercent: 10m, serviceChargeRatePercent: 0m);
+        var withoutRates = Order.Create(Guid.NewGuid(), Guid.NewGuid());
+
+        withRates.TaxRatePercent.Should().Be(10m);
+        withoutRates.TaxRatePercent.Should().Be(0m, "each order only ever carries the rate it was created with");
     }
 
     [Fact]

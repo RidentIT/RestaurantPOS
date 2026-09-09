@@ -17,15 +17,15 @@ namespace RestaurantPOS.Application.Inventory.Commands.ConsumeStockForSale;
 /// INV-014). This is the integration point POS &amp; Billing's "complete order" flow will call
 /// once it exists; it is fully implemented and tested ahead of that.
 /// </summary>
-/// <param name="QuantitySold">How many units of the menu item were sold in this transaction.</param>
-public sealed record ConsumeStockForSaleCommand(Guid MenuItemId, decimal QuantitySold)
+/// <param name="QuantitySold">How many units of the menu item size were sold in this transaction.</param>
+public sealed record ConsumeStockForSaleCommand(Guid MenuItemVariantId, decimal QuantitySold)
     : IRequest<Result<ConsumptionResultDto>>;
 
 public sealed class ConsumeStockForSaleCommandValidator : AbstractValidator<ConsumeStockForSaleCommand>
 {
     public ConsumeStockForSaleCommandValidator()
     {
-        RuleFor(x => x.MenuItemId).NotEmpty();
+        RuleFor(x => x.MenuItemVariantId).NotEmpty();
         RuleFor(x => x.QuantitySold).GreaterThan(0).WithMessage("Quantity sold must be greater than zero.");
     }
 }
@@ -39,15 +39,15 @@ internal sealed class ConsumeStockForSaleCommandHandler(
     public async Task<Result<ConsumptionResultDto>> Handle(
         ConsumeStockForSaleCommand request, CancellationToken cancellationToken)
     {
-        var menuItemExists = await db.MenuItems.AnyAsync(m => m.Id == request.MenuItemId, cancellationToken);
-        if (!menuItemExists)
+        var variantExists = await db.MenuItemVariants.AnyAsync(v => v.Id == request.MenuItemVariantId, cancellationToken);
+        if (!variantExists)
         {
-            return Result.Failure<ConsumptionResultDto>(RecipeErrors.MenuItemNotFound(request.MenuItemId));
+            return Result.Failure<ConsumptionResultDto>(RecipeErrors.VariantNotFound(request.MenuItemVariantId));
         }
 
         var consumed = await SaleStockConsumption.ApplyAsync(
             db,
-            [new SoldItem(request.MenuItemId, request.QuantitySold)],
+            [new SoldItem(request.MenuItemVariantId, request.QuantitySold)],
             currentUser.UserId!.Value,
             clock.UtcNow,
             cancellationToken);

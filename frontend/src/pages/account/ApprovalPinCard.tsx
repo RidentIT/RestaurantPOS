@@ -15,6 +15,7 @@ import {
   CardTitle,
   FormField,
   Input,
+  PasswordInput,
 } from "@/shared/ui";
 
 interface PinFormValues {
@@ -128,7 +129,7 @@ export function ApprovalPinCard() {
             error={errors.currentPassword?.message}
             className="sm:col-span-2"
           >
-            <Input {...register("currentPassword", { required: true })} type="password" autoComplete="current-password" />
+            <PasswordInput {...register("currentPassword", { required: true })} autoComplete="current-password" />
           </FormField>
 
           <FormField

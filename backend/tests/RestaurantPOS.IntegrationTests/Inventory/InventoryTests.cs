@@ -177,7 +177,7 @@ public class InventoryTests : IntegrationTestBase
         await Client.CreateStockReleaseAsync([(riceId, 5m), (chickenId, 3m)], pin);
 
         var itemId = (await PosApiClient.ReadAsync<MenuItemResponse>(
-            await Client.CreateMenuItemAsync("Chicken Fried Rice", "Rice & Curry", 850m))).Id;
+            await Client.CreateMenuItemAsync("Chicken Fried Rice", "Rice & Curry", 850m))).Variants.Single().Id;
         await Client.UpsertRecipeAsync(itemId, (riceId, 0.25m), (chickenId, 0.15m));
 
         var response = await Client.ConsumeStockAsync(itemId, 2);
@@ -197,7 +197,7 @@ public class InventoryTests : IntegrationTestBase
     {
         await SignInAsAdminAsync();
         var itemId = (await PosApiClient.ReadAsync<MenuItemResponse>(
-            await Client.CreateMenuItemAsync("Bottled Water", "Beverages", 100m))).Id;
+            await Client.CreateMenuItemAsync("Bottled Water", "Beverages", 100m))).Variants.Single().Id;
 
         var response = await Client.ConsumeStockAsync(itemId, 5);
 
@@ -211,7 +211,7 @@ public class InventoryTests : IntegrationTestBase
         await SignInAsAdminAsync();
         var riceId = await CreateRawMaterialAsync("Rice");
         var itemId = (await PosApiClient.ReadAsync<MenuItemResponse>(
-            await Client.CreateMenuItemAsync("Fried Rice", "Rice", 700m))).Id;
+            await Client.CreateMenuItemAsync("Fried Rice", "Rice", 700m))).Variants.Single().Id;
         await Client.UpsertRecipeAsync(itemId, (riceId, 0.25m));
         await Client.SetRecipeEnabledAsync(itemId, false);
 
@@ -227,7 +227,7 @@ public class InventoryTests : IntegrationTestBase
         await SignInAsAdminAsync();
         var riceId = await CreateRawMaterialAsync("Rice");
         var itemId = (await PosApiClient.ReadAsync<MenuItemResponse>(
-            await Client.CreateMenuItemAsync("Fried Rice", "Rice", 700m))).Id;
+            await Client.CreateMenuItemAsync("Fried Rice", "Rice", 700m))).Variants.Single().Id;
         await Client.UpsertRecipeAsync(itemId, (riceId, 1m));
         // No stock has been released to the kitchen at all.
 

@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import { useModules } from "@/features/auth";
+import { useRunDailyBackupOnce } from "@/features/settings";
 import { LoadingState } from "@/shared/ui";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
@@ -7,6 +8,7 @@ import { Topbar } from "./Topbar";
 /** The signed-in application frame: sidebar navigation, top bar, and the routed page. */
 export function AppShell() {
   const { data: catalog, isLoading } = useModules();
+  useRunDailyBackupOnce();
 
   if (isLoading || !catalog) {
     return <LoadingState label="Loading your workspace…" className="h-screen" />;

@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { ModuleDescriptor, ModuleKey, User } from "@/entities/user";
+import { toApiError } from "@/shared/api/problem";
 import {
   Button,
   Dialog,
@@ -12,6 +13,7 @@ import {
   DialogTitle,
   FormField,
   Input,
+  PasswordInput,
   Select,
   SelectContent,
   SelectItem,
@@ -37,12 +39,12 @@ export interface UserFormDialogProps {
 }
 
 /**
- * Creates a staff account, or edits an existing one's profile, role and module grants.
+ * Creates a staff account, or edits an existing one's profile, username, role and module grants.
  *
  * Rendered as two distinct form bodies rather than one form with optional fields: creation and
- * editing have genuinely different shapes (a username and starting password only make sense
- * once), and giving each its own `useForm` keeps both strongly typed instead of forcing
- * `react-hook-form` through a union schema.
+ * editing have genuinely different shapes (a starting password only makes sense once), and
+ * giving each its own `useForm` keeps both strongly typed instead of forcing `react-hook-form`
+ * through a union schema.
  */
 export function UserFormDialog({ open, onOpenChange, user, catalog }: UserFormDialogProps) {
   return (
@@ -150,7 +152,7 @@ function CreateUserFormBody({ catalog, onDone }: { catalog: ModuleDescriptor[]; 
             hint={PASSWORD_HINT}
             error={errors.password?.message}
           >
-            <Input {...register("password")} type="password" autoComplete="new-password" />
+            <PasswordInput {...register("password")} autoComplete="new-password" />
           </FormField>
         </div>
 
@@ -199,10 +201,12 @@ function EditUserFormBody({
     handleSubmit,
     control,
     watch,
+    setError,
     formState: { errors },
   } = useForm<UpdateUserForm>({
     resolver: zodResolver(updateUserSchema),
     defaultValues: {
+      username: user.username,
       fullName: user.fullName,
       email: user.email ?? "",
       role: user.role,
@@ -217,6 +221,7 @@ function EditUserFormBody({
       await update.mutateAsync({
         id: user.id,
         payload: {
+          username: values.username,
           fullName: values.fullName,
           email: toNullableEmail(values.email),
           role: values.role,
@@ -226,7 +231,13 @@ function EditUserFormBody({
       toast.success(`${values.fullName}'s account was updated.`);
       onDone();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Something went wrong.");
+      const apiError = toApiError(error);
+
+      if (apiError.code === "User.UsernameTaken") {
+        setError("username", { message: apiError.message });
+      } else {
+        toast.error(apiError.message);
+      }
     }
   });
 
@@ -235,19 +246,23 @@ function EditUserFormBody({
       <DialogHeader>
         <DialogTitle>Edit staff account</DialogTitle>
         <DialogDescription>
-          Changes to role or modules take effect the next time this user signs in.
+          Changes to username, role or modules take effect the next time this user signs in.
         </DialogDescription>
       </DialogHeader>
 
       <form onSubmit={onSubmit} className="space-y-5">
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField
-            htmlFor="fullName"
-            label="Full name"
+            htmlFor="username"
+            label="Username"
             required
-            className="sm:col-span-2"
-            error={errors.fullName?.message}
+            hint="Letters, digits, dots, hyphens and underscores only."
+            error={errors.username?.message}
           >
+            <Input {...register("username")} autoComplete="off" placeholder="cashier01" />
+          </FormField>
+
+          <FormField htmlFor="fullName" label="Full name" required error={errors.fullName?.message}>
             <Input {...register("fullName")} placeholder="Ravi Kumar" />
           </FormField>
 

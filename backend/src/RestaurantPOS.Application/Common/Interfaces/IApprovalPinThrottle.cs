@@ -18,10 +18,10 @@ public readonly record struct ApprovalPinAttemptState(bool IsLocked, TimeSpan Re
 public interface IApprovalPinThrottle
 {
     /// <summary>Reports whether <paramref name="terminalKey"/> may attempt a PIN right now.</summary>
-    ApprovalPinAttemptState Check(string terminalKey);
+    ApprovalPinAttemptState Check(string terminalKey, int maxAttempts);
 
     /// <summary>Counts a wrong PIN, locking the terminal once the allowance runs out.</summary>
-    ApprovalPinAttemptState RecordFailure(string terminalKey);
+    ApprovalPinAttemptState RecordFailure(string terminalKey, int maxAttempts, TimeSpan lockoutDuration);
 
     /// <summary>Clears the count after a correct PIN.</summary>
     void Reset(string terminalKey);

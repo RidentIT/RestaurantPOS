@@ -7,10 +7,10 @@ export interface RecipeLine {
   quantity: number;
 }
 
-/** The bill of materials for one menu item: what it consumes per unit sold. */
+/** The bill of materials for one menu item size: what it consumes per unit sold. */
 export interface Recipe {
   id: string;
-  menuItemId: string;
+  menuItemVariantId: string;
   isEnabled: boolean;
   lines: RecipeLine[];
   createdAtUtc: string;

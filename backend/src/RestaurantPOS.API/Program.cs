@@ -117,6 +117,9 @@ try
     api.MapOrderEndpoints();
     api.MapKitchenEndpoints();
     api.MapExpenseEndpoints();
+    api.MapNotificationEndpoints();
+    api.MapSettingsEndpoints();
+    api.MapReportsEndpoints();
 
     app.MapGet("/health", () => Results.Ok(new { status = "Healthy", timestamp = DateTime.UtcNow }))
         .AllowAnonymous()

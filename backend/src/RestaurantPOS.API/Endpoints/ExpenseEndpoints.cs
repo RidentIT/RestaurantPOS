@@ -51,7 +51,16 @@ public static class ExpenseEndpoints
         MapApproval(group);
         MapAttachments(group);
         MapRecurring(group);
-        MapReports(group);
+
+        // A sibling group, not nested under the one above: these three read the same revenue and
+        // expense figures Reports & Analytics is meant to show, so they accept that module too —
+        // nesting under the ExpensesManagement-only group would AND the two policies together
+        // instead of accepting either.
+        var reports = routes.MapGroup("/expenses/reports")
+            .WithTags("Expenses")
+            .RequireAuthorization(AuthorizationPolicies.ReportsRead);
+
+        MapReports(reports);
 
         return routes;
     }
@@ -335,7 +344,7 @@ public static class ExpenseEndpoints
 
     private static void MapReports(RouteGroupBuilder group)
     {
-        group.MapGet("/reports/daily", async (DateOnly date, ISender sender, CancellationToken ct) =>
+        group.MapGet("/daily", async (DateOnly date, ISender sender, CancellationToken ct) =>
             {
                 var result = await sender.Send(new GetDailyExpenseReportQuery(date), ct);
                 return result.ToHttpResult();
@@ -343,7 +352,7 @@ public static class ExpenseEndpoints
             .WithName("GetDailyExpenseReport")
             .WithSummary("A day's expenses against that day's takings.");
 
-        group.MapGet("/reports/monthly", async (
+        group.MapGet("/monthly", async (
                 int year, int month, ISender sender, CancellationToken ct) =>
             {
                 var result = await sender.Send(new GetMonthlyExpenseReportQuery(year, month), ct);
@@ -352,7 +361,7 @@ public static class ExpenseEndpoints
             .WithName("GetMonthlyExpenseReport")
             .WithSummary("A month's expenses, trend, weekly split, comparison and budget alerts.");
 
-        group.MapGet("/reports/range", async (
+        group.MapGet("/range", async (
                 DateOnly from, DateOnly to, ISender sender, CancellationToken ct) =>
             {
                 var result = await sender.Send(new GetExpenseRangeReportQuery(from, to), ct);

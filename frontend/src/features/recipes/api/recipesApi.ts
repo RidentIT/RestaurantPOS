@@ -7,17 +7,18 @@ export const recipesApi = {
    * server sends a genuinely empty body for that case, which axios surfaces as `""` rather than
    * JSON `null`, so that's normalised here rather than leaking into every consumer of this call.
    */
-  get: (menuItemId: string) =>
+  get: (menuItemVariantId: string) =>
     apiService
-      .get<Recipe | null>(API_ENDPOINTS.MENU_ITEMS.RECIPE(menuItemId))
+      .get<Recipe | null>(API_ENDPOINTS.MENU_ITEMS.RECIPE(menuItemVariantId))
       .then((data) => data || null),
 
   /** Creates the recipe if none exists, or replaces its lines if one already does. */
-  upsert: (menuItemId: string, lines: RecipeLineInput[]) =>
-    apiService.put<Recipe>(API_ENDPOINTS.MENU_ITEMS.RECIPE(menuItemId), { lines }),
+  upsert: (menuItemVariantId: string, lines: RecipeLineInput[]) =>
+    apiService.put<Recipe>(API_ENDPOINTS.MENU_ITEMS.RECIPE(menuItemVariantId), { lines }),
 
-  setEnabled: (menuItemId: string, isEnabled: boolean) =>
-    apiService.put<Recipe>(API_ENDPOINTS.MENU_ITEMS.RECIPE_STATUS(menuItemId), { isEnabled }),
+  setEnabled: (menuItemVariantId: string, isEnabled: boolean) =>
+    apiService.put<Recipe>(API_ENDPOINTS.MENU_ITEMS.RECIPE_STATUS(menuItemVariantId), { isEnabled }),
 
-  remove: (menuItemId: string) => apiService.delete<void>(API_ENDPOINTS.MENU_ITEMS.RECIPE(menuItemId)),
+  remove: (menuItemVariantId: string) =>
+    apiService.delete<void>(API_ENDPOINTS.MENU_ITEMS.RECIPE(menuItemVariantId)),
 };

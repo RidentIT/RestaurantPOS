@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 using RestaurantPOS.Application.Common.Interfaces;
+using RestaurantPOS.Application.Settings.Common;
 using RestaurantPOS.Domain.Common;
 using RestaurantPOS.Domain.Entities;
 using RestaurantPOS.Domain.Enums;
@@ -51,7 +52,11 @@ internal sealed class VerifyApprovalPinCommandHandler(
         // cashier (BR-POS-020), so their session is the closest thing to a physical terminal.
         var terminalKey = currentUser.UserId?.ToString() ?? "anonymous";
 
-        var state = throttle.Check(terminalKey);
+        var settings = await RestaurantSettingsAccessor.GetAsync(db, cancellationToken);
+        var maxAttempts = settings.ApprovalPinMaxAttempts;
+        var lockoutDuration = TimeSpan.FromMinutes(settings.ApprovalPinLockoutMinutes);
+
+        var state = throttle.Check(terminalKey, maxAttempts);
         if (state.IsLocked)
         {
             return Result.Failure<ApprovalResult>(AuthErrors.PinAttemptsExhausted(state.RetryAfter));
@@ -77,7 +82,7 @@ internal sealed class VerifyApprovalPinCommandHandler(
 
         if (!matched.Found)
         {
-            var afterFailure = throttle.RecordFailure(terminalKey);
+            var afterFailure = throttle.RecordFailure(terminalKey, maxAttempts, lockoutDuration);
 
             return Result.Failure<ApprovalResult>(afterFailure.IsLocked
                 ? AuthErrors.PinAttemptsExhausted(afterFailure.RetryAfter)

@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 using RestaurantPOS.Application.Common.Interfaces;
+using RestaurantPOS.Application.Common.Mappings;
 using RestaurantPOS.Application.Recipes.Dtos;
 using RestaurantPOS.Domain.Common;
 using RestaurantPOS.Domain.Entities;
@@ -12,7 +13,11 @@ using RestaurantPOS.Domain.Errors;
 
 namespace RestaurantPOS.Application.Recipes.Commands.CreateMenuItem;
 
-public sealed record CreateMenuItemCommand(string Name, string Category, decimal Price)
+/// <summary>One size to create the new item with. Every item needs at least one.</summary>
+public sealed record MenuItemVariantInput(string? Name, decimal Price);
+
+public sealed record CreateMenuItemCommand(
+    string Name, string Category, IReadOnlyCollection<MenuItemVariantInput> Variants)
     : IRequest<Result<MenuItemDto>>;
 
 public sealed class CreateMenuItemCommandValidator : AbstractValidator<CreateMenuItemCommand>
@@ -27,7 +32,26 @@ public sealed class CreateMenuItemCommandValidator : AbstractValidator<CreateMen
             .NotEmpty().WithMessage("Category is required.")
             .MaximumLength(MenuItem.CategoryMaxLength);
 
-        RuleFor(x => x.Price).GreaterThanOrEqualTo(0).WithMessage("Price cannot be negative.");
+        RuleFor(x => x.Variants)
+            .NotEmpty().WithMessage("Add at least one size.");
+
+        RuleForEach(x => x.Variants).ChildRules(variant =>
+        {
+            variant.RuleFor(v => v.Price).GreaterThanOrEqualTo(0).WithMessage("Price cannot be negative.");
+            variant.RuleFor(v => v.Name).MaximumLength(MenuItemVariant.NameMaxLength);
+        });
+
+        RuleFor(x => x.Variants)
+            .Must(v => v.Count == 1 || v.All(x => !string.IsNullOrWhiteSpace(x.Name)))
+            .WithMessage("Every size needs its own name once there is more than one size.")
+            .When(x => x.Variants.Count > 0);
+
+        RuleFor(x => x.Variants)
+            .Must(v => v.Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                .Select(x => x.Name!.Trim().ToLowerInvariant())
+                .Distinct().Count() == v.Count(x => !string.IsNullOrWhiteSpace(x.Name)))
+            .WithMessage("Two sizes on the same item cannot share a name.")
+            .When(x => x.Variants.Count > 0);
     }
 }
 
@@ -45,13 +69,16 @@ internal sealed class CreateMenuItemCommandHandler(IAppDbContext db)
             return Result.Failure<MenuItemDto>(RecipeErrors.MenuItemNameTaken);
         }
 
-        var menuItem = MenuItem.Create(name, request.Category, request.Price);
+        var variants = request.Variants
+            .Select(v => new MenuItemVariantEdit(Id: null, v.Name, v.Price))
+            .ToList();
+
+        var menuItem = MenuItem.Create(name, request.Category, variants);
 
         db.MenuItems.Add(menuItem);
         await db.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(new MenuItemDto(
-            menuItem.Id, menuItem.Name, menuItem.Category, menuItem.Price, menuItem.IsActive,
-            HasRecipe: false, menuItem.CreatedAtUtc));
+        // Brand new — nothing on it has a recipe yet.
+        return Result.Success(menuItem.ToDto(new HashSet<Guid>()));
     }
 }

@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
     REFRESH: "/auth/refresh",
     LOGOUT: "/auth/logout",
     ME: "/auth/me",
+    PROFILE: "/auth/profile",
     CHANGE_PASSWORD: "/auth/change-password",
     PIN: "/auth/pin",
     VERIFY_PIN: "/auth/pin/verify",
@@ -24,8 +25,10 @@ export const API_ENDPOINTS = {
     BASE: "/menu-items",
     BY_ID: (id: string) => `/menu-items/${id}`,
     STATUS: (id: string) => `/menu-items/${id}/status`,
-    RECIPE: (menuItemId: string) => `/menu-items/${menuItemId}/recipe`,
-    RECIPE_STATUS: (menuItemId: string) => `/menu-items/${menuItemId}/recipe/status`,
+    CATEGORIES: "/menu-items/categories",
+    // Recipes belong to a size (MenuItemVariant), not the item itself — every size can have its own.
+    RECIPE: (menuItemVariantId: string) => `/menu-items/variants/${menuItemVariantId}/recipe`,
+    RECIPE_STATUS: (menuItemVariantId: string) => `/menu-items/variants/${menuItemVariantId}/recipe/status`,
   },
   RAW_MATERIALS: {
     BASE: "/raw-materials",
@@ -69,6 +72,13 @@ export const API_ENDPOINTS = {
     PAYMENTS: (id: string) => `/orders/${id}/payments`,
     REPRINT_RECEIPT: (id: string) => `/orders/${id}/receipt/reprint`,
   },
+  NOTIFICATIONS: {
+    BASE: "/notifications",
+    EVALUATE: "/notifications/evaluate",
+    READ: "/notifications/read",
+    PREFERENCES: "/notifications/preferences",
+    THRESHOLDS: "/notifications/thresholds",
+  },
   EXPENSES: {
     BASE: "/expenses",
     BY_ID: (id: string) => `/expenses/${id}`,
@@ -95,6 +105,24 @@ export const API_ENDPOINTS = {
     TICKET_STATUS: (id: string) => `/kitchen/tickets/${id}/status`,
     TICKET_REPRINT: (id: string) => `/kitchen/tickets/${id}/reprint`,
   },
+  REPORTS: {
+    SALES_DAILY: "/reports/sales/daily",
+    SALES_MONTHLY: "/reports/sales/monthly",
+  },
+  SETTINGS: {
+    BASE: "/settings",
+    PROFILE: "/settings/profile",
+    BRANDING: "/settings/branding",
+    LOGO: "/settings/logo",
+    BILL_CHARGES: "/settings/bill-charges",
+    RECEIPT_FOOTER: "/settings/receipt-footer",
+    PRINTER: "/settings/printer",
+    APPROVAL_PIN_POLICY: "/settings/approval-pin-policy",
+    BACKUP: "/settings/backup",
+    BACKUPS: "/settings/backups",
+    BACKUPS_RESTORE: "/settings/backups/restore",
+    BACKUPS_RUN_DAILY: "/settings/backups/run-daily",
+  },
   INVENTORY: {
     MAIN_STORE_STOCK: "/inventory/main-store/stock",
     MAIN_STORE_MOVEMENTS: "/inventory/main-store/movements",
@@ -104,7 +132,7 @@ export const API_ENDPOINTS = {
     KITCHEN_STOCK: "/inventory/kitchen/stock",
     KITCHEN_MOVEMENTS: "/inventory/kitchen/movements",
     KITCHEN_ADJUSTMENTS: "/inventory/kitchen/adjustments",
-    CONSUMPTION: (menuItemId: string) => `/inventory/kitchen/consumption/${menuItemId}`,
+    CONSUMPTION: (menuItemVariantId: string) => `/inventory/kitchen/consumption/${menuItemVariantId}`,
     RELEASES: "/inventory/releases",
     RELEASE_BY_ID: (id: string) => `/inventory/releases/${id}`,
   },
@@ -121,4 +149,13 @@ export const apiService = {
   put: <T>(url: string, data?: unknown) => axiosClient.put<T>(url, data).then((res) => res.data),
 
   delete: <T>(url: string) => axiosClient.delete<T>(url).then((res) => res.data),
+
+  /**
+   * For a `FormData` body specifically. `axiosClient` fixes `Content-Type: application/json` as
+   * a default for every request, which otherwise stomps on the `multipart/form-data; boundary=…`
+   * header a file upload needs — the browser (via axios) can only set that correctly once nothing
+   * has already claimed the header first, which the explicit `undefined` here clears the way for.
+   */
+  uploadFile: <T>(url: string, form: FormData) =>
+    axiosClient.post<T>(url, form, { headers: { "Content-Type": undefined } }).then((res) => res.data),
 };

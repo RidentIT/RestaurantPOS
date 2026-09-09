@@ -16,8 +16,8 @@ internal sealed class RecipeConfiguration : IEntityTypeConfiguration<Recipe>
         builder.HasKey(r => r.Id);
         builder.Property(r => r.Id).ValueGeneratedNever();
 
-        // At most one recipe per menu item (BR-REC-001).
-        builder.HasIndex(r => r.MenuItemId).IsUnique();
+        // At most one recipe per size (BR-REC-001).
+        builder.HasIndex(r => r.MenuItemVariantId).IsUnique();
 
         builder.Property(r => r.IsEnabled).IsRequired();
 

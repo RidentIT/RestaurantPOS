@@ -5,7 +5,8 @@ export interface KitchenTicket {
   id: string;
   orderId: string;
   orderNumber: number | null;
-  tableNumber: string;
+  /** Null for a takeaway order, which never holds a table. */
+  tableNumber: string | null;
   ticketNumber: number;
   kind: KitchenTicketKind;
   status: KitchenTicketStatus;

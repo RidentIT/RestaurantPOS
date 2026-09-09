@@ -23,6 +23,16 @@ public static class AuthorizationPolicies
     /// </summary>
     public const string SupplierLookup = "suppliers:read";
 
+    /// <summary>
+    /// The revenue-vs-expenses reports (daily, monthly, range) belong to Expenses Management day
+    /// to day, but the numbers themselves are exactly what Reports &amp; Analytics exists to show —
+    /// its own catalog entry says "sales, inventory, expense... reporting". A manager tracking
+    /// overall performance should not need day-to-day expense-entry access just to read them, so
+    /// this accepts either grant. Recording, approving or editing an expense stays
+    /// <see cref="AppModule.ExpensesManagement"/>-only.
+    /// </summary>
+    public const string ReportsRead = "reports:read";
+
     /// <summary>Builds the policy name guarding <paramref name="module"/>.</summary>
     public static string ForModule(AppModule module) => $"module:{module}";
 
@@ -38,6 +48,12 @@ public static class AuthorizationPolicies
                 context.User.IsInRole(nameof(UserRole.Admin)) ||
                 context.User.HasClaim(AppClaimTypes.Module, AppModule.SupplierManagement.ToString()) ||
                 context.User.HasClaim(AppClaimTypes.Module, AppModule.StoreStockManagement.ToString())));
+
+        builder.AddPolicy(ReportsRead, policy =>
+            policy.RequireAssertion(context =>
+                context.User.IsInRole(nameof(UserRole.Admin)) ||
+                context.User.HasClaim(AppClaimTypes.Module, AppModule.ExpensesManagement.ToString()) ||
+                context.User.HasClaim(AppClaimTypes.Module, AppModule.ReportsAnalytics.ToString())));
 
         foreach (var descriptor in ModuleCatalog.All)
         {

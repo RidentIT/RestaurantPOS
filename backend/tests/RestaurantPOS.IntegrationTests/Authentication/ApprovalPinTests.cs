@@ -146,7 +146,7 @@ public class ApprovalPinTests : IntegrationTestBase
         ownerClient.Authenticate((await PosApiClient.ReadAsync<SessionResponse>(changed)).AccessToken);
         await ownerClient.SetApprovalPinAsync("Owner@2026New", "7777");
 
-        await Client.UpdateUserAsync(owner.Id, "Restaurant Owner", "User", ["PosBilling"]);
+        await Client.UpdateUserAsync(owner.Id, owner.Username, "Restaurant Owner", "User", ["PosBilling"]);
 
         var demoted = await PosApiClient.ReadAsync<UserResponse>(await Client.GetUserAsync(owner.Id));
         demoted.HasApprovalPin.Should().BeFalse("an approval PIN carries administrator authority");
