@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Ban, CreditCard, Percent, Send } from "lucide-react";
+import { ArrowLeft, Ban, CreditCard, Percent, Send, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import type { DiscountType, OrderItem } from "@/entities/order";
 import { useMenuItems } from "@/features/menu-items";
@@ -12,6 +12,7 @@ import { AddItemDialog } from "./AddItemDialog";
 import { BillPanel } from "./BillPanel";
 import { DiscountDialog } from "./DiscountDialog";
 import { MenuPicker } from "./MenuPicker";
+import { StewardDialog } from "./StewardDialog";
 
 /** A guarded action waiting on a manager's PIN. */
 interface PendingApproval {
@@ -36,6 +37,7 @@ export default function OrderScreen() {
 
   const [picked, setPicked] = useState<PickedMenuItem | null>(null);
   const [discountOpen, setDiscountOpen] = useState(false);
+  const [stewardOpen, setStewardOpen] = useState(false);
   const [approval, setApproval] = useState<PendingApproval | null>(null);
 
   // A bill already frozen for payment has nothing to do here — the menu and the bill are both
@@ -56,6 +58,7 @@ export default function OrderScreen() {
     mutations.confirm.isPending ||
     mutations.cancel.isPending ||
     mutations.setDiscount.isPending ||
+    mutations.assignSteward.isPending ||
     mutations.startCheckout.isPending;
 
   if (isLoading || !order || order.status === "Checkout") {
@@ -145,13 +148,27 @@ export default function OrderScreen() {
             </Link>
           </Button>
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-semibold">{order.tableNumber ? `Table ${order.tableNumber}` : "Takeaway"}</h1>
+            <h1 className="text-2xl font-semibold">
+              {order.tableNumber ? `Table ${order.tableNumber}` : "Takeaway"}
+            </h1>
             {order.orderNumber && (
               <Badge variant="secondary">Order #{String(order.orderNumber).padStart(3, "0")}</Badge>
             )}
             <Badge variant={isDraft ? "outline" : "default"}>{order.status}</Badge>
             {order.kitchenStatus && <Badge variant="warning">Kitchen: {order.kitchenStatus}</Badge>}
           </div>
+          {order.tableId && (
+            <Button
+              variant={order.stewardName ? "ghost" : "outline"}
+              size="sm"
+              className="-ml-2"
+              onClick={() => setStewardOpen(true)}
+              disabled={busy}
+            >
+              <UserRound />
+              {order.stewardName ? `Steward: ${order.stewardName}` : "Assign steward"}
+            </Button>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -166,12 +183,20 @@ export default function OrderScreen() {
             </Button>
           )}
           {isDraft && (
-            <Button onClick={confirmOrder} loading={mutations.confirm.isPending} disabled={activeItems.length === 0}>
+            <Button
+              onClick={confirmOrder}
+              loading={mutations.confirm.isPending}
+              disabled={activeItems.length === 0}
+            >
               <Send /> Confirm &amp; send to kitchen
             </Button>
           )}
           {isOpen && (
-            <Button onClick={goToCheckout} loading={mutations.startCheckout.isPending} disabled={activeItems.length === 0}>
+            <Button
+              onClick={goToCheckout}
+              loading={mutations.startCheckout.isPending}
+              disabled={activeItems.length === 0}
+            >
               <CreditCard /> Checkout
             </Button>
           )}
@@ -196,7 +221,12 @@ export default function OrderScreen() {
 
         <Card className="min-h-0 overflow-y-auto p-4">
           <h2 className="mb-3 font-semibold">Current bill</h2>
-          <BillPanel order={order} onChangeQuantity={changeQuantity} onVoid={voidItem} busy={busy} />
+          <BillPanel
+            order={order}
+            onChangeQuantity={changeQuantity}
+            onVoid={voidItem}
+            busy={busy}
+          />
         </Card>
       </div>
 
@@ -213,6 +243,17 @@ export default function OrderScreen() {
         order={order}
         onApply={applyDiscount}
         pending={mutations.setDiscount.isPending}
+      />
+
+      <StewardDialog
+        open={stewardOpen}
+        onOpenChange={setStewardOpen}
+        currentStewardId={order.stewardId}
+        currentStewardName={order.stewardName}
+        onAssign={(stewardId) =>
+          mutations.assignSteward.mutateAsync({ id: order.id, stewardId }).then(() => undefined)
+        }
+        pending={mutations.assignSteward.isPending}
       />
 
       <ManagerPinDialog

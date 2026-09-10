@@ -29,8 +29,13 @@ export const ordersApi = {
 
   getById: (id: string) => apiService.get<Order>(API_ENDPOINTS.ORDERS.BY_ID(id)),
 
-  /** Null opens a takeaway order instead of one on a table. */
-  create: (tableId: string | null) => apiService.post<Order>(API_ENDPOINTS.ORDERS.BASE, { tableId }),
+  /** Null tableId opens a takeaway order. `stewardId` credits the serving steward, dine-in only. */
+  create: (tableId: string | null, stewardId: string | null = null) =>
+    apiService.post<Order>(API_ENDPOINTS.ORDERS.BASE, { tableId, stewardId }),
+
+  /** Credits a dine-in order to a steward, or clears it with null. */
+  assignSteward: (id: string, stewardId: string | null) =>
+    apiService.put<Order>(API_ENDPOINTS.ORDERS.STEWARD(id), { stewardId }),
 
   addItems: (id: string, items: AddOrderItemInput[]) =>
     apiService.post<OrderMutationResult>(API_ENDPOINTS.ORDERS.ITEMS(id), { items }),

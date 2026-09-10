@@ -1,8 +1,22 @@
+import { Award } from "lucide-react";
 import type { SalesReport } from "@/entities/report";
 import { PAYMENT_METHOD_LABELS } from "@/entities/order";
 import { ProfitSummaryCards } from "@/features/expenses";
 import { RankedBarChart, ShareDonut } from "@/shared/charts/Charts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui";
+import {
+  Badge,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  EmptyState,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/shared/ui";
 
 const money = (value: number) =>
   value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -25,6 +39,9 @@ export function SalesTab({ report }: { report: SalesReport }) {
     .slice(0, 8);
 
   const busiestDays = [...report.dayOfWeekPattern].sort((a, b) => b.revenue - a.revenue);
+
+  // The best steward is the highest-net *named* one — the "Unassigned" bucket never wins an award.
+  const bestStewardId = report.stewardSales.find((s) => s.stewardId !== null)?.stewardId ?? null;
 
   return (
     <div className="space-y-4">
@@ -57,6 +74,64 @@ export function SalesTab({ report }: { report: SalesReport }) {
           />
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Sales by steward</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {report.stewardSales.length === 0 ? (
+            <EmptyState title="No completed orders in this period yet." />
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Steward</TableHead>
+                    <TableHead className="text-right">Orders</TableHead>
+                    <TableHead className="text-right">Items</TableHead>
+                    <TableHead className="text-right">Gross</TableHead>
+                    <TableHead className="text-right">Discount</TableHead>
+                    <TableHead className="text-right">Net sales</TableHead>
+                    <TableHead className="text-right">Avg bill</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {report.stewardSales.map((row) => (
+                    <TableRow
+                      key={row.stewardId ?? "unassigned"}
+                      className={row.stewardId === bestStewardId ? "bg-success/10" : undefined}
+                    >
+                      <TableCell className="font-medium">
+                        <span
+                          className={row.stewardId === null ? "text-muted-foreground" : undefined}
+                        >
+                          {row.stewardName}
+                        </span>
+                        {row.stewardId === bestStewardId && (
+                          <Badge variant="success" className="ml-2 gap-1">
+                            <Award className="size-3" /> Best steward
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="tabular text-right">{row.ordersServed}</TableCell>
+                      <TableCell className="tabular text-right">{row.itemsSold}</TableCell>
+                      <TableCell className="tabular text-right">{money(row.grossSales)}</TableCell>
+                      <TableCell className="tabular text-right">
+                        {money(row.discountsGiven)}
+                      </TableCell>
+                      <TableCell className="tabular text-right font-medium">
+                        {money(row.netSales)}
+                      </TableCell>
+                      <TableCell className="tabular text-right">{money(row.averageBill)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-5">
@@ -107,11 +182,13 @@ export function SalesTab({ report }: { report: SalesReport }) {
           <CardContent className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Given away</p>
-              <p className="mt-1 text-2xl font-semibold tabular">{money(report.discounts.totalDiscountGiven)}</p>
+              <p className="tabular mt-1 text-2xl font-semibold">
+                {money(report.discounts.totalDiscountGiven)}
+              </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Orders discounted</p>
-              <p className="mt-1 text-2xl font-semibold tabular">
+              <p className="tabular mt-1 text-2xl font-semibold">
                 {report.discounts.ordersWithDiscount}
                 <span className="text-base font-normal text-muted-foreground">
                   {" "}

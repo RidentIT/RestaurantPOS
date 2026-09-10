@@ -6,7 +6,8 @@ public sealed record TableResponse(
     Guid Id, string Number, int Seats, string? Notes, bool IsActive, TableOrderSummaryResponse? CurrentOrder);
 
 public sealed record TableOrderSummaryResponse(
-    Guid OrderId, int? OrderNumber, string Status, int ItemCount, decimal Total, string? KitchenStatus);
+    Guid OrderId, int? OrderNumber, string Status, int ItemCount, decimal Total,
+    string CashierName, string? StewardName, string? KitchenStatus);
 
 public sealed record OrderResponse(
     Guid Id,
@@ -15,6 +16,8 @@ public sealed record OrderResponse(
     string? TableNumber,
     string Status,
     string CashierName,
+    Guid? StewardId,
+    string? StewardName,
     string DiscountType,
     decimal DiscountValue,
     decimal Subtotal,
@@ -40,8 +43,10 @@ public sealed record OrderPaymentResponse(
 
 public sealed record KotDocumentResponse(
     Guid TicketId, string RestaurantName, int? OrderNumber, string? TableNumber, int TicketNumber,
-    string Kind, string CashierName, int PrintCount, string? PrinterName,
+    string Kind, string CashierName, string? StewardName, int PrintCount, string? PrinterName,
     IReadOnlyCollection<KotLineResponse> Lines);
+
+public sealed record StewardResponse(Guid Id, string Name, bool IsActive, DateTime CreatedAtUtc);
 
 public sealed record KotLineResponse(string MenuItemName, int Quantity, string? SpecialInstructions, string? Note);
 
@@ -95,8 +100,25 @@ public sealed partial class PosApiClient
         Http.PutAsJsonAsync($"{BaseUrl}/tables/{id}/status", new { isActive }, Json);
 
     /// <summary>Null opens a takeaway order instead of one on a table.</summary>
-    public Task<HttpResponseMessage> CreateOrderAsync(Guid? tableId) =>
-        Http.PostAsJsonAsync($"{BaseUrl}/orders", new { tableId }, Json);
+    public Task<HttpResponseMessage> CreateOrderAsync(Guid? tableId, Guid? stewardId = null) =>
+        Http.PostAsJsonAsync($"{BaseUrl}/orders", new { tableId, stewardId }, Json);
+
+    public Task<HttpResponseMessage> AssignOrderStewardAsync(Guid orderId, Guid? stewardId) =>
+        Http.PutAsJsonAsync($"{BaseUrl}/orders/{orderId}/steward", new { stewardId }, Json);
+
+    // ----- Stewards -----
+
+    public Task<HttpResponseMessage> GetStewardsAsync(bool? isActive = null) =>
+        Http.GetAsync($"{BaseUrl}/stewards{(isActive.HasValue ? $"?isActive={isActive}" : string.Empty)}");
+
+    public Task<HttpResponseMessage> CreateStewardAsync(string name) =>
+        Http.PostAsJsonAsync($"{BaseUrl}/stewards", new { name }, Json);
+
+    public Task<HttpResponseMessage> RenameStewardAsync(Guid id, string name) =>
+        Http.PutAsJsonAsync($"{BaseUrl}/stewards/{id}", new { name }, Json);
+
+    public Task<HttpResponseMessage> SetStewardActiveAsync(Guid id, bool isActive) =>
+        Http.PutAsJsonAsync($"{BaseUrl}/stewards/{id}/status", new { isActive }, Json);
 
     public Task<HttpResponseMessage> GetOrdersAsync(string? query = null) =>
         Http.GetAsync($"{BaseUrl}/orders{query}");

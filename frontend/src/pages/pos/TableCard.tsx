@@ -1,4 +1,4 @@
-import { ChefHat, CircleCheck, Clock, CreditCard, Pencil, UtensilsCrossed } from "lucide-react";
+import { ChefHat, CircleCheck, Clock, CreditCard, Pencil, UserRound, UtensilsCrossed } from "lucide-react";
 import type { RestaurantTable, TableDisplayStatus } from "@/entities/table";
 import { tableDisplayStatus } from "@/entities/table";
 import { Badge } from "@/shared/ui";
@@ -100,6 +100,12 @@ export function TableCard({
           <p className="text-sm text-muted-foreground">
             {order.itemCount} item{order.itemCount === 1 ? "" : "s"} · {order.total.toFixed(2)}
           </p>
+          {order.stewardName && (
+            <p className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+              <UserRound className="size-3 shrink-0" />
+              {order.stewardName}
+            </p>
+          )}
         </div>
       ) : (
         <div className="mt-auto pt-3 text-sm text-muted-foreground">

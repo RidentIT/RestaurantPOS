@@ -45,6 +45,11 @@ public static class SalesAnalytics
             kv => kv.Key,
             kv => categoriesByMenuItem.GetValueOrDefault(kv.Value.MenuItemId, string.Empty));
 
+        var stewardIds = orders.Where(o => o.StewardId.HasValue).Select(o => o.StewardId!.Value).Distinct().ToList();
+        var stewardNames = await db.Stewards.AsNoTracking()
+            .Where(s => stewardIds.Contains(s.Id))
+            .ToDictionaryAsync(s => s.Id, s => s.Name, cancellationToken);
+
         var revenue = orders.Sum(o => o.Total);
         var expenses = (await ExpenseAnalytics.ApprovedExpensesBetweenAsync(db, from, to, cancellationToken))
             .Sum(e => e.Amount);
@@ -60,7 +65,35 @@ public static class SalesAnalytics
             BuildPaymentMethods(orders),
             BuildHourlyPattern(orders),
             BuildDayOfWeekPattern(orders),
+            BuildStewardSales(orders, stewardNames),
             BuildDiscountSummary(orders));
+    }
+
+    private static IReadOnlyCollection<SalesByStewardDto> BuildStewardSales(
+        IEnumerable<Order> orders, IReadOnlyDictionary<Guid, string> stewardNames)
+    {
+        return [.. orders
+            .GroupBy(o => o.StewardId)
+            .Select(g =>
+            {
+                var gross = g.Sum(o => o.Subtotal);
+                var discounts = g.Sum(o => o.DiscountAmount);
+                var net = gross - discounts;
+                var count = g.Count();
+
+                return new SalesByStewardDto(
+                    g.Key,
+                    g.Key is { } id ? stewardNames.GetValueOrDefault(id, "Unknown") : "Unassigned",
+                    count,
+                    g.Sum(o => o.ActiveItems.Sum(i => i.Quantity)),
+                    Money(gross),
+                    Money(discounts),
+                    Money(net),
+                    count > 0 ? Money(net / count) : 0m);
+            })
+            // Named stewards ranked by net sales; the "Unassigned" bucket always sits last.
+            .OrderBy(s => s.StewardId is null)
+            .ThenByDescending(s => s.NetSales)];
     }
 
     private static IReadOnlyCollection<TopMenuItemDto> BuildTopItems(
@@ -164,4 +197,6 @@ public static class SalesAnalytics
     }
 
     private static decimal Round(decimal value) => Math.Round(value, 1, MidpointRounding.AwayFromZero);
+
+    private static decimal Money(decimal value) => Math.Round(value, 2, MidpointRounding.AwayFromZero);
 }

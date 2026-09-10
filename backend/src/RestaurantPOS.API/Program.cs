@@ -119,6 +119,7 @@ try
 
     api.MapAuthEndpoints();
     api.MapUserEndpoints();
+    api.MapStewardEndpoints();
     api.MapModuleEndpoints();
     api.MapRecipeEndpoints();
     api.MapInventoryEndpoints();

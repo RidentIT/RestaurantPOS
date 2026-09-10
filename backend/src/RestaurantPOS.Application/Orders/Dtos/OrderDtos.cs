@@ -13,6 +13,9 @@ public sealed record OrderDto(
     OrderStatus Status,
     Guid CashierUserId,
     string CashierName,
+    /// <summary>The steward serving the table. Null for a takeaway order or one not yet assigned.</summary>
+    Guid? StewardId,
+    string? StewardName,
     DateTime CreatedAtUtc,
     DateTime? ConfirmedAtUtc,
     DateTime? CompletedAtUtc,

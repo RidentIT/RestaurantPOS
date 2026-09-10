@@ -3,11 +3,15 @@ using MediatR;
 using RestaurantPOS.API.Contracts.Users;
 using RestaurantPOS.API.Extensions;
 using RestaurantPOS.API.Security;
+using RestaurantPOS.Application.Users.Commands.CreateSteward;
 using RestaurantPOS.Application.Users.Commands.CreateUser;
+using RestaurantPOS.Application.Users.Commands.RenameSteward;
 using RestaurantPOS.Application.Users.Commands.ResetUserPassword;
+using RestaurantPOS.Application.Users.Commands.SetStewardActive;
 using RestaurantPOS.Application.Users.Commands.SetUserActive;
 using RestaurantPOS.Application.Users.Commands.UpdateUser;
 using RestaurantPOS.Application.Users.Queries.GetModules;
+using RestaurantPOS.Application.Users.Queries.GetStewards;
 using RestaurantPOS.Application.Users.Queries.GetUserById;
 using RestaurantPOS.Application.Users.Queries.GetUsers;
 using RestaurantPOS.Domain.Enums;
@@ -107,6 +111,59 @@ public static class UserEndpoints
             })
             .WithName("ResetUserPassword")
             .WithSummary("Sets a temporary password the user must then change.");
+
+        return routes;
+    }
+
+    /// <summary>
+    /// The steward roster. Reading it is gated on POS &amp; Billing, since the order screen needs the
+    /// picker; maintaining it is an administrative act, gated on the role like the rest of this file.
+    /// </summary>
+    public static IEndpointRouteBuilder MapStewardEndpoints(this IEndpointRouteBuilder routes)
+    {
+        ArgumentNullException.ThrowIfNull(routes);
+
+        var group = routes.MapGroup("/stewards")
+            .WithTags("Stewards")
+            .RequireAuthorization();
+
+        group.MapGet("/", async (bool? isActive, ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(new GetStewardsQuery(isActive), ct);
+                return result.ToHttpResult();
+            })
+            .RequireAuthorization(AuthorizationPolicies.ForModule(AppModule.PosBilling))
+            .WithName("GetStewards")
+            .WithSummary("Lists stewards; pass isActive=true for the order screen's picker.");
+
+        group.MapPost("/", async (CreateStewardRequest request, ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(new CreateStewardCommand(request.Name), ct);
+                return result.ToCreatedResult(s => $"/api/v1/stewards/{s.Id}");
+            })
+            .RequireAuthorization(AuthorizationPolicies.AdminOnly)
+            .WithName("CreateSteward")
+            .WithSummary("Adds a steward to the roster.");
+
+        group.MapPut("/{id:guid}", async (
+                Guid id, RenameStewardRequest request, ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(new RenameStewardCommand(id, request.Name), ct);
+                return result.ToHttpResult();
+            })
+            .RequireAuthorization(AuthorizationPolicies.AdminOnly)
+            .WithName("RenameSteward")
+            .WithSummary("Corrects a steward's name.");
+
+        group.MapPut("/{id:guid}/status", async (
+                Guid id, SetStewardActiveRequest request, ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(new SetStewardActiveCommand(id, request.IsActive), ct);
+                return result.ToHttpResult();
+            })
+            .RequireAuthorization(AuthorizationPolicies.AdminOnly)
+            .WithName("SetStewardActive")
+            .WithSummary("Retires a steward who has left, or brings one back.");
 
         return routes;
     }

@@ -21,6 +21,24 @@ public sealed record HourlySalesDto(int Hour, decimal Revenue, int OrderCount);
 /// <summary>Takings by day of the week, aggregated across the whole period.</summary>
 public sealed record DayOfWeekSalesDto(DayOfWeek Day, decimal Revenue, int OrderCount);
 
+/// <summary>
+/// One steward's share of a period's sales, so the owner can see who served the most and award
+/// them. Takeaway orders and any dine-in order without a steward fall into a single "Unassigned"
+/// row (<see cref="StewardId"/> null) so the numbers still reconcile to the period total.
+/// </summary>
+public sealed record SalesByStewardDto(
+    Guid? StewardId,
+    string StewardName,
+    int OrdersServed,
+    int ItemsSold,
+    /// <summary>Menu value of everything sold, before any discount.</summary>
+    decimal GrossSales,
+    decimal DiscountsGiven,
+    /// <summary>Gross less discounts — the figure the table is ranked on.</summary>
+    decimal NetSales,
+    /// <summary>Net sales divided by orders served. Zero when the steward served none.</summary>
+    decimal AverageBill);
+
 /// <summary>How much of the period's sales were discounted, and how often.</summary>
 public sealed record DiscountSummaryDto(
     decimal TotalDiscountGiven,
@@ -43,4 +61,6 @@ public sealed record SalesReportDto(
     IReadOnlyCollection<PaymentMethodBreakdownDto> PaymentMethods,
     IReadOnlyCollection<HourlySalesDto> HourlyPattern,
     IReadOnlyCollection<DayOfWeekSalesDto> DayOfWeekPattern,
+    /// <summary>Sales per steward, highest net first — the first named steward is the period's best.</summary>
+    IReadOnlyCollection<SalesByStewardDto> StewardSales,
     DiscountSummaryDto Discounts);

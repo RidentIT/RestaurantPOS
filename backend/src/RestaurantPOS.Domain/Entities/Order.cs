@@ -51,6 +51,12 @@ public sealed class Order : BaseEntity
     /// <summary>Who keyed the order in (POS-012).</summary>
     public Guid CashierUserId { get; private set; }
 
+    /// <summary>
+    /// The steward serving this table, credited with the sale on the sales-by-steward report.
+    /// Optional — a takeaway order never has one, and a dine-in order can be confirmed without one.
+    /// </summary>
+    public Guid? StewardId { get; private set; }
+
     public OrderStatus Status { get; private set; }
 
     public DiscountType DiscountType { get; private set; }
@@ -256,6 +262,21 @@ public sealed class Order : BaseEntity
         ticket.AddLine(item.Id, item.MenuItemName, item.Quantity, item.SpecialInstructions, "CANCELLED");
 
         return ticket;
+    }
+
+    /// <summary>
+    /// Credits (or clears, with null) the steward serving this table. Allowed at any point before
+    /// the bill is settled — including during checkout, since it changes no money on the bill — so
+    /// a cashier can still fix the wrong name after freezing it to pay.
+    /// </summary>
+    public void AssignSteward(Guid? stewardId)
+    {
+        if (!IsLive)
+        {
+            throw new InvalidOperationException($"An order that is {Status} can no longer be assigned a steward.");
+        }
+
+        StewardId = stewardId;
     }
 
     /// <summary>Applies money off the bill (POS-007).</summary>

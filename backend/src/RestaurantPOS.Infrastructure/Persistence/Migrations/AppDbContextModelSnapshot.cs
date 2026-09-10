@@ -633,6 +633,9 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
+                    b.Property<Guid?>("StewardId")
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid?>("TableId")
                         .HasColumnType("TEXT");
 
@@ -643,6 +646,8 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("StewardId");
 
                     b.HasIndex("OrderDate", "OrderNumber");
 
@@ -1091,6 +1096,33 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
                     b.ToTable("RestaurantTables", (string)null);
                 });
 
+            modelBuilder.Entity("RestaurantPOS.Domain.Entities.Steward", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Stewards", (string)null);
+                });
+
             modelBuilder.Entity("RestaurantPOS.Domain.Entities.StockLevel", b =>
                 {
                     b.Property<Guid>("RawMaterialId")
@@ -1492,6 +1524,11 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("RestaurantPOS.Domain.Entities.Order", b =>
                 {
+                    b.HasOne("RestaurantPOS.Domain.Entities.Steward", null)
+                        .WithMany()
+                        .HasForeignKey("StewardId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("RestaurantPOS.Domain.Entities.RestaurantTable", null)
                         .WithMany()
                         .HasForeignKey("TableId")

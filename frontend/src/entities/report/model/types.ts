@@ -56,6 +56,23 @@ export interface DiscountSummary {
   percentageOfOrdersDiscounted: number;
 }
 
+/**
+ * One steward's share of a period's sales. Takeaway and un-assigned dine-in orders collapse into
+ * a single row with `stewardId` null and the name "Unassigned", always sorted last.
+ */
+export interface SalesBySteward {
+  stewardId: string | null;
+  stewardName: string;
+  ordersServed: number;
+  itemsSold: number;
+  /** Menu value of everything sold, before any discount. */
+  grossSales: number;
+  discountsGiven: number;
+  /** Gross less discounts — the figure the table is ranked on. */
+  netSales: number;
+  averageBill: number;
+}
+
 /** A period's sales in depth: what sold, how it was paid for, and when the till was busy. */
 export interface SalesReport {
   from: string;
@@ -67,5 +84,7 @@ export interface SalesReport {
   paymentMethods: PaymentMethodBreakdown[];
   hourlyPattern: HourlySales[];
   dayOfWeekPattern: DayOfWeekSales[];
+  /** Sales per steward, best (highest net) first. */
+  stewardSales: SalesBySteward[];
   discounts: DiscountSummary;
 }

@@ -97,6 +97,7 @@ export function renderKotHtml(kot: KotDocument): string {
     <div class="solid"></div>
     <div class="center bold xl">${kot.tableNumber ? `TABLE ${escapeHtml(kot.tableNumber)}` : "TAKEAWAY"}</div>
     <div class="center">Order #${String(kot.orderNumber ?? 0).padStart(3, "0")} &middot; KOT-${kot.ticketNumber}</div>
+    ${kot.stewardName ? `<div class="center bold">Steward: ${escapeHtml(kot.stewardName)}</div>` : ""}
     <div class="rule"></div>
     <table>${lines}</table>
     <div class="rule"></div>
