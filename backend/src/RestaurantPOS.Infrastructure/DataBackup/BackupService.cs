@@ -247,10 +247,24 @@ internal sealed class BackupService(AppDbContext db, IConfiguration configuratio
         return new BackupFileInfo(info.Name, info.CreationTimeUtc, info.Length);
     }
 
-    private static string ResolveFolder(string? folderPath) =>
-        string.IsNullOrWhiteSpace(folderPath)
+    private string ResolveFolder(string? folderPath)
+    {
+        if (!string.IsNullOrWhiteSpace(folderPath))
+        {
+            return Path.GetFullPath(folderPath);
+        }
+
+        // A packaged desktop install runs from under Program Files, which a standard Windows user
+        // cannot write to — so a blank folder must not resolve to "beside the executable" there.
+        // The shell passes RPOS_DATA_DIR, a writable per-machine folder; default backups to a
+        // Backups sub-folder of it. Only a bare `dotnet run` (no data dir set) falls back to the
+        // application directory, which in that case is the writable project output.
+        var dataDir = configuration["RPOS_DATA_DIR"];
+
+        return string.IsNullOrWhiteSpace(dataDir)
             ? Path.Combine(AppContext.BaseDirectory, "Backups")
-            : Path.GetFullPath(folderPath);
+            : Path.Combine(Path.GetFullPath(dataDir), "Backups");
+    }
 
     private string ResolveAttachmentsRoot()
     {

@@ -11,12 +11,21 @@ using RestaurantPOS.Infrastructure.Persistence.Seeding;
 
 using Serilog;
 
+// When the desktop shell launches this process it points RPOS_DATA_DIR at a writable per-machine
+// folder (the install directory itself is read-only under Program Files). Logs, and by extension
+// everything else that defaults to a relative path, belong beside the database there rather than
+// next to the executable. Unset in development, where the working directory is already writable.
+var dataDirectory = Environment.GetEnvironmentVariable("RPOS_DATA_DIR");
+var logDirectory = string.IsNullOrWhiteSpace(dataDirectory)
+    ? "logs"
+    : Path.Combine(dataDirectory, "logs");
+
 #pragma warning disable CA1305
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
     .WriteTo.Console()
-    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .WriteTo.File(Path.Combine(logDirectory, "log-.txt"), rollingInterval: RollingInterval.Day)
     .CreateLogger();
 #pragma warning restore CA1305
 
