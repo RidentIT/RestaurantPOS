@@ -49,6 +49,8 @@ public interface IAppDbContext
 
     DbSet<RestaurantTable> RestaurantTables { get; }
 
+    DbSet<Steward> Stewards { get; }
+
     DbSet<Order> Orders { get; }
 
     DbSet<OrderItem> OrderItems { get; }

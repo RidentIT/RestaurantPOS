@@ -10,7 +10,8 @@ namespace RestaurantPOS.Application.Orders.Common;
 
 /// <summary>
 /// Assembles the response every order command returns: the order as it now stands, plus the
-/// kitchen slip the change obliges — looking up the table number and cashier name each needs.
+/// kitchen slip the change obliges — looking up the table number, cashier name and steward name
+/// each needs.
 /// </summary>
 public static class OrderResultFactory
 {
@@ -30,14 +31,16 @@ public static class OrderResultFactory
             .Select(u => u.FullName)
             .FirstAsync(cancellationToken);
 
+        var stewardName = await StewardNameResolver.ResolveAsync(db, order.StewardId, cancellationToken);
+
         KotDocumentDto? kot = null;
 
         if (ticket is not null)
         {
             var settings = await RestaurantSettingsAccessor.GetAsync(db, cancellationToken);
-            kot = ticket.ToKotDocument(order, settings, tableNumber, cashierName);
+            kot = ticket.ToKotDocument(order, settings, tableNumber, cashierName, stewardName);
         }
 
-        return new OrderMutationDto(order.ToDto(tableNumber, cashierName), kot);
+        return new OrderMutationDto(order.ToDto(tableNumber, cashierName, stewardName), kot);
     }
 }

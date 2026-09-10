@@ -45,6 +45,11 @@ internal sealed class GetTablesQueryHandler(IAppDbContext db)
             .Where(u => liveOrders.Select(o => o.CashierUserId).Contains(u.Id))
             .ToDictionaryAsync(u => u.Id, u => u.FullName, cancellationToken);
 
+        var stewardIds = liveOrders.Where(o => o.StewardId.HasValue).Select(o => o.StewardId!.Value).Distinct().ToList();
+        var stewardNames = await db.Stewards.AsNoTracking()
+            .Where(s => stewardIds.Contains(s.Id))
+            .ToDictionaryAsync(s => s.Id, s => s.Name, cancellationToken);
+
         // A takeaway order (TableId null) never sits on the floor plan, so it's excluded here
         // rather than collapsing every one of them onto a single null dictionary key.
         var ordersByTable = liveOrders.Where(o => o.TableId.HasValue).ToDictionary(o => o.TableId!.Value);
@@ -64,6 +69,7 @@ internal sealed class GetTablesQueryHandler(IAppDbContext db)
                         order.Total,
                         order.ConfirmedAtUtc,
                         cashierNames.GetValueOrDefault(order.CashierUserId, string.Empty),
+                        order.StewardId is { } sid ? stewardNames.GetValueOrDefault(sid) : null,
                         OrderMappings.DeriveKitchenStatus(order.Tickets));
 
                 return new TableDto(table.Id, table.Number, table.Seats, table.Notes, table.IsActive, summary);

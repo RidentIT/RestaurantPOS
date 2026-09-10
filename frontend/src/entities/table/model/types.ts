@@ -21,6 +21,8 @@ export interface TableOrderSummary {
   total: number;
   confirmedAtUtc: string | null;
   cashierName: string;
+  /** The steward serving this table, or null if none has been assigned yet. */
+  stewardName: string | null;
   /** The least-advanced kitchen ticket. Null before anything reaches the kitchen. */
   kitchenStatus: KitchenTicketStatus | null;
 }

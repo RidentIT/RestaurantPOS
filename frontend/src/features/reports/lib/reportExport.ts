@@ -90,6 +90,33 @@ export function exportSalesReportPdf(report: SalesReport): void {
   });
   y = lastTableY(doc);
 
+  if (report.stewardSales.length > 0) {
+    autoTable(doc, {
+      startY: y,
+      head: [["Steward", "Orders", "Items", "Gross", "Discount", "Net sales", "Avg bill"]],
+      body: report.stewardSales.map((s) => [
+        s.stewardName,
+        String(s.ordersServed),
+        String(s.itemsSold),
+        money(s.grossSales),
+        money(s.discountsGiven),
+        money(s.netSales),
+        money(s.averageBill),
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [15, 82, 66] },
+      columnStyles: {
+        1: { halign: "right" },
+        2: { halign: "right" },
+        3: { halign: "right" },
+        4: { halign: "right" },
+        5: { halign: "right" },
+        6: { halign: "right" },
+      },
+    });
+    y = lastTableY(doc);
+  }
+
   doc.setFontSize(10);
   doc.text(
     `Discounts: ${money(report.discounts.totalDiscountGiven)} given across ` +
@@ -149,6 +176,21 @@ export function exportSalesReportExcel(report: SalesReport): void {
         rows: [
           ["Category", "Revenue", "Share %", "Qty sold"],
           ...report.categories.map((c) => [c.category, c.revenue, c.percentageOfTotal, c.quantitySold]),
+        ],
+      },
+      {
+        name: "By steward",
+        rows: [
+          ["Steward", "Orders served", "Items sold", "Gross", "Discounts", "Net sales", "Avg bill"],
+          ...report.stewardSales.map((s) => [
+            s.stewardName,
+            s.ordersServed,
+            s.itemsSold,
+            s.grossSales,
+            s.discountsGiven,
+            s.netSales,
+            s.averageBill,
+          ]),
         ],
       },
       {

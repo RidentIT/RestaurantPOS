@@ -2,8 +2,15 @@ using RestaurantPOS.Domain.Enums;
 
 namespace RestaurantPOS.API.Contracts.Orders;
 
-/// <summary>Null <paramref name="TableId"/> opens a takeaway order instead of a dine-in one.</summary>
-public sealed record CreateOrderRequest(Guid? TableId);
+/// <summary>
+/// Null <paramref name="TableId"/> opens a takeaway order instead of a dine-in one.
+/// <paramref name="StewardId"/> is the steward serving the table, if picked up front; ignored for
+/// a takeaway order.
+/// </summary>
+public sealed record CreateOrderRequest(Guid? TableId, Guid? StewardId);
+
+/// <summary>Credits a dine-in order to a steward, or clears it with a null id.</summary>
+public sealed record AssignOrderStewardRequest(Guid? StewardId);
 
 public sealed record OrderItemRequest(Guid MenuItemVariantId, int Quantity, string? SpecialInstructions);
 

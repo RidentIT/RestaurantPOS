@@ -28,6 +28,14 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasForeignKey(o => o.TableId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Stewards are deactivated, never deleted, so an order always keeps a resolvable name.
+        builder.HasOne<Steward>()
+            .WithMany()
+            .HasForeignKey(o => o.StewardId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(o => o.StewardId);
+
         foreach (var navigation in new[] { nameof(Order.Items), nameof(Order.Tickets), nameof(Order.Payments) })
         {
             builder.Metadata.FindNavigation(navigation)!.SetPropertyAccessMode(PropertyAccessMode.Field);

@@ -4,6 +4,7 @@ using RestaurantPOS.API.Contracts.Orders;
 using RestaurantPOS.API.Extensions;
 using RestaurantPOS.API.Security;
 using RestaurantPOS.Application.Orders.Commands.AddOrderItems;
+using RestaurantPOS.Application.Orders.Commands.AssignOrderSteward;
 using RestaurantPOS.Application.Orders.Commands.CancelOrder;
 using RestaurantPOS.Application.Orders.Commands.ChangeOrderItemQuantity;
 using RestaurantPOS.Application.Orders.Commands.CompleteOrderPayment;
@@ -108,11 +109,20 @@ public static class OrderEndpoints
 
         group.MapPost("/", async (CreateOrderRequest request, ISender sender, CancellationToken ct) =>
             {
-                var result = await sender.Send(new CreateOrderCommand(request.TableId), ct);
+                var result = await sender.Send(new CreateOrderCommand(request.TableId, request.StewardId), ct);
                 return result.ToCreatedResult(o => $"/api/v1/orders/{o.Id}");
             })
             .WithName("CreateOrder")
             .WithSummary("Opens a draft bill on a table, or a takeaway order when no table is given.");
+
+        group.MapPut("/{id:guid}/steward", async (
+                Guid id, AssignOrderStewardRequest request, ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(new AssignOrderStewardCommand(id, request.StewardId), ct);
+                return result.ToHttpResult();
+            })
+            .WithName("AssignOrderSteward")
+            .WithSummary("Credits a dine-in order to the steward serving the table.");
 
         group.MapPost("/{id:guid}/confirm", async (Guid id, ISender sender, CancellationToken ct) =>
             {

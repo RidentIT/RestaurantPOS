@@ -20,6 +20,8 @@ public sealed record KotDocumentDto(
     int TicketNumber,
     KitchenTicketKind Kind,
     string CashierName,
+    /// <summary>The steward serving the table, printed on the slip. Null for takeaway / unassigned.</summary>
+    string? StewardName,
     DateTime PrintedAtUtc,
     int PrintCount,
     /// <summary>The Windows printer this slip should go to. Null uses the till's default printer.</summary>
