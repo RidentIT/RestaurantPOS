@@ -2,13 +2,16 @@
   "name": "restaurant-pos-frontend",
   "version": "0.1.0",
   "private": true,
+  "description": "Restaurant POS Terminal — offline point-of-sale for a single restaurant.",
+  "author": "Rident IT",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron:build": "tsc && vite build && electron-builder",
+    "publish:backend": "node -e \"require('fs').rmSync('../backend/publish',{recursive:true,force:true})\" && dotnet publish ../backend/src/RestaurantPOS.API/RestaurantPOS.API.csproj -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -o ../backend/publish",
+    "electron:build": "npm run publish:backend && tsc && vite build && electron-builder --win",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
@@ -20,6 +23,45 @@
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "sonar": "sonar-scanner"
+  },
+  "build": {
+    "appId": "lk.rident.restaurantpos",
+    "productName": "Restaurant POS",
+    "copyright": "Rident IT",
+    "directories": {
+      "output": "release",
+      "buildResources": "electron/assets"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../backend/publish",
+        "to": "backend"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Restaurant POS",
+      "runAfterFinish": true
+    }
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",

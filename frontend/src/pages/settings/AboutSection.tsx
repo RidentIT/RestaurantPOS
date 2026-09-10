@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
-import { Info, MonitorSmartphone } from "lucide-react";
+import { Info, LifeBuoy, MonitorSmartphone } from "lucide-react";
 import type { RestaurantSettings } from "@/entities/settings";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui";
+
+/** The company that built and maintains this system. Shown so staff know who to call. */
+const VENDOR = {
+  name: "Rident IT",
+  tagline: "Restaurant POS was built and is maintained by Rident IT.",
+  email: "hello@ridentit.com",
+  whatsapp: "074 265 6406",
+} as const;
 
 /** What this install is, and what it is running on — useful when reporting a problem. */
 export function AboutSection({ settings }: { settings: RestaurantSettings }) {
@@ -52,6 +60,20 @@ export function AboutSection({ settings }: { settings: RestaurantSettings }) {
               <p>Chromium {versions.chrome}</p>
             </>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <LifeBuoy className="size-5" /> Support
+          </CardTitle>
+          <CardDescription>{VENDOR.tagline}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-1 text-sm text-muted-foreground">
+          <p className="font-medium text-foreground">{VENDOR.name}</p>
+          <p>WhatsApp {VENDOR.whatsapp}</p>
+          <p>{VENDOR.email}</p>
         </CardContent>
       </Card>
     </div>
