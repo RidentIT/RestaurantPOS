@@ -1,12 +1,12 @@
 {
-  "_note": "Everything the setup script configures besides the menu. Fill in the real values before running. Anything you leave blank / null is skipped.",
+  "_note": "TEMPLATE — the committed default. For a real run, copy this to restaurant.local.json (git-ignored) and fill it in there so the admin password never reaches the repo. setup.mjs uses restaurant.local.json when it exists, otherwise this file. Blank / null values are skipped.",
 
   "api": "http://localhost:5207/api/v1",
 
   "admin": {
     "username": "admin",
     "password": "ChangeMe!123",
-    "//": "If this account still shows 'must change password', set newPassword too — the script will change it and use it from then on. If you've already changed it, put the real password above and leave newPassword empty.",
+    "//": "If the account still says 'must change password', put a new one in newPassword and the script sets it. If you already changed it in the app, put that password above and leave newPassword empty.",
     "newPassword": ""
   },
 

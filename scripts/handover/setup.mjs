@@ -17,7 +17,20 @@ import { dirname, join } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-const config = JSON.parse(await readFile(join(here, "restaurant.json"), "utf8"));
+// restaurant.local.json holds the real, filled-in values (admin password, phone, …) and is
+// git-ignored so those never land in the repo. restaurant.json stays as the committed template.
+async function loadConfig() {
+  for (const name of ["restaurant.local.json", "restaurant.json"]) {
+    try {
+      return JSON.parse(await readFile(join(here, name), "utf8"));
+    } catch (e) {
+      if (e.code !== "ENOENT") throw e;
+    }
+  }
+  throw new Error("No restaurant.json (or restaurant.local.json) found next to setup.mjs.");
+}
+
+const config = await loadConfig();
 const menu = JSON.parse(await readFile(join(here, "menu.json"), "utf8"));
 
 const BASE = config.api.replace(/\/+$/, "");
