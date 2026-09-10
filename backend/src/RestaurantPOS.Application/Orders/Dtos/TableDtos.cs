@@ -24,6 +24,8 @@ public sealed record TableOrderSummaryDto(
     decimal Total,
     DateTime? ConfirmedAtUtc,
     string CashierName,
+    /// <summary>The steward serving this table, or null if none has been assigned yet.</summary>
+    string? StewardName,
     /// <summary>
     /// How far the kitchen has got overall: the least-advanced ticket still outstanding, so a
     /// table with one dish plated and one still queued reads as preparing, not ready. Null while

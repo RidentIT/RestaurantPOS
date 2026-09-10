@@ -54,6 +54,9 @@ export interface Order {
   status: OrderStatus;
   cashierUserId: string;
   cashierName: string;
+  /** The steward serving the table. Null for a takeaway order, or one not yet assigned. */
+  stewardId: string | null;
+  stewardName: string | null;
   createdAtUtc: string;
   confirmedAtUtc: string | null;
   completedAtUtc: string | null;
@@ -134,6 +137,8 @@ export interface KotDocument {
   ticketNumber: number;
   kind: KitchenTicketKind;
   cashierName: string;
+  /** The steward serving the table, printed on the slip. Null for takeaway / unassigned. */
+  stewardName: string | null;
   printedAtUtc: string;
   printCount: number;
   /** The Windows printer this slip should go to. Null uses the till's default printer. */

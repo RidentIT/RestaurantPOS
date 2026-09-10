@@ -55,6 +55,8 @@ public class AppDbContext : DbContext, IAppDbContext
 
     public DbSet<RestaurantTable> RestaurantTables => Set<RestaurantTable>();
 
+    public DbSet<Steward> Stewards => Set<Steward>();
+
     public DbSet<Order> Orders => Set<Order>();
 
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();

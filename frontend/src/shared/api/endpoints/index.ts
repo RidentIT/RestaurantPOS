@@ -21,6 +21,11 @@ export const API_ENDPOINTS = {
     STATUS: (id: string) => `/users/${id}/status`,
     PASSWORD: (id: string) => `/users/${id}/password`,
   },
+  STEWARDS: {
+    BASE: "/stewards",
+    BY_ID: (id: string) => `/stewards/${id}`,
+    STATUS: (id: string) => `/stewards/${id}/status`,
+  },
   MENU_ITEMS: {
     BASE: "/menu-items",
     BY_ID: (id: string) => `/menu-items/${id}`,
@@ -66,6 +71,7 @@ export const API_ENDPOINTS = {
     VOID_ITEM: (id: string, itemId: string) => `/orders/${id}/items/${itemId}/void`,
     CONFIRM: (id: string) => `/orders/${id}/confirm`,
     CANCEL: (id: string) => `/orders/${id}/cancel`,
+    STEWARD: (id: string) => `/orders/${id}/steward`,
     DISCOUNT: (id: string) => `/orders/${id}/discount`,
     CHECKOUT: (id: string) => `/orders/${id}/checkout`,
     REOPEN: (id: string) => `/orders/${id}/reopen`,

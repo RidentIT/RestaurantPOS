@@ -66,7 +66,12 @@ export function useOrderMutations() {
   };
 
   const create = useMutation<Order, Error, string | null>({
-    mutationFn: ordersApi.create,
+    mutationFn: (tableId) => ordersApi.create(tableId),
+    onSuccess: (order) => refresh(order.id),
+  });
+
+  const assignSteward = useMutation<Order, Error, { id: string; stewardId: string | null }>({
+    mutationFn: ({ id, stewardId }) => ordersApi.assignSteward(id, stewardId),
     onSuccess: (order) => refresh(order.id),
   });
 
@@ -151,6 +156,7 @@ export function useOrderMutations() {
 
   return {
     create,
+    assignSteward,
     addItems,
     confirm,
     changeQuantity,

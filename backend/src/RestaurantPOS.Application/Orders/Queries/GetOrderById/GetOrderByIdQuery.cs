@@ -34,6 +34,8 @@ internal sealed class GetOrderByIdQueryHandler(IAppDbContext db)
             .Select(u => u.FullName)
             .FirstAsync(cancellationToken);
 
-        return Result.Success(order.ToDto(tableNumber, cashierName));
+        var stewardName = await StewardNameResolver.ResolveAsync(db, order.StewardId, cancellationToken);
+
+        return Result.Success(order.ToDto(tableNumber, cashierName, stewardName));
     }
 }

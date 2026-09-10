@@ -22,7 +22,11 @@ namespace RestaurantPOS.Application.Orders.Commands.CreateOrder;
 /// than kept at the till, so a cashier can walk between tables mid-order and nothing is lost if
 /// the machine is restarted.
 /// </summary>
-public sealed record CreateOrderCommand(Guid? TableId) : IRequest<Result<OrderDto>>;
+/// <param name="StewardId">
+/// The steward serving the table, if the cashier picked one when opening the order. Optional, and
+/// only ever set for a dine-in order — a takeaway has no steward.
+/// </param>
+public sealed record CreateOrderCommand(Guid? TableId, Guid? StewardId = null) : IRequest<Result<OrderDto>>;
 
 internal sealed class CreateOrderCommandHandler(IAppDbContext db, ICurrentUser currentUser)
     : IRequestHandler<CreateOrderCommand, Result<OrderDto>>
@@ -60,9 +64,36 @@ internal sealed class CreateOrderCommandHandler(IAppDbContext db, ICurrentUser c
             }
         }
 
+        // A steward is only meaningful on a dine-in order; a takeaway silently carries none even
+        // if one is passed. When given, it must be a real, still-active steward.
+        string? stewardName = null;
+
+        if (table is not null && request.StewardId is { } stewardId)
+        {
+            var steward = await db.Stewards.FirstOrDefaultAsync(s => s.Id == stewardId, cancellationToken);
+
+            if (steward is null)
+            {
+                return Result.Failure<OrderDto>(StewardErrors.NotFound(stewardId));
+            }
+
+            if (!steward.IsActive)
+            {
+                return Result.Failure<OrderDto>(StewardErrors.Inactive);
+            }
+
+            stewardName = steward.Name;
+        }
+
         var settings = await RestaurantSettingsAccessor.GetAsync(db, cancellationToken);
         var order = Order.Create(
             table?.Id, currentUser.UserId!.Value, settings.TaxRatePercent, settings.ServiceChargeRatePercent);
+
+        if (stewardName is not null)
+        {
+            order.AssignSteward(request.StewardId);
+        }
+
         db.Orders.Add(order);
         await db.SaveChangesAsync(cancellationToken);
 
@@ -73,6 +104,6 @@ internal sealed class CreateOrderCommandHandler(IAppDbContext db, ICurrentUser c
 
         var saved = await OrderRepository.FindAsync(db, order.Id, cancellationToken);
 
-        return Result.Success(saved!.ToDto(table?.Number, cashierName));
+        return Result.Success(saved!.ToDto(table?.Number, cashierName, stewardName));
     }
 }

@@ -23,7 +23,7 @@ public static class OrderMappings
         return workable.Count == 0 ? null : workable.Min(t => t.Status);
     }
 
-    public static OrderDto ToDto(this Order order, string? tableNumber, string cashierName)
+    public static OrderDto ToDto(this Order order, string? tableNumber, string cashierName, string? stewardName)
     {
         ArgumentNullException.ThrowIfNull(order);
 
@@ -36,6 +36,8 @@ public static class OrderMappings
             order.Status,
             order.CashierUserId,
             cashierName,
+            order.StewardId,
+            stewardName,
             order.CreatedAtUtc,
             order.ConfirmedAtUtc,
             order.CompletedAtUtc,
@@ -91,7 +93,12 @@ public static class OrderMappings
 
     /// <summary>Builds the printable slip for a ticket the kitchen has just been sent.</summary>
     public static KotDocumentDto ToKotDocument(
-        this KitchenTicket ticket, Order order, RestaurantSettings settings, string? tableNumber, string cashierName)
+        this KitchenTicket ticket,
+        Order order,
+        RestaurantSettings settings,
+        string? tableNumber,
+        string cashierName,
+        string? stewardName)
     {
         ArgumentNullException.ThrowIfNull(ticket);
         ArgumentNullException.ThrowIfNull(order);
@@ -105,6 +112,7 @@ public static class OrderMappings
             ticket.TicketNumber,
             ticket.Kind,
             cashierName,
+            stewardName,
             ticket.PrintedAtUtc,
             ticket.PrintCount,
             settings.KitchenPrinterName ?? settings.DefaultPrinterName,
