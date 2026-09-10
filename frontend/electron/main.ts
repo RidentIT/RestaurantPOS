@@ -14,6 +14,14 @@ let mainWindow: BrowserWindow | null = null;
 let apiProcess: ChildProcess | null = null;
 let quitting = false;
 
+// A packaged install keeps its data in %APPDATA%\Restaurant POS — a folder a person can find and
+// a support call can name. A dev build keeps the package name (restaurant-pos-frontend) so a
+// developer's throwaway test data never shares a database with a real installation. Must run
+// before requestSingleInstanceLock and any getPath('userData'), which is why it is up here.
+if (app.isPackaged) {
+  app.setName('Restaurant POS');
+}
+
 // A till is one window. A second launch (double-clicked icon, tapped twice) just focuses the
 // running one rather than starting a second copy fighting over the same database and port.
 if (!app.requestSingleInstanceLock()) {
