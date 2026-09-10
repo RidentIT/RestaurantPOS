@@ -103,7 +103,8 @@ export function BackupSection({ settings }: { settings: RestaurantSettings }) {
         <CardHeader>
           <CardTitle>Backup location</CardTitle>
           <CardDescription>
-            Leave blank to use the default <code>Backups</code> folder beside the app.
+            Leave blank to keep backups in the app&apos;s own data folder. Point this at a USB or external
+            drive so a copy survives if this computer fails.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
