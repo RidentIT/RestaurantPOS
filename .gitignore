@@ -10,3 +10,6 @@ Thumbs.db
 # IDEs
 .idea/
 .vscode/
+
+# Handover setup — real filled config with credentials, never committed
+scripts/handover/restaurant.local.json
