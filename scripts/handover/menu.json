@@ -1,0 +1,113 @@
+{
+  "_note": "Transcribed from the printed menu cards. 'Vegi' used where cards wrote 'Uegi'. Spellings corrected: Devel->Devilled, Chilly->Chilli, Peper->Pepper, Sweet Cone->Sweet Corn, Nest malt->Nestomalt, Patis->Patties. Names made specific so the till search returns one dish, not five. Edit anything here and re-run setup.mjs — it only adds what is missing.",
+  "_review": [
+    "Special Item: Thai Rice is one price; Mongolian Rice is all 2150; Chopsey Rice has per-protein prices. 'Crabs curry' on the card (2500) is set as 'Crab Curry Chopsey Rice'.",
+    "Side Dish: the card groups Cuttlefish / Prawns / Fish under one price each — captured as single 'Seafood' items. Split them if the customer wants them separate.",
+    "'Fried Chicken' is priced 300 on the card (much lower than the rest) — confirm it isn't a typo or a per-piece price."
+  ],
+  "categories": [
+    "Rice",
+    "Kottu",
+    "Noodles",
+    "Pasta",
+    "String Hopper Kottu",
+    "Cheese Kottu",
+    "Cheese Pasta",
+    "Special Item",
+    "Side Dish",
+    "Soup",
+    "Short Eats",
+    "Beverages",
+    "Fresh Juice",
+    "Desserts"
+  ],
+  "items": [
+    { "name": "Vegi Fried Rice", "category": "Rice", "variants": [ { "name": "Normal", "price": 550 }, { "name": "Full", "price": 700 } ] },
+    { "name": "Egg Fried Rice", "category": "Rice", "variants": [ { "name": "Normal", "price": 650 }, { "name": "Full", "price": 850 } ] },
+    { "name": "Chicken Fried Rice", "category": "Rice", "variants": [ { "name": "Normal", "price": 800 }, { "name": "Full", "price": 1000 } ] },
+    { "name": "Seafood Fried Rice", "category": "Rice", "variants": [ { "name": "Normal", "price": 1050 }, { "name": "Full", "price": 1300 } ] },
+    { "name": "Mixed Fried Rice", "category": "Rice", "variants": [ { "name": "Normal", "price": 1200 }, { "name": "Full", "price": 1500 } ] },
+
+    { "name": "Vegi Kottu", "category": "Kottu", "variants": [ { "name": "Normal", "price": 550 }, { "name": "Full", "price": 700 } ] },
+    { "name": "Egg Kottu", "category": "Kottu", "variants": [ { "name": "Normal", "price": 650 }, { "name": "Full", "price": 850 } ] },
+    { "name": "Chicken Kottu", "category": "Kottu", "variants": [ { "name": "Normal", "price": 800 }, { "name": "Full", "price": 1000 } ] },
+    { "name": "Seafood Kottu", "category": "Kottu", "variants": [ { "name": "Normal", "price": 1050 }, { "name": "Full", "price": 1300 } ] },
+    { "name": "Mixed Kottu", "category": "Kottu", "variants": [ { "name": "Normal", "price": 1200 }, { "name": "Full", "price": 1500 } ] },
+
+    { "name": "Vegi Noodles", "category": "Noodles", "variants": [ { "name": "Normal", "price": 550 }, { "name": "Full", "price": 700 } ] },
+    { "name": "Egg Noodles", "category": "Noodles", "variants": [ { "name": "Normal", "price": 650 }, { "name": "Full", "price": 850 } ] },
+    { "name": "Chicken Noodles", "category": "Noodles", "variants": [ { "name": "Normal", "price": 800 }, { "name": "Full", "price": 1000 } ] },
+    { "name": "Seafood Noodles", "category": "Noodles", "variants": [ { "name": "Normal", "price": 1050 }, { "name": "Full", "price": 1300 } ] },
+    { "name": "Mixed Noodles", "category": "Noodles", "variants": [ { "name": "Normal", "price": 1200 }, { "name": "Full", "price": 1500 } ] },
+
+    { "name": "Vegi Pasta", "category": "Pasta", "variants": [ { "name": null, "price": 700 } ] },
+    { "name": "Egg Pasta", "category": "Pasta", "variants": [ { "name": null, "price": 850 } ] },
+    { "name": "Chicken Pasta", "category": "Pasta", "variants": [ { "name": null, "price": 1000 } ] },
+    { "name": "Seafood Pasta", "category": "Pasta", "variants": [ { "name": null, "price": 1300 } ] },
+    { "name": "Mixed Pasta", "category": "Pasta", "variants": [ { "name": null, "price": 1500 } ] },
+
+    { "name": "Vegi String Hopper Kottu", "category": "String Hopper Kottu", "variants": [ { "name": "Normal", "price": 550 }, { "name": "Full", "price": 700 } ] },
+    { "name": "Egg String Hopper Kottu", "category": "String Hopper Kottu", "variants": [ { "name": "Normal", "price": 650 }, { "name": "Full", "price": 850 } ] },
+    { "name": "Chicken String Hopper Kottu", "category": "String Hopper Kottu", "variants": [ { "name": "Normal", "price": 800 }, { "name": "Full", "price": 1000 } ] },
+    { "name": "Seafood String Hopper Kottu", "category": "String Hopper Kottu", "variants": [ { "name": "Normal", "price": 1050 }, { "name": "Full", "price": 1300 } ] },
+    { "name": "Mixed String Hopper Kottu", "category": "String Hopper Kottu", "variants": [ { "name": "Normal", "price": 1200 }, { "name": "Full", "price": 1500 } ] },
+
+    { "name": "Vegi Cheese Kottu", "category": "Cheese Kottu", "variants": [ { "name": null, "price": 1200 } ] },
+    { "name": "Egg Cheese Kottu", "category": "Cheese Kottu", "variants": [ { "name": null, "price": 1350 } ] },
+    { "name": "Chicken Cheese Kottu", "category": "Cheese Kottu", "variants": [ { "name": null, "price": 1550 } ] },
+    { "name": "Seafood Cheese Kottu", "category": "Cheese Kottu", "variants": [ { "name": null, "price": 1700 } ] },
+    { "name": "Mixed Cheese Kottu", "category": "Cheese Kottu", "variants": [ { "name": null, "price": 1850 } ] },
+
+    { "name": "Vegi Cheese Pasta", "category": "Cheese Pasta", "variants": [ { "name": null, "price": 1200 } ] },
+    { "name": "Egg Cheese Pasta", "category": "Cheese Pasta", "variants": [ { "name": null, "price": 1350 } ] },
+    { "name": "Chicken Cheese Pasta", "category": "Cheese Pasta", "variants": [ { "name": null, "price": 1550 } ] },
+    { "name": "Seafood Cheese Pasta", "category": "Cheese Pasta", "variants": [ { "name": null, "price": 1700 } ] },
+    { "name": "Mixed Cheese Pasta", "category": "Cheese Pasta", "variants": [ { "name": null, "price": 1850 } ] },
+
+    { "name": "Thai Rice", "category": "Special Item", "variants": [ { "name": null, "price": 1950 } ] },
+    { "name": "Vegi Mongolian Rice", "category": "Special Item", "variants": [ { "name": null, "price": 2150 } ] },
+    { "name": "Egg Mongolian Rice", "category": "Special Item", "variants": [ { "name": null, "price": 2150 } ] },
+    { "name": "Chicken Mongolian Rice", "category": "Special Item", "variants": [ { "name": null, "price": 2150 } ] },
+    { "name": "Seafood Mongolian Rice", "category": "Special Item", "variants": [ { "name": null, "price": 2150 } ] },
+    { "name": "Mixed Mongolian Rice", "category": "Special Item", "variants": [ { "name": null, "price": 2150 } ] },
+    { "name": "Chicken Chopsey Rice", "category": "Special Item", "variants": [ { "name": null, "price": 2100 } ] },
+    { "name": "Seafood Chopsey Rice", "category": "Special Item", "variants": [ { "name": null, "price": 2400 } ] },
+    { "name": "Mixed Chopsey Rice", "category": "Special Item", "variants": [ { "name": null, "price": 2700 } ] },
+    { "name": "Special Chopsey Rice", "category": "Special Item", "variants": [ { "name": null, "price": 2900 } ] },
+    { "name": "Crab Curry Chopsey Rice", "category": "Special Item", "variants": [ { "name": null, "price": 2500 } ] },
+
+    { "name": "Devilled Chicken", "category": "Side Dish", "variants": [ { "name": null, "price": 1300 } ] },
+    { "name": "Chilli Chicken", "category": "Side Dish", "variants": [ { "name": null, "price": 1350 } ] },
+    { "name": "Pepper Chicken", "category": "Side Dish", "variants": [ { "name": null, "price": 1400 } ] },
+    { "name": "Chicken Stew", "category": "Side Dish", "variants": [ { "name": null, "price": 1400 } ] },
+    { "name": "Fried Chicken", "category": "Side Dish", "variants": [ { "name": null, "price": 300 } ] },
+    { "name": "Devilled Seafood", "category": "Side Dish", "variants": [ { "name": null, "price": 1600 } ] },
+    { "name": "Chilli Seafood", "category": "Side Dish", "variants": [ { "name": null, "price": 1700 } ] },
+    { "name": "Seafood Curry", "category": "Side Dish", "variants": [ { "name": null, "price": 1850 } ] },
+    { "name": "Fried Seafood", "category": "Side Dish", "variants": [ { "name": null, "price": 1550 } ] },
+
+    { "name": "Vegi Soup", "category": "Soup", "variants": [ { "name": null, "price": 550 } ] },
+    { "name": "Chicken Soup", "category": "Soup", "variants": [ { "name": null, "price": 550 } ] },
+    { "name": "Sweet Corn Soup", "category": "Soup", "variants": [ { "name": null, "price": 550 } ] },
+
+    { "name": "Roll", "category": "Short Eats", "variants": [ { "name": null, "price": 150 } ] },
+    { "name": "Patty", "category": "Short Eats", "variants": [ { "name": null, "price": 150 } ] },
+    { "name": "Vegi Roti", "category": "Short Eats", "variants": [ { "name": null, "price": 150 } ] },
+    { "name": "Bun", "category": "Short Eats", "variants": [ { "name": null, "price": 150 } ] },
+    { "name": "Cake", "category": "Short Eats", "variants": [ { "name": null, "price": 150 } ] },
+
+    { "name": "Plain Tea", "category": "Beverages", "variants": [ { "name": null, "price": 60 } ] },
+    { "name": "Milk Tea", "category": "Beverages", "variants": [ { "name": null, "price": 150 } ] },
+    { "name": "Nescafe", "category": "Beverages", "variants": [ { "name": null, "price": 150 } ] },
+    { "name": "Nestomalt", "category": "Beverages", "variants": [ { "name": null, "price": 150 } ] },
+
+    { "name": "Lime Juice", "category": "Fresh Juice", "variants": [ { "name": null, "price": 250 } ] },
+    { "name": "Avocado Juice", "category": "Fresh Juice", "variants": [ { "name": null, "price": 250 } ] },
+    { "name": "Mango Juice", "category": "Fresh Juice", "variants": [ { "name": null, "price": 250 } ] },
+    { "name": "Papaya Juice", "category": "Fresh Juice", "variants": [ { "name": null, "price": 250 } ] },
+    { "name": "Mixed Juice", "category": "Fresh Juice", "variants": [ { "name": null, "price": 250 } ] },
+    { "name": "Pineapple Juice", "category": "Fresh Juice", "variants": [ { "name": null, "price": 250 } ] },
+
+    { "name": "Ice Cream", "category": "Desserts", "variants": [ { "name": null, "price": 150 } ] }
+  ]
+}
