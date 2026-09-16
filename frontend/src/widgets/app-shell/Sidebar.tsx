@@ -9,6 +9,8 @@ import { BrandMark } from "@/shared/ui";
 
 export interface SidebarProps {
   catalog: ModuleDescriptor[];
+  /** Slid out of view (via the toggle in the top bar) to give a small POS screen more room. */
+  collapsed: boolean;
 }
 
 /**
@@ -16,7 +18,7 @@ export interface SidebarProps {
  * user cannot open is left out entirely rather than shown and blocked, so the menu only ever
  * promises what it can deliver.
  */
-export function Sidebar({ catalog }: SidebarProps) {
+export function Sidebar({ catalog, collapsed }: SidebarProps) {
   const { can } = useAuth();
   // The public branding query, not the admin-only full settings one: the sidebar renders for
   // every signed-in role, and a cashier's own request for the full settings would be refused
@@ -31,46 +33,56 @@ export function Sidebar({ catalog }: SidebarProps) {
   const logoSrc = name ? settingsApi.logoUrl() : undefined;
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r bg-card">
-      <div className="flex h-16 items-center gap-2 border-b px-5">
-        <BrandMark src={logoSrc} name={name} className="size-8 shrink-0 text-sm" />
-        <div className="min-w-0 leading-tight">
-          <p className="truncate text-sm font-semibold">{name}</p>
+    <aside
+      className={cn(
+        "h-full shrink-0 overflow-hidden border-r bg-card transition-[width] duration-200 ease-in-out",
+        collapsed ? "w-0 border-r-0" : "w-64",
+      )}
+      aria-hidden={collapsed}
+    >
+      {/* Fixed at the expanded width regardless of the aside's own width, so the clipped edge
+          slides the whole sidebar out of view instead of squeezing its labels and wrapping them. */}
+      <div className="flex h-full w-64 flex-col">
+        <div className="flex h-16 items-center gap-2 border-b px-5">
+          <BrandMark src={logoSrc} name={name} className="size-8 shrink-0 text-sm" />
+          <div className="min-w-0 leading-tight">
+            <p className="truncate text-sm font-semibold">{name}</p>
+          </div>
         </div>
-      </div>
 
-      <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
-        {groups
-          .filter((group) => group.modules.length > 0)
-          .map(({ group, modules }) => (
-            <div key={group}>
-              <p className="mb-1.5 px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {group}
-              </p>
-              <div className="space-y-0.5">
-                {modules.map((descriptor) => (
-                  <ModuleNavItem key={descriptor.module} descriptor={descriptor} />
-                ))}
+        <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
+          {groups
+            .filter((group) => group.modules.length > 0)
+            .map(({ group, modules }) => (
+              <div key={group}>
+                <p className="mb-1.5 px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {group}
+                </p>
+                <div className="space-y-0.5">
+                  {modules.map((descriptor) => (
+                    <ModuleNavItem key={descriptor.module} descriptor={descriptor} />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-      </nav>
+            ))}
+        </nav>
 
-      <div className="border-t px-3 py-3">
-        <NavLink
-          to="/account"
-          className={({ isActive }) =>
-            cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              isActive
-                ? "bg-primary/10 text-primary"
-                : "text-foreground/80 hover:bg-accent hover:text-accent-foreground",
-            )
-          }
-        >
-          <UserCircle className="size-4 shrink-0" />
-          <span className="truncate">My account</span>
-        </NavLink>
+        <div className="border-t px-3 py-3">
+          <NavLink
+            to="/account"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-primary/10 text-primary"
+                  : "text-foreground/80 hover:bg-accent hover:text-accent-foreground",
+              )
+            }
+          >
+            <UserCircle className="size-4 shrink-0" />
+            <span className="truncate">My account</span>
+          </NavLink>
+        </div>
       </div>
     </aside>
   );

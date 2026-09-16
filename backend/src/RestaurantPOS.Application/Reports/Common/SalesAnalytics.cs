@@ -50,6 +50,11 @@ public static class SalesAnalytics
             .Where(s => stewardIds.Contains(s.Id))
             .ToDictionaryAsync(s => s.Id, s => s.Name, cancellationToken);
 
+        var cashierIds = orders.Select(o => o.CashierUserId).Distinct().ToList();
+        var cashierNames = await db.Users.AsNoTracking()
+            .Where(u => cashierIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.FullName, cancellationToken);
+
         var revenue = orders.Sum(o => o.Total);
         var expenses = (await ExpenseAnalytics.ApprovedExpensesBetweenAsync(db, from, to, cancellationToken))
             .Sum(e => e.Amount);
@@ -66,6 +71,7 @@ public static class SalesAnalytics
             BuildHourlyPattern(orders),
             BuildDayOfWeekPattern(orders),
             BuildStewardSales(orders, stewardNames),
+            BuildCashierSales(orders, cashierNames),
             BuildDiscountSummary(orders));
     }
 
@@ -94,6 +100,31 @@ public static class SalesAnalytics
             // Named stewards ranked by net sales; the "Unassigned" bucket always sits last.
             .OrderBy(s => s.StewardId is null)
             .ThenByDescending(s => s.NetSales)];
+    }
+
+    private static IReadOnlyCollection<SalesByCashierDto> BuildCashierSales(
+        IEnumerable<Order> orders, IReadOnlyDictionary<Guid, string> cashierNames)
+    {
+        return [.. orders
+            .GroupBy(o => o.CashierUserId)
+            .Select(g =>
+            {
+                var gross = g.Sum(o => o.Subtotal);
+                var discounts = g.Sum(o => o.DiscountAmount);
+                var net = gross - discounts;
+                var count = g.Count();
+
+                return new SalesByCashierDto(
+                    g.Key,
+                    cashierNames.GetValueOrDefault(g.Key, "Unknown"),
+                    count,
+                    g.Sum(o => o.ActiveItems.Sum(i => i.Quantity)),
+                    Money(gross),
+                    Money(discounts),
+                    Money(net),
+                    count > 0 ? Money(net / count) : 0m);
+            })
+            .OrderByDescending(c => c.NetSales)];
     }
 
     private static IReadOnlyCollection<TopMenuItemDto> BuildTopItems(

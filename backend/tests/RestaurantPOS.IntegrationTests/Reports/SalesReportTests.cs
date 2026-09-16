@@ -126,6 +126,37 @@ public class SalesReportTests : IntegrationTestBase
     }
 
     [Fact]
+    public async Task TheDailyReport_RanksCashiersByNetSales()
+    {
+        await SignInAsAdminAsync();
+        var dish = await MenuItemAsync("Kottu", "Mains", 500m);
+        var (cashier, cashierId) = await CreateAndSignInStaffAsync(
+            username: "cashier02", modules: "PosBilling");
+
+        // The admin's own session rings up one sale; the second cashier rings up two, so the
+        // report should rank the second cashier first.
+        await TakeSaleAsync(await TableAsync("1"), dish, 1, "Cash");
+
+        var order = await PosApiClient.ReadAsync<OrderResponse>(await cashier.CreateOrderAsync(await TableAsync("2")));
+        await cashier.AddOrderItemsAsync(order.Id, (dish, 2, null));
+        (await cashier.ConfirmOrderAsync(order.Id)).EnsureSuccessStatusCode();
+        (await cashier.StartCheckoutAsync(order.Id)).EnsureSuccessStatusCode();
+        (await cashier.PayOrderAsync(order.Id, ("Cash", 1000m, 1000m))).EnsureSuccessStatusCode();
+
+        var report = await PosApiClient.ReadAsync<SalesReportResponse>(await Client.GetDailySalesReportAsync(Today));
+
+        report.CashierSales.Should().HaveCount(2);
+
+        var top = report.CashierSales.First();
+        top.CashierUserId.Should().Be(cashierId);
+        top.NetSales.Should().Be(1000m);
+        top.OrdersHandled.Should().Be(1);
+        top.ItemsSold.Should().Be(2);
+
+        report.CashierSales.Last().NetSales.Should().Be(500m);
+    }
+
+    [Fact]
     public async Task ReportsAnalyticsHoldersCanReadTheExpenseProfitReport_WithoutHoldingExpensesManagement()
     {
         await SignInAsAdminAsync();

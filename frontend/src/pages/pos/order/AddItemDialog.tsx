@@ -56,7 +56,9 @@ export function AddItemDialog({ picked, onOpenChange, onAdd, pending }: AddItemD
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>{picked ? variantDisplayName(picked.item, picked.variant) : ""}</DialogTitle>
-          <DialogDescription>{picked ? `${price.toFixed(2)} each · ${picked.item.category}` : ""}</DialogDescription>
+          <DialogDescription>
+            {picked ? `${price.toFixed(2)} each · ${picked.item.category}` : ""}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -80,7 +82,7 @@ export function AddItemDialog({ picked, onOpenChange, onAdd, pending }: AddItemD
                   const parsed = Number(event.target.value.replace(/\D/g, ""));
                   setQuantity(Number.isFinite(parsed) && parsed > 0 ? parsed : 1);
                 }}
-                className="w-20 text-center text-lg tabular"
+                className="tabular w-20 text-center text-lg"
               />
               <Button
                 type="button"
@@ -91,13 +93,17 @@ export function AddItemDialog({ picked, onOpenChange, onAdd, pending }: AddItemD
               >
                 <Plus className="size-4" />
               </Button>
-              <span className="ml-auto text-lg font-semibold tabular">
+              <span className="tabular ml-auto text-lg font-semibold">
                 {picked ? (price * quantity).toFixed(2) : ""}
               </span>
             </div>
           </FormField>
 
-          <FormField htmlFor="instructions" label="Special instructions" hint="Optional — printed on the KOT">
+          <FormField
+            htmlFor="instructions"
+            label="Special instructions"
+            hint="Optional — printed on the KOT"
+          >
             <Input
               id="instructions"
               value={instructions}
@@ -114,7 +120,12 @@ export function AddItemDialog({ picked, onOpenChange, onAdd, pending }: AddItemD
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={pending}
+          >
             Cancel
           </Button>
           <Button type="button" onClick={submit} loading={pending}>

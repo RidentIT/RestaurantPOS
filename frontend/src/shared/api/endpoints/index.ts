@@ -128,6 +128,9 @@ export const API_ENDPOINTS = {
     BACKUPS: "/settings/backups",
     BACKUPS_RESTORE: "/settings/backups/restore",
     BACKUPS_RUN_DAILY: "/settings/backups/run-daily",
+    FREQUENT_MENU_CATEGORIES: "/settings/frequent-menu-categories",
+    FREQUENT_MENU_CATEGORY_BY_NAME: (category: string) =>
+      `/settings/frequent-menu-categories/${encodeURIComponent(category)}`,
   },
   INVENTORY: {
     MAIN_STORE_STOCK: "/inventory/main-store/stock",

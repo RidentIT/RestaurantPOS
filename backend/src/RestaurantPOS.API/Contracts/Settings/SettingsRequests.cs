@@ -20,3 +20,5 @@ public sealed record UpdateApprovalPinPolicyRequest(int MaxAttempts, int Lockout
 public sealed record UpdateBackupSettingsRequest(string? BackupFolderPath, int RetentionCount);
 
 public sealed record RestoreBackupRequest(string FileName, string Pin, string ConfirmationText);
+
+public sealed record AddFrequentMenuCategoryRequest(string Category);

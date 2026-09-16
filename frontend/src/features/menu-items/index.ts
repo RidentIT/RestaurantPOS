@@ -6,6 +6,8 @@ export {
   useMenuCategories,
   useCreateMenuCategory,
   useDeleteMenuCategory,
+  useFrequentCategories,
+  useFrequentCategoryMutations,
 } from "./model/useMenuItems";
 export { CategoryCombobox } from "./ui/CategoryCombobox";
 export { ManageCategoriesDialog } from "./ui/ManageCategoriesDialog";
