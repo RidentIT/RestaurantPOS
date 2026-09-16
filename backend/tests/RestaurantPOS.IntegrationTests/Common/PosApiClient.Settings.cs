@@ -18,7 +18,8 @@ public sealed record RestaurantSettingsResponse(
     int ApprovalPinMaxAttempts,
     int ApprovalPinLockoutMinutes,
     string? BackupFolderPath,
-    int BackupRetentionCount);
+    int BackupRetentionCount,
+    IReadOnlyList<string> FrequentMenuCategories);
 
 public sealed record BackupResponse(string FileName, DateTime CreatedAtUtc, long SizeBytes);
 
@@ -85,4 +86,13 @@ public sealed partial class PosApiClient
     }
 
     public Task<HttpResponseMessage> RemoveLogoAsync() => Http.DeleteAsync($"{BaseUrl}/settings/logo");
+
+    public Task<HttpResponseMessage> GetFrequentMenuCategoriesAsync() =>
+        Http.GetAsync($"{BaseUrl}/settings/frequent-menu-categories");
+
+    public Task<HttpResponseMessage> AddFrequentMenuCategoryAsync(string category) =>
+        Http.PostAsJsonAsync($"{BaseUrl}/settings/frequent-menu-categories", new { category }, Json);
+
+    public Task<HttpResponseMessage> RemoveFrequentMenuCategoryAsync(string category) =>
+        Http.DeleteAsync($"{BaseUrl}/settings/frequent-menu-categories/{Uri.EscapeDataString(category)}");
 }

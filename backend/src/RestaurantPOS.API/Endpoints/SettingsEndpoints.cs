@@ -6,7 +6,9 @@ using Microsoft.Extensions.Hosting;
 using RestaurantPOS.API.Contracts.Settings;
 using RestaurantPOS.API.Extensions;
 using RestaurantPOS.API.Security;
+using RestaurantPOS.Application.Settings.Commands.AddFrequentMenuCategory;
 using RestaurantPOS.Application.Settings.Commands.CreateBackup;
+using RestaurantPOS.Application.Settings.Commands.RemoveFrequentMenuCategory;
 using RestaurantPOS.Application.Settings.Commands.RemoveLogo;
 using RestaurantPOS.Application.Settings.Commands.RestoreBackup;
 using RestaurantPOS.Application.Settings.Commands.RunDailyBackup;
@@ -19,8 +21,10 @@ using RestaurantPOS.Application.Settings.Commands.UpdateReceiptFooter;
 using RestaurantPOS.Application.Settings.Commands.UploadLogo;
 using RestaurantPOS.Application.Settings.Queries.GetBackups;
 using RestaurantPOS.Application.Settings.Queries.GetBranding;
+using RestaurantPOS.Application.Settings.Queries.GetFrequentMenuCategories;
 using RestaurantPOS.Application.Settings.Queries.GetLogo;
 using RestaurantPOS.Application.Settings.Queries.GetRestaurantSettings;
+using RestaurantPOS.Domain.Enums;
 
 namespace RestaurantPOS.API.Endpoints;
 
@@ -217,6 +221,37 @@ public static class SettingsEndpoints
             })
             .WithName("RunDailyBackup")
             .WithSummary("Takes today's backup if one has not already been taken today. Called once at sign-in.");
+
+        // PosBilling, not AdminOnly: these shortcuts belong to whoever is standing at the till, the
+        // same way the steward roster is a cashier's tool rather than an administrator's.
+        group.MapGet("/frequent-menu-categories", async (ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(new GetFrequentMenuCategoriesQuery(), ct);
+                return result.ToHttpResult();
+            })
+            .RequireAuthorization(AuthorizationPolicies.ForModule(AppModule.PosBilling))
+            .WithName("GetFrequentMenuCategories")
+            .WithSummary("Categories pinned to the front of the till's category strip.");
+
+        group.MapPost("/frequent-menu-categories", async (
+                AddFrequentMenuCategoryRequest request, ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(new AddFrequentMenuCategoryCommand(request.Category), ct);
+                return result.ToHttpResult();
+            })
+            .RequireAuthorization(AuthorizationPolicies.ForModule(AppModule.PosBilling))
+            .WithName("AddFrequentMenuCategory")
+            .WithSummary("Pins a category to the front of the till's category strip.");
+
+        group.MapDelete("/frequent-menu-categories/{category}", async (
+                string category, ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(new RemoveFrequentMenuCategoryCommand(category), ct);
+                return result.ToHttpResult();
+            })
+            .RequireAuthorization(AuthorizationPolicies.ForModule(AppModule.PosBilling))
+            .WithName("RemoveFrequentMenuCategory")
+            .WithSummary("Unpins a category from the till's category strip.");
 
         return routes;
     }

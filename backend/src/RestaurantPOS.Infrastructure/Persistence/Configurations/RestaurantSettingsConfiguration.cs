@@ -32,5 +32,11 @@ internal sealed class RestaurantSettingsConfiguration : IEntityTypeConfiguration
         builder.Property(s => s.ApprovalPinLockoutMinutes).IsRequired();
         builder.Property(s => s.BackupFolderPath).HasMaxLength(RestaurantSettings.BackupFolderPathMaxLength);
         builder.Property(s => s.BackupRetentionCount).IsRequired();
+
+        // FrequentMenuCategories has no settable public property — it's a computed read-only view
+        // over this field — so EF is pointed at the backing field by name instead of an expression.
+        builder.Property<string?>("_frequentMenuCategoriesCsv")
+            .HasColumnName("FrequentMenuCategories")
+            .HasMaxLength(2000);
     }
 }

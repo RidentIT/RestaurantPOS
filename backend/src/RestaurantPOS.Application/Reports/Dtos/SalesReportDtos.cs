@@ -39,6 +39,24 @@ public sealed record SalesByStewardDto(
     /// <summary>Net sales divided by orders served. Zero when the steward served none.</summary>
     decimal AverageBill);
 
+/// <summary>
+/// One cashier's share of a period's sales, so cashiers on different shifts can be compared at
+/// handover. Every order has a cashier from the moment it's opened, so unlike
+/// <see cref="SalesByStewardDto"/> there is no "Unassigned" row.
+/// </summary>
+public sealed record SalesByCashierDto(
+    Guid CashierUserId,
+    string CashierName,
+    int OrdersHandled,
+    int ItemsSold,
+    /// <summary>Menu value of everything sold, before any discount.</summary>
+    decimal GrossSales,
+    decimal DiscountsGiven,
+    /// <summary>Gross less discounts — the figure the table is ranked on.</summary>
+    decimal NetSales,
+    /// <summary>Net sales divided by orders handled. Zero when the cashier handled none.</summary>
+    decimal AverageBill);
+
 /// <summary>How much of the period's sales were discounted, and how often.</summary>
 public sealed record DiscountSummaryDto(
     decimal TotalDiscountGiven,
@@ -63,4 +81,6 @@ public sealed record SalesReportDto(
     IReadOnlyCollection<DayOfWeekSalesDto> DayOfWeekPattern,
     /// <summary>Sales per steward, highest net first — the first named steward is the period's best.</summary>
     IReadOnlyCollection<SalesByStewardDto> StewardSales,
+    /// <summary>Sales per cashier, highest net first.</summary>
+    IReadOnlyCollection<SalesByCashierDto> CashierSales,
     DiscountSummaryDto Discounts);

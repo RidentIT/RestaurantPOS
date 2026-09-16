@@ -4,6 +4,7 @@ import { menuItemsApi } from "../api/menuItemsApi";
 
 const MENU_ITEMS_KEY = "menu-items";
 const MENU_CATEGORIES_KEY = "menu-categories";
+const FREQUENT_CATEGORIES_KEY = "frequent-menu-categories";
 
 export function useMenuItems(filters: MenuItemFilters = {}) {
   return useQuery({
@@ -46,6 +47,31 @@ export function useDeleteMenuCategory() {
     mutationFn: (name: string) => menuItemsApi.deleteCategory(name),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [MENU_CATEGORIES_KEY] }),
   });
+}
+
+/** Categories pinned to the front of the till's category strip. */
+export function useFrequentCategories() {
+  return useQuery({
+    queryKey: [FREQUENT_CATEGORIES_KEY],
+    queryFn: menuItemsApi.listFrequentCategories,
+  });
+}
+
+export function useFrequentCategoryMutations() {
+  const queryClient = useQueryClient();
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: [FREQUENT_CATEGORIES_KEY] });
+
+  const pin = useMutation({
+    mutationFn: (category: string) => menuItemsApi.pinFrequentCategory(category),
+    onSuccess: invalidate,
+  });
+
+  const unpin = useMutation({
+    mutationFn: (category: string) => menuItemsApi.unpinFrequentCategory(category),
+    onSuccess: invalidate,
+  });
+
+  return { pin, unpin };
 }
 
 export function useMenuItemMutations() {

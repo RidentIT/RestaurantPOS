@@ -25,6 +25,7 @@ public static class SettingsMappings
             settings.ApprovalPinMaxAttempts,
             settings.ApprovalPinLockoutMinutes,
             settings.BackupFolderPath,
-            settings.BackupRetentionCount);
+            settings.BackupRetentionCount,
+            settings.FrequentMenuCategories);
     }
 }

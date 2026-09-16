@@ -47,7 +47,7 @@ export function BillPanel({
                 <p className={cn("font-medium", item.isCancelled && "line-through")}>
                   {item.menuItemName}
                 </p>
-                <p className="text-sm text-muted-foreground tabular">
+                <p className="tabular text-sm text-muted-foreground">
                   {item.quantity} × {item.unitPrice.toFixed(2)}
                 </p>
                 {item.specialInstructions && (
@@ -63,7 +63,12 @@ export function BillPanel({
               </div>
 
               <div className="flex shrink-0 items-center gap-2">
-                <span className={cn("w-20 text-right font-medium tabular", item.isCancelled && "line-through")}>
+                <span
+                  className={cn(
+                    "tabular w-20 text-right font-medium",
+                    item.isCancelled && "line-through",
+                  )}
+                >
                   {(item.unitPrice * item.quantity).toFixed(2)}
                 </span>
               </div>
@@ -81,7 +86,7 @@ export function BillPanel({
                 >
                   <Minus className="size-3.5" />
                 </Button>
-                <span className="w-8 text-center text-sm tabular">{item.quantity}</span>
+                <span className="tabular w-8 text-center text-sm">{item.quantity}</span>
                 <Button
                   variant="outline"
                   size="icon"
@@ -118,13 +123,17 @@ export function BillPanel({
         <div className="flex justify-between">
           <dt className="text-muted-foreground">
             Discount
-            {order.discountType === "Percentage" && order.discountValue > 0 && ` (${order.discountValue}%)`}
+            {order.discountType === "Percentage" &&
+              order.discountValue > 0 &&
+              ` (${order.discountValue}%)`}
           </dt>
           <dd className="tabular">−{order.discountAmount.toFixed(2)}</dd>
         </div>
         {order.serviceChargeAmount > 0 && (
           <div className="flex justify-between">
-            <dt className="text-muted-foreground">Service charge ({order.serviceChargeRatePercent}%)</dt>
+            <dt className="text-muted-foreground">
+              Service charge ({order.serviceChargeRatePercent}%)
+            </dt>
             <dd className="tabular">{order.serviceChargeAmount.toFixed(2)}</dd>
           </div>
         )}

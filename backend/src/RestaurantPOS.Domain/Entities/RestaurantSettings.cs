@@ -23,6 +23,25 @@ public sealed class RestaurantSettings : BaseEntity
     public const int ReceiptFooterMaxLength = 200;
     public const int PrinterNameMaxLength = 200;
     public const int BackupFolderPathMaxLength = 400;
+    public const int FrequentMenuCategoryMaxLength = 100;
+
+    /// <summary>
+    /// Separator joining <see cref="_frequentMenuCategoriesCsv"/> — a category name typed into
+    /// Recipe Management is free text, so this has to be a character no one would plausibly put in
+    /// one. The Unit Separator is exactly what it sounds like: a control character reserved for
+    /// this and never something a keyboard types.
+    /// </summary>
+    private const char FrequentCategoriesSeparator = '';
+
+    /// <summary>
+    /// What a fresh restaurant starts with, until the till's own cashiers reshape it to match how
+    /// they actually work — see <see cref="AddFrequentMenuCategory"/> and
+    /// <see cref="RemoveFrequentMenuCategory"/>.
+    /// </summary>
+    private static readonly string[] DefaultFrequentMenuCategories =
+        ["Kottu", "Rice and Curry", "Cheese Kottu", "String Hoppers"];
+
+    private string? _frequentMenuCategoriesCsv;
 
     // EF Core materialisation.
     private RestaurantSettings()
@@ -40,6 +59,7 @@ public sealed class RestaurantSettings : BaseEntity
         ApprovalPinMaxAttempts = 3;
         ApprovalPinLockoutMinutes = 5;
         BackupRetentionCount = 7;
+        _frequentMenuCategoriesCsv = string.Join(FrequentCategoriesSeparator, DefaultFrequentMenuCategories);
     }
 
     // ----- Business profile (printed on every receipt and KOT) -----
@@ -110,6 +130,18 @@ public sealed class RestaurantSettings : BaseEntity
     /// <summary>How many backups to keep before the oldest are pruned.</summary>
     public int BackupRetentionCount { get; private set; }
 
+    // ----- POS till shortcuts -----
+
+    /// <summary>
+    /// Categories pinned to the front of the till's category strip, in the order they were added,
+    /// so a cashier can reach the dishes sold most often without scrolling. Shared by every till —
+    /// there's one restaurant here, not one preference per cashier.
+    /// </summary>
+    public IReadOnlyList<string> FrequentMenuCategories =>
+        string.IsNullOrEmpty(_frequentMenuCategoriesCsv)
+            ? []
+            : _frequentMenuCategoriesCsv.Split(FrequentCategoriesSeparator);
+
     public static RestaurantSettings Create(string name, string addressLine1, string? city, string? phone) =>
         new(name, addressLine1, city, phone);
 
@@ -170,6 +202,30 @@ public sealed class RestaurantSettings : BaseEntity
             ? retentionCount
             : throw new ArgumentOutOfRangeException(
                 nameof(retentionCount), retentionCount, "Retention must be between 1 and 60 backups.");
+    }
+
+    /// <summary>Pins a category, or silently does nothing if it's already pinned (case-insensitive).</summary>
+    public void AddFrequentMenuCategory(string category)
+    {
+        var trimmed = NormaliseRequired(category, FrequentMenuCategoryMaxLength, nameof(category));
+        var current = FrequentMenuCategories;
+
+        if (current.Any(c => c.Equals(trimmed, StringComparison.OrdinalIgnoreCase)))
+        {
+            return;
+        }
+
+        _frequentMenuCategoriesCsv = string.Join(FrequentCategoriesSeparator, [.. current, trimmed]);
+    }
+
+    /// <summary>Unpins a category, or silently does nothing if it wasn't pinned.</summary>
+    public void RemoveFrequentMenuCategory(string category)
+    {
+        var remaining = FrequentMenuCategories
+            .Where(c => !c.Equals(category, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        _frequentMenuCategoriesCsv = remaining.Length == 0 ? null : string.Join(FrequentCategoriesSeparator, remaining);
     }
 
     private static decimal ValidatePercentage(decimal value, string paramName) =>

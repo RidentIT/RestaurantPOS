@@ -42,6 +42,7 @@ export function SalesTab({ report }: { report: SalesReport }) {
 
   // The best steward is the highest-net *named* one — the "Unassigned" bucket never wins an award.
   const bestStewardId = report.stewardSales.find((s) => s.stewardId !== null)?.stewardId ?? null;
+  const bestCashierId = report.cashierSales[0]?.cashierUserId ?? null;
 
   return (
     <div className="space-y-4">
@@ -115,6 +116,60 @@ export function SalesTab({ report }: { report: SalesReport }) {
                         )}
                       </TableCell>
                       <TableCell className="tabular text-right">{row.ordersServed}</TableCell>
+                      <TableCell className="tabular text-right">{row.itemsSold}</TableCell>
+                      <TableCell className="tabular text-right">{money(row.grossSales)}</TableCell>
+                      <TableCell className="tabular text-right">
+                        {money(row.discountsGiven)}
+                      </TableCell>
+                      <TableCell className="tabular text-right font-medium">
+                        {money(row.netSales)}
+                      </TableCell>
+                      <TableCell className="tabular text-right">{money(row.averageBill)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Sales by cashier</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {report.cashierSales.length === 0 ? (
+            <EmptyState title="No completed orders in this period yet." />
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cashier</TableHead>
+                    <TableHead className="text-right">Orders</TableHead>
+                    <TableHead className="text-right">Items</TableHead>
+                    <TableHead className="text-right">Gross</TableHead>
+                    <TableHead className="text-right">Discount</TableHead>
+                    <TableHead className="text-right">Net sales</TableHead>
+                    <TableHead className="text-right">Avg bill</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {report.cashierSales.map((row) => (
+                    <TableRow
+                      key={row.cashierUserId}
+                      className={row.cashierUserId === bestCashierId ? "bg-success/10" : undefined}
+                    >
+                      <TableCell className="font-medium">
+                        {row.cashierName}
+                        {row.cashierUserId === bestCashierId && (
+                          <Badge variant="success" className="ml-2 gap-1">
+                            <Award className="size-3" /> Top cashier
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="tabular text-right">{row.ordersHandled}</TableCell>
                       <TableCell className="tabular text-right">{row.itemsSold}</TableCell>
                       <TableCell className="tabular text-right">{money(row.grossSales)}</TableCell>
                       <TableCell className="tabular text-right">

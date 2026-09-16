@@ -30,4 +30,13 @@ export const menuItemsApi = {
   /** Refused by the server while any menu item still carries this category. */
   deleteCategory: (name: string) =>
     apiService.delete<void>(`${API_ENDPOINTS.MENU_ITEMS.CATEGORIES}?name=${encodeURIComponent(name)}`),
+
+  /** Categories pinned to the front of the till's category strip. */
+  listFrequentCategories: () => apiService.get<string[]>(API_ENDPOINTS.SETTINGS.FREQUENT_MENU_CATEGORIES),
+
+  pinFrequentCategory: (category: string) =>
+    apiService.post<string[]>(API_ENDPOINTS.SETTINGS.FREQUENT_MENU_CATEGORIES, { category }),
+
+  unpinFrequentCategory: (category: string) =>
+    apiService.delete<string[]>(API_ENDPOINTS.SETTINGS.FREQUENT_MENU_CATEGORY_BY_NAME(category)),
 };
