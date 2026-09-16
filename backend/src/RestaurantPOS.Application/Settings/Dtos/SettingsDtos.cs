@@ -17,4 +17,5 @@ public sealed record RestaurantSettingsDto(
     int ApprovalPinMaxAttempts,
     int ApprovalPinLockoutMinutes,
     string? BackupFolderPath,
-    int BackupRetentionCount);
+    int BackupRetentionCount,
+    IReadOnlyList<string> FrequentMenuCategories);

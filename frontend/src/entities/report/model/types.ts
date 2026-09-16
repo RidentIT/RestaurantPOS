@@ -73,6 +73,20 @@ export interface SalesBySteward {
   averageBill: number;
 }
 
+/** One cashier's share of a period's sales. Every order has a cashier, so there is no "Unassigned" row. */
+export interface SalesByCashier {
+  cashierUserId: string;
+  cashierName: string;
+  ordersHandled: number;
+  itemsSold: number;
+  /** Menu value of everything sold, before any discount. */
+  grossSales: number;
+  discountsGiven: number;
+  /** Gross less discounts — the figure the table is ranked on. */
+  netSales: number;
+  averageBill: number;
+}
+
 /** A period's sales in depth: what sold, how it was paid for, and when the till was busy. */
 export interface SalesReport {
   from: string;
@@ -86,5 +100,7 @@ export interface SalesReport {
   dayOfWeekPattern: DayOfWeekSales[];
   /** Sales per steward, best (highest net) first. */
   stewardSales: SalesBySteward[];
+  /** Sales per cashier, best (highest net) first. */
+  cashierSales: SalesByCashier[];
   discounts: DiscountSummary;
 }

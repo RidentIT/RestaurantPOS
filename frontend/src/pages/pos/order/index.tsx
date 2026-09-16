@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Ban, CreditCard, Percent, Send, UserRound } from "lucide-react";
+import { ArrowLeft, Ban, CreditCard, Percent, Search, Send, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import type { DiscountType, OrderItem } from "@/entities/order";
 import { useMenuItems } from "@/features/menu-items";
 import { ManagerPinDialog, useOrder, useOrderMutations } from "@/features/orders";
 import { toApiError } from "@/shared/api/problem";
-import { Badge, Button, Card, LoadingState } from "@/shared/ui";
+import { Badge, Button, Card, Input, LoadingState } from "@/shared/ui";
 import type { PickedMenuItem } from "./AddItemDialog";
 import { AddItemDialog } from "./AddItemDialog";
 import { BillPanel } from "./BillPanel";
@@ -36,6 +36,7 @@ export default function OrderScreen() {
   const mutations = useOrderMutations();
 
   const [picked, setPicked] = useState<PickedMenuItem | null>(null);
+  const [menuSearch, setMenuSearch] = useState("");
   const [discountOpen, setDiscountOpen] = useState(false);
   const [stewardOpen, setStewardOpen] = useState(false);
   const [approval, setApproval] = useState<PendingApproval | null>(null);
@@ -67,6 +68,10 @@ export default function OrderScreen() {
 
   const isDraft = order.status === "Draft";
   const isOpen = order.status === "Open";
+  // A takeaway customer orders and pays in the same breath at the counter, unlike a table that
+  // eats first and settles later — so takeaway collapses "send to the kitchen" and "checkout"
+  // into the one tap a walk-in transaction actually is. Dine-in keeps them separate.
+  const isTakeaway = !order.tableId;
   const activeItems = order.items.filter((item) => !item.isCancelled);
 
   /** Runs a command directly on a draft, or behind a PIN prompt once the kitchen has the order. */
@@ -138,8 +143,32 @@ export default function OrderScreen() {
     }
   };
 
+  /**
+   * Takeaway's one-tap version of confirm-then-checkout. The two steps are still two separate
+   * requests — if sending to the kitchen succeeds but the checkout step itself fails (a dropped
+   * connection, say), the KOT has already printed and nothing is lost: the order simply sits as
+   * "Open" and the ordinary Checkout button is right there to finish the job with one more tap.
+   */
+  const confirmAndCheckout = async () => {
+    try {
+      await mutations.confirm.mutateAsync(order.id);
+    } catch (error) {
+      toast.error(toApiError(error).message);
+      return;
+    }
+
+    try {
+      await mutations.startCheckout.mutateAsync(order.id);
+      navigate(`/pos/orders/${order.id}/checkout`);
+    } catch (error) {
+      toast.warning(
+        `Sent to the kitchen, but couldn't move to checkout automatically: ${toApiError(error).message}`,
+      );
+    }
+  };
+
   return (
-    <div className="flex h-full flex-col gap-4 p-6">
+    <div className="flex h-full flex-col gap-3 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
           <Button variant="ghost" size="sm" asChild className="-ml-2">
@@ -171,7 +200,17 @@ export default function OrderScreen() {
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={menuSearch}
+              onChange={(event) => setMenuSearch(event.target.value)}
+              placeholder="Search the menu"
+              className="w-44 pl-8"
+              aria-label="Search the menu"
+            />
+          </div>
           {(isDraft || isOpen) && (
             <Button variant="outline" onClick={() => setDiscountOpen(true)} disabled={busy}>
               <Percent /> Discount
@@ -182,7 +221,16 @@ export default function OrderScreen() {
               <Ban /> Cancel order
             </Button>
           )}
-          {isDraft && (
+          {isDraft && isTakeaway && (
+            <Button
+              onClick={confirmAndCheckout}
+              loading={mutations.confirm.isPending || mutations.startCheckout.isPending}
+              disabled={activeItems.length === 0}
+            >
+              <CreditCard /> Confirm &amp; checkout
+            </Button>
+          )}
+          {isDraft && !isTakeaway && (
             <Button
               onClick={confirmOrder}
               loading={mutations.confirm.isPending}
@@ -203,23 +251,17 @@ export default function OrderScreen() {
         </div>
       </div>
 
-      {isDraft && (
-        <p className="rounded-lg border border-dashed bg-muted/40 px-4 py-2 text-sm text-muted-foreground">
-          Nothing has been sent to the kitchen yet. Confirm the order to print the KOT — after that
-          you can keep adding items without a manager PIN.
-        </p>
-      )}
-
-      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[1fr_24rem]">
-        <Card className="min-h-0 overflow-hidden p-4">
+      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[1fr_21rem]">
+        <Card className="min-h-0 overflow-hidden p-3">
           <MenuPicker
             menuItems={(menuItems ?? []).filter((m) => m.isActive)}
             onPick={(item, variant) => setPicked({ item, variant })}
             disabled={busy || (!isDraft && !isOpen)}
+            search={menuSearch}
           />
         </Card>
 
-        <Card className="min-h-0 overflow-y-auto p-4">
+        <Card className="min-h-0 overflow-y-auto p-3">
           <h2 className="mb-3 font-semibold">Current bill</h2>
           <BillPanel
             order={order}

@@ -7,5 +7,6 @@ export type {
   DayOfWeekSales,
   DiscountSummary,
   SalesBySteward,
+  SalesByCashier,
   SalesReport,
 } from "./model/types";

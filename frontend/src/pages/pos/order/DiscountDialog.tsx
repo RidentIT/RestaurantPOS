@@ -29,7 +29,13 @@ const TYPES: { value: DiscountType; label: string }[] = [
 ];
 
 /** Applies money off the bill (POS-007), never more than the bill itself (BR-POS-010). */
-export function DiscountDialog({ open, onOpenChange, order, onApply, pending }: DiscountDialogProps) {
+export function DiscountDialog({
+  open,
+  onOpenChange,
+  order,
+  onApply,
+  pending,
+}: DiscountDialogProps) {
   const [type, setType] = useState<DiscountType>(order.discountType);
   const [value, setValue] = useState(order.discountValue ? String(order.discountValue) : "");
 
@@ -122,7 +128,12 @@ export function DiscountDialog({ open, onOpenChange, order, onApply, pending }: 
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={pending}
+          >
             Cancel
           </Button>
           <Button type="button" onClick={submit} loading={pending}>

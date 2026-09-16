@@ -20,6 +20,10 @@ public sealed record SalesByStewardResponse(
     Guid? StewardId, string StewardName, int OrdersServed, int ItemsSold,
     decimal GrossSales, decimal DiscountsGiven, decimal NetSales, decimal AverageBill);
 
+public sealed record SalesByCashierResponse(
+    Guid CashierUserId, string CashierName, int OrdersHandled, int ItemsSold,
+    decimal GrossSales, decimal DiscountsGiven, decimal NetSales, decimal AverageBill);
+
 public sealed record SalesReportResponse(
     DateOnly From,
     DateOnly To,
@@ -31,6 +35,7 @@ public sealed record SalesReportResponse(
     IReadOnlyCollection<HourlySalesResponse> HourlyPattern,
     IReadOnlyCollection<DayOfWeekSalesResponse> DayOfWeekPattern,
     IReadOnlyCollection<SalesByStewardResponse> StewardSales,
+    IReadOnlyCollection<SalesByCashierResponse> CashierSales,
     DiscountSummaryResponse Discounts);
 
 public sealed partial class PosApiClient
