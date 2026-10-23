@@ -5,9 +5,11 @@ import { toast } from "sonner";
 import type { RestaurantTable } from "@/entities/table";
 import { tableDisplayStatus } from "@/entities/table";
 import { useOrderMutations, useOrders } from "@/features/orders";
+import { CheckInDialog, CheckOutDialog, useCurrentShift } from "@/features/shifts";
 import { useTables } from "@/features/tables";
 import { toApiError } from "@/shared/api/problem";
 import { Button, Card, EmptyState, Input, LoadingState } from "@/shared/ui";
+import { ShiftBar } from "./ShiftBar";
 import { TableCard, TableStatusLegend } from "./TableCard";
 import { TakeawayOrders } from "./TakeawayOrders";
 
@@ -18,6 +20,11 @@ import { TakeawayOrders } from "./TakeawayOrders";
 export default function PosDashboardPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [checkInOpen, setCheckInOpen] = useState(false);
+  const [checkOutOpen, setCheckOutOpen] = useState(false);
+
+  const { data: currentShift, isLoading: shiftLoading, refetch: refetchShift } = useCurrentShift();
+  const shift = currentShift?.shift ?? null;
 
   const { data: tables, isLoading } = useTables();
   const { data: takeawayOrders } = useOrders({ openOnly: true, isTakeaway: true });
@@ -50,6 +57,12 @@ export default function PosDashboardPage() {
       return;
     }
 
+    // A new order belongs to a shift, so a cashier who hasn't checked in is asked to first.
+    if (!shift) {
+      setCheckInOpen(true);
+      return;
+    }
+
     try {
       const order = await create.mutateAsync(table.id);
       navigate(`/pos/orders/${order.id}`);
@@ -59,6 +72,11 @@ export default function PosDashboardPage() {
   };
 
   const startTakeaway = async () => {
+    if (!shift) {
+      setCheckInOpen(true);
+      return;
+    }
+
     try {
       const order = await create.mutateAsync(null);
       navigate(`/pos/orders/${order.id}`);
@@ -101,6 +119,14 @@ export default function PosDashboardPage() {
           </Button>
         </div>
       </div>
+
+      {!shiftLoading && (
+        <ShiftBar shift={shift} onCheckIn={() => setCheckInOpen(true)} onCheckOut={() => {
+            void refetchShift();
+            setCheckOutOpen(true);
+          }}
+        />
+      )}
 
       <TableStatusLegend />
 
@@ -145,6 +171,9 @@ export default function PosDashboardPage() {
           </Button>
         </div>
       )}
+
+      <CheckInDialog open={checkInOpen} onOpenChange={setCheckInOpen} />
+      {shift && <CheckOutDialog open={checkOutOpen} onOpenChange={setCheckOutOpen} shift={shift} />}
     </div>
   );
 }

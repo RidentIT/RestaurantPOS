@@ -26,6 +26,15 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `/stewards/${id}`,
     STATUS: (id: string) => `/stewards/${id}/status`,
   },
+  SHIFTS: {
+    BASE: "/shifts",
+    CHECK_IN: "/shifts/check-in",
+    CHECK_OUT: "/shifts/check-out",
+    CURRENT: "/shifts/current",
+    MINE: "/shifts/mine",
+    BY_ID: (id: string) => `/shifts/${id}`,
+    FORCE_CLOSE: (id: string) => `/shifts/${id}/force-close`,
+  },
   MENU_ITEMS: {
     BASE: "/menu-items",
     BY_ID: (id: string) => `/menu-items/${id}`,

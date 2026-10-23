@@ -52,8 +52,24 @@ public abstract class IntegrationTestBase : IAsyncLifetime, IDisposable
     /// Signs <see cref="Client"/> in as a fully provisioned administrator: seeded credentials
     /// exchanged for a real password, leaving an unrestricted session.
     /// </summary>
-    protected Task<SessionResponse> SignInAsAdminAsync() =>
-        Client.SignInAsProvisionedAdminAsync(AdminPassword);
+    protected async Task<SessionResponse> SignInAsAdminAsync()
+    {
+        var session = await Client.SignInAsProvisionedAdminAsync(AdminPassword);
+
+        if (AutoCheckIn)
+        {
+            (await Client.CheckInAsync(0m)).EnsureSuccessStatusCode();
+        }
+
+        return session;
+    }
+
+    /// <summary>
+    /// Every order needs an open shift, so signing in also checks the account in — otherwise each
+    /// test that merely rings up a sale would have to repeat the same step. The shift tests
+    /// themselves switch this off to exercise checking in and out directly.
+    /// </summary>
+    protected bool AutoCheckIn { get; set; } = true;
 
     /// <summary>
     /// Creates a staff account and signs a separate client in as it, completing the mandatory
@@ -80,6 +96,11 @@ public abstract class IntegrationTestBase : IAsyncLifetime, IDisposable
         var changed = await staff.ChangePasswordAsync(temporaryPassword, finalPassword);
         changed.EnsureSuccessStatusCode();
         staff.Authenticate((await PosApiClient.ReadAsync<SessionResponse>(changed)).AccessToken);
+
+        if (AutoCheckIn && modules.Contains("PosBilling"))
+        {
+            (await staff.CheckInAsync(0m)).EnsureSuccessStatusCode();
+        }
 
         return (staff, user.Id);
     }

@@ -9,6 +9,7 @@ using RestaurantPOS.Application.Common.Mappings;
 using RestaurantPOS.Application.Orders.Common;
 using RestaurantPOS.Application.Orders.Dtos;
 using RestaurantPOS.Application.Settings.Common;
+using RestaurantPOS.Application.Shifts.Common;
 using RestaurantPOS.Domain.Common;
 using RestaurantPOS.Domain.Entities;
 using RestaurantPOS.Domain.Enums;
@@ -36,6 +37,14 @@ internal sealed class CreateOrderCommandHandler(IAppDbContext db, ICurrentUser c
 
     public async Task<Result<OrderDto>> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
     {
+        // Every order belongs to a shift, so nothing can be rung up until the cashier has checked in.
+        var shift = await ShiftReadModel.FindOpenShiftAsync(db, currentUser.UserId!.Value, cancellationToken);
+
+        if (shift is null)
+        {
+            return Result.Failure<OrderDto>(ShiftErrors.NotCheckedIn);
+        }
+
         RestaurantTable? table = null;
 
         if (request.TableId is { } tableId)
@@ -87,7 +96,11 @@ internal sealed class CreateOrderCommandHandler(IAppDbContext db, ICurrentUser c
 
         var settings = await RestaurantSettingsAccessor.GetAsync(db, cancellationToken);
         var order = Order.Create(
-            table?.Id, currentUser.UserId!.Value, settings.TaxRatePercent, settings.ServiceChargeRatePercent);
+            table?.Id,
+            currentUser.UserId!.Value,
+            settings.TaxRatePercent,
+            settings.ServiceChargeRatePercent,
+            shift.Id);
 
         if (stewardName is not null)
         {

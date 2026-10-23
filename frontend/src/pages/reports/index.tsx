@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { BarChart3, FileSpreadsheet, FileText, LineChart } from "lucide-react";
+import { BarChart3, Clock, FileSpreadsheet, FileText, LineChart } from "lucide-react";
 import { useDailyExpenseReport, useMonthlyExpenseReport } from "@/features/expenses";
 import { exportSalesReportExcel, exportSalesReportPdf, useDailySalesReport, useMonthlySalesReport } from "@/features/reports";
 import { Button, Input, Label, LoadingState, SegmentedTabs } from "@/shared/ui";
 import { OverviewDaily, OverviewLoading, OverviewMonthly } from "./OverviewTab";
 import { SalesTab } from "./SalesTab";
+import { ShiftsTab } from "./ShiftsTab";
 
-type Section = "overview" | "sales";
+type Section = "overview" | "sales" | "shifts";
 type Period = "daily" | "monthly";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -46,22 +47,25 @@ export default function ReportsPage() {
             tabs={[
               { value: "overview", label: "Overview", icon: <LineChart className="size-4" /> },
               { value: "sales", label: "Sales", icon: <BarChart3 className="size-4" /> },
+              { value: "shifts", label: "Shifts", icon: <Clock className="size-4" /> },
             ]}
             value={section}
             onValueChange={(value) => setSection(value as Section)}
           />
-          <SegmentedTabs
-            tabs={[
-              { value: "daily", label: "Daily" },
-              { value: "monthly", label: "Monthly" },
-            ]}
-            value={period}
-            onValueChange={(value) => setPeriod(value as Period)}
-          />
+          {section !== "shifts" && (
+            <SegmentedTabs
+              tabs={[
+                { value: "daily", label: "Daily" },
+                { value: "monthly", label: "Monthly" },
+              ]}
+              value={period}
+              onValueChange={(value) => setPeriod(value as Period)}
+            />
+          )}
         </div>
 
         <div className="flex flex-wrap items-end gap-2">
-          {period === "daily" ? (
+          {section === "shifts" ? null : period === "daily" ? (
             <div className="space-y-1.5">
               <Label htmlFor="report-date">Date</Label>
               <Input
@@ -115,6 +119,8 @@ export default function ReportsPage() {
         ) : (
           <OverviewMonthly report={monthlyOverview.data} />
         ))}
+
+      {section === "shifts" && <ShiftsTab />}
 
       {section === "sales" &&
         (salesLoading || !salesReport ? (

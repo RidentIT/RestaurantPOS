@@ -130,6 +130,7 @@ try
     api.MapNotificationEndpoints();
     api.MapSettingsEndpoints();
     api.MapReportsEndpoints();
+    api.MapShiftEndpoints();
 
     app.MapGet("/health", () => Results.Ok(new { status = "Healthy", timestamp = DateTime.UtcNow }))
         .AllowAnonymous()

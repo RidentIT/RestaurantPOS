@@ -11,6 +11,15 @@ import type { SalesReport } from "@/entities/report";
 const money = (value: number) =>
   value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+/**
+ * The on-screen "Best sellers" chart keeps the backend's revenue order on purpose — it's a
+ * ranking. This full item-by-item table is a reference list instead (every item sold, not just
+ * the top 10), so it's alphabetised here rather than in the report data itself, which would have
+ * un-ranked the chart too.
+ */
+const byItemName = (report: SalesReport) =>
+  [...report.topItems].sort((a, b) => a.name.localeCompare(b.name));
+
 function download(blob: Blob, fileName: string): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -68,7 +77,7 @@ export function exportSalesReportPdf(report: SalesReport): void {
   autoTable(doc, {
     startY: y,
     head: [["Item", "Category", "Qty sold", "Revenue"]],
-    body: report.topItems.map((i) => [i.name, i.category, String(i.quantitySold), money(i.revenue)]),
+    body: byItemName(report).map((i) => [i.name, i.category, String(i.quantitySold), money(i.revenue)]),
     styles: { fontSize: 9 },
     headStyles: { fillColor: [15, 82, 66] },
     columnStyles: { 2: { halign: "right" }, 3: { halign: "right" } },
@@ -168,7 +177,7 @@ export function exportSalesReportExcel(report: SalesReport): void {
         name: "Top items",
         rows: [
           ["Item", "Category", "Qty sold", "Revenue"],
-          ...report.topItems.map((i) => [i.name, i.category, i.quantitySold, i.revenue]),
+          ...byItemName(report).map((i) => [i.name, i.category, i.quantitySold, i.revenue]),
         ],
       },
       {

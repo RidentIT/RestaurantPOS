@@ -22,6 +22,7 @@ const ReleasesPage = lazy(() => import("@/pages/inventory/releases"));
 const SuppliersPage = lazy(() => import("@/pages/suppliers"));
 const PosDashboardPage = lazy(() => import("@/pages/pos"));
 const TableManagementPage = lazy(() => import("@/pages/pos/tables"));
+const MyShiftsPage = lazy(() => import("@/pages/pos/shifts"));
 const OrderScreen = lazy(() => import("@/pages/pos/order"));
 const CheckoutScreen = lazy(() => import("@/pages/pos/checkout"));
 const KitchenDisplayPage = lazy(() => import("@/pages/kitchen"));
@@ -59,6 +60,7 @@ export const router = createBrowserRouter([
             children: [
               { path: "pos", element: withSuspense(<PosDashboardPage />) },
               { path: "pos/tables", element: withSuspense(<TableManagementPage />) },
+              { path: "pos/shifts", element: withSuspense(<MyShiftsPage />) },
               { path: "pos/orders/:orderId", element: withSuspense(<OrderScreen />) },
               { path: "pos/orders/:orderId/checkout", element: withSuspense(<CheckoutScreen />) },
               { path: "checkout", element: <Navigate to="/pos" replace /> },
