@@ -57,6 +57,8 @@ public class AppDbContext : DbContext, IAppDbContext
 
     public DbSet<Steward> Stewards => Set<Steward>();
 
+    public DbSet<CashierShift> CashierShifts => Set<CashierShift>();
+
     public DbSet<Order> Orders => Set<Order>();
 
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();

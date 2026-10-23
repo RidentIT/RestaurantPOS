@@ -51,6 +51,8 @@ public interface IAppDbContext
 
     DbSet<Steward> Stewards { get; }
 
+    DbSet<CashierShift> CashierShifts { get; }
+
     DbSet<Order> Orders { get; }
 
     DbSet<OrderItem> OrderItems { get; }

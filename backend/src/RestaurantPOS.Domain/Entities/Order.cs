@@ -29,10 +29,12 @@ public sealed class Order : BaseEntity
     {
     }
 
-    private Order(Guid? tableId, Guid cashierUserId, decimal taxRatePercent, decimal serviceChargeRatePercent)
+    private Order(
+        Guid? tableId, Guid cashierUserId, decimal taxRatePercent, decimal serviceChargeRatePercent, Guid? shiftId)
     {
         TableId = tableId;
         CashierUserId = cashierUserId;
+        ShiftId = shiftId;
         Status = OrderStatus.Draft;
         DiscountType = DiscountType.None;
         TaxRatePercent = taxRatePercent;
@@ -50,6 +52,13 @@ public sealed class Order : BaseEntity
 
     /// <summary>Who keyed the order in (POS-012).</summary>
     public Guid CashierUserId { get; private set; }
+
+    /// <summary>
+    /// The cashier's shift this order was opened in. Null only for orders that predate shifts.
+    /// Checking out is refused while a shift still has live orders, so an order is always settled
+    /// inside the shift it belongs to.
+    /// </summary>
+    public Guid? ShiftId { get; private set; }
 
     /// <summary>
     /// The steward serving this table, credited with the sale on the sales-by-steward report.
@@ -141,8 +150,12 @@ public sealed class Order : BaseEntity
 
     /// <param name="tableId">Null opens a takeaway order instead of a dine-in one.</param>
     public static Order Create(
-        Guid? tableId, Guid cashierUserId, decimal taxRatePercent = 0m, decimal serviceChargeRatePercent = 0m) =>
-        new(tableId, cashierUserId, taxRatePercent, serviceChargeRatePercent);
+        Guid? tableId,
+        Guid cashierUserId,
+        decimal taxRatePercent = 0m,
+        decimal serviceChargeRatePercent = 0m,
+        Guid? shiftId = null) =>
+        new(tableId, cashierUserId, taxRatePercent, serviceChargeRatePercent, shiftId);
 
     /// <summary>
     /// Adds dishes to the bill. Free at any time on an open order and never needs approval

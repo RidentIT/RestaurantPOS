@@ -33,6 +33,15 @@ public static class AuthorizationPolicies
     /// </summary>
     public const string ReportsRead = "reports:read";
 
+    /// <summary>Everyone's shifts, and closing one on a cashier's behalf: the owner's view.</summary>
+    public const string ShiftsReadAll = "shifts:read-all";
+
+    /// <summary>
+    /// Opening a single shift's detail: a cashier for their own, the owner for anyone's. The
+    /// handler tells the two apart — this only admits both.
+    /// </summary>
+    public const string ShiftsView = "shifts:view";
+
     /// <summary>Builds the policy name guarding <paramref name="module"/>.</summary>
     public static string ForModule(AppModule module) => $"module:{module}";
 
@@ -54,6 +63,17 @@ public static class AuthorizationPolicies
                 context.User.IsInRole(nameof(UserRole.Admin)) ||
                 context.User.HasClaim(AppClaimTypes.Module, AppModule.ExpensesManagement.ToString()) ||
                 context.User.HasClaim(AppClaimTypes.Module, AppModule.ReportsAnalytics.ToString())));
+
+        builder.AddPolicy(ShiftsReadAll, policy =>
+            policy.RequireAssertion(context =>
+                context.User.IsInRole(nameof(UserRole.Admin)) ||
+                context.User.HasClaim(AppClaimTypes.Module, AppModule.ReportsAnalytics.ToString())));
+
+        builder.AddPolicy(ShiftsView, policy =>
+            policy.RequireAssertion(context =>
+                context.User.IsInRole(nameof(UserRole.Admin)) ||
+                context.User.HasClaim(AppClaimTypes.Module, AppModule.ReportsAnalytics.ToString()) ||
+                context.User.HasClaim(AppClaimTypes.Module, AppModule.PosBilling.ToString())));
 
         foreach (var descriptor in ModuleCatalog.All)
         {

@@ -36,6 +36,14 @@ internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
 
         builder.HasIndex(o => o.StewardId);
 
+        // Shifts are closed, never deleted, so an order always keeps the shift it was rung up in.
+        builder.HasOne<CashierShift>()
+            .WithMany()
+            .HasForeignKey(o => o.ShiftId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(o => o.ShiftId);
+
         foreach (var navigation in new[] { nameof(Order.Items), nameof(Order.Tickets), nameof(Order.Payments) })
         {
             builder.Metadata.FindNavigation(navigation)!.SetPropertyAccessMode(PropertyAccessMode.Field);

@@ -67,6 +67,54 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
                     b.ToTable("AuditLogEntries", (string)null);
                 });
 
+            modelBuilder.Entity("RestaurantPOS.Domain.Entities.CashierShift", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CashierUserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CheckedInAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CheckedOutAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ClosedByUserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("ClosingCash")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("ExpectedCash")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(300)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("OpeningCash")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CashierUserId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_CashierShifts_OneOpenPerCashier")
+                        .HasFilter("\"CheckedOutAtUtc\" IS NULL");
+
+                    b.HasIndex("CashierUserId", "CheckedInAtUtc");
+
+                    b.ToTable("CashierShifts", (string)null);
+                });
+
             modelBuilder.Entity("RestaurantPOS.Domain.Entities.Expense", b =>
                 {
                     b.Property<Guid>("Id")
@@ -630,6 +678,9 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("ServiceChargeRatePercent")
                         .HasColumnType("TEXT");
 
+                    b.Property<Guid?>("ShiftId")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
@@ -646,6 +697,8 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ShiftId");
 
                     b.HasIndex("StewardId");
 
@@ -1447,6 +1500,15 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
                     b.ToTable("UserModulePermissions", (string)null);
                 });
 
+            modelBuilder.Entity("RestaurantPOS.Domain.Entities.CashierShift", b =>
+                {
+                    b.HasOne("RestaurantPOS.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("CashierUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RestaurantPOS.Domain.Entities.Expense", b =>
                 {
                     b.HasOne("RestaurantPOS.Domain.Entities.ExpenseCategory", null)
@@ -1529,6 +1591,11 @@ namespace RestaurantPOS.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("RestaurantPOS.Domain.Entities.Order", b =>
                 {
+                    b.HasOne("RestaurantPOS.Domain.Entities.CashierShift", null)
+                        .WithMany()
+                        .HasForeignKey("ShiftId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("RestaurantPOS.Domain.Entities.Steward", null)
                         .WithMany()
                         .HasForeignKey("StewardId")
